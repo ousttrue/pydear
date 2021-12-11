@@ -26,15 +26,33 @@ def def_pointer_filter(src: str) -> str:
         return src
 
 
-IM_PATTERN = re.compile(r'(.*)(Im\w+)(.*)')
+IM_PATTERN = re.compile(r'\bIm\w+')
+TEMPLAE_PATTERN = re.compile(r'<[^>]+>')
+
+
+def pxd_type_filter(src: str) -> str:
+    def rep_typearg(m):
+        ret = f'[{m.group(0)[1:-1]}]'
+        return ret
+    dst = TEMPLAE_PATTERN.sub(rep_typearg, src)
+
+    return dst
 
 
 def pyx_type_filter(src: str) -> str:
-    m = IM_PATTERN.match(src)
-    if m:
-        return f'{m.group(1)}cpp_imgui.{m.group(2)}{m.group(3)}'
-    else:
-        return src
+    def add_prefix(m):
+        if m.group(0) == 'ImGuiTextRange':
+            return m.group(0)
+        ret = f'cpp_imgui.{m.group(0)}'
+        return ret
+    dst = IM_PATTERN.sub(add_prefix, src)
+
+    def rep_typearg(m):
+        ret = f'[{m.group(0)[1:-1]}]'
+        return ret
+    dst = TEMPLAE_PATTERN.sub(rep_typearg, dst)
+
+    return dst
 
 
 def symbol_filter(src: str) -> str:
@@ -102,7 +120,6 @@ class Parser:
                     | cindex.CursorKind.MACRO_INSTANTIATION
                     | cindex.CursorKind.INCLUSION_DIRECTIVE
                     | cindex.CursorKind.FUNCTION_TEMPLATE
-                    | cindex.CursorKind.CLASS_TEMPLATE
                 ):
                     pass
                 case cindex.CursorKind.FUNCTION_DECL:
@@ -112,7 +129,7 @@ class Parser:
                         self.functions.append(cursor_path)
                 case cindex.CursorKind.ENUM_DECL:
                     self.enums.append(cursor_path)
-                case cindex.CursorKind.TYPEDEF_DECL | cindex.CursorKind.STRUCT_DECL:
+                case cindex.CursorKind.TYPEDEF_DECL | cindex.CursorKind.STRUCT_DECL | cindex.CursorKind.CLASS_TEMPLATE:
                     self.typedef_struct_list.append(cursor_path)
                 case _:
                     logger.debug(cursor.kind)
@@ -126,6 +143,10 @@ class Parser:
         pycindex.traverse(self.tu, self.callback)
 
     def _generate_typedef_struct(self, pxd: io.IOBase, pyx: io.IOBase, pyi: io.IOBase, cursor: cindex.Cursor):
+        if cursor.spelling in ('ImGuiTextFilter', 'ImGuiStorage'):
+            # TODO: nested type
+            return
+
         match cursor.kind:
             case cindex.CursorKind.TYPEDEF_DECL:
                 underlying_type = cursor.underlying_typedef_type
@@ -138,21 +159,16 @@ class Parser:
                 pxd.write(f'    struct {cursor.spelling}')
                 has_children = False
                 for child in cursor.get_children():
-                    if '<' in child.type.spelling:
-                        # TODO: template
-                        logger.warn(
-                            f'{cursor.spelling}.{child.spelling}: {child.type.spelling}')
-                        break
-
                     match child.kind:
                         case cindex.CursorKind.FIELD_DECL:
                             if not has_children:
                                 pxd.write(':\n')
                                 has_children = True
                             pxd.write(
-                                f'        {type_name(child.type.spelling, child.spelling)}\n')
+                                f'        {type_name(pxd_type_filter(child.type.spelling), child.spelling)}\n')
                 if not has_children:
-                    pxd.write('\n')
+                    pxd.write(':\n')
+                    pxd.write('        pass\n')
 
                 #
                 # pyx
@@ -162,10 +178,6 @@ class Parser:
                 if has_children:
                     pyx.write(f'cdef class {cursor.spelling}:\n')
                     for child in cursor.get_children():
-                        if '<' in child.type.spelling:
-                            # TODO: template
-                            break
-
                         match child.kind:
                             case cindex.CursorKind.FIELD_DECL:
                                 pyx.write(
@@ -175,6 +187,18 @@ class Parser:
                     if not cursor.get_definition():
                         pyx.write(f'cdef class {cursor.spelling}:\n')
                         pyx.write('    pass\n\n')
+
+            case cindex.CursorKind.CLASS_TEMPLATE:
+                # ImVector
+                pxd.write(f'    cdef cppclass {cursor.spelling}[T]:\n')
+                for child in cursor.get_children():
+                    match child.kind:
+                        case cindex.CursorKind.FIELD_DECL:
+                            pxd.write(
+                                f'        {type_name(child.type.spelling, child.spelling)}\n')
+                        case _:
+                            logger.info(
+                                f'template: {child.kind} {child.spelling}')
 
     def _generate_function(self, pxd: io.IOBase, pyx: io.IOBase, pyi: io.IOBase, cursor: cindex.Cursor):
         result_type = cursor.result_type
