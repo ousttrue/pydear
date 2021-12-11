@@ -16,6 +16,9 @@ extensions = [Extension('cydeer.imgui',
                         sources=[
                             str(EXT_DIR / 'imgui.pyx'),  # generated
                             str(IMGUI_DIR / 'imgui.cpp'),
+                            str(IMGUI_DIR / 'imgui_widgets.cpp'),
+                            str(IMGUI_DIR / 'imgui_draw.cpp'),
+                            str(IMGUI_DIR / 'imgui_tables.cpp'),
                         ],
                         include_dirs=[str(IMGUI_DIR)],
                         language='c++',

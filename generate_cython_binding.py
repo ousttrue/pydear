@@ -55,12 +55,14 @@ def pyx_type_filter(src: str) -> str:
     return dst
 
 
-def symbol_filter(src: str) -> str:
+def symbol_filter(src: str, *, get_ptr=False) -> str:
     match src:
         case 'in':
-            return '_' + src
-        case _:
-            return src
+            src = '_' + src
+    if get_ptr:
+        return f'{src}._ptr'
+    else:
+        return src
 
 
 FP_PATTERN = re.compile(r'(.*)\(\*\)(.*)')
@@ -173,20 +175,27 @@ class Parser:
                 #
                 # pyx
                 #
-                if cursor.spelling == 'ImGuiContext':
-                    pass
-                if has_children:
-                    pyx.write(f'cdef class {cursor.spelling}:\n')
-                    for child in cursor.get_children():
-                        match child.kind:
-                            case cindex.CursorKind.FIELD_DECL:
-                                pyx.write(
-                                    f'     cdef {type_name(pyx_type_filter(child.type.spelling), child.spelling)}\n')
-                    pyx.write('\n')
-                else:
-                    if not cursor.get_definition():
-                        pyx.write(f'cdef class {cursor.spelling}:\n')
-                        pyx.write('    pass\n\n')
+                definition = cursor.get_definition()
+                if definition and definition != cursor:
+                    # skip
+                    return
+                pyx.write(f'''cdef class {cursor.spelling}:
+    cdef cpp_imgui.{cursor.spelling} *_ptr
+    @staticmethod
+    cdef from_ptr(cpp_imgui.{cursor.spelling}* ptr):
+        if ptr == NULL:
+            return None
+        instance = {cursor.spelling}()
+        instance._ptr = ptr
+        return instance                    
+''')
+
+                for child in cursor.get_children():
+                    match child.kind:
+                        case cindex.CursorKind.FIELD_DECL:
+                            pyx.write(
+                                f'    cdef {type_name(pyx_type_filter(child.type.spelling), child.spelling)}\n')
+                pyx.write('\n')
 
             case cindex.CursorKind.CLASS_TEMPLATE:
                 # ImVector
@@ -215,7 +224,8 @@ class Parser:
         # pyx
         #
         pyx.write(f'''def {cursor.spelling}({", ".join(f"{def_pointer_filter(param_type)} {symbol_filter(param_name)}" for param_name, param_type in params)})->{def_pointer_filter(result_type.spelling)}:
-    return cpp_imgui.{cursor.spelling}({", ".join(symbol_filter(param_name) for param_name, param_type in params)})
+    value = cpp_imgui.{cursor.spelling}({", ".join(symbol_filter(param_name, get_ptr=True) for param_name, param_type in params)})
+    return {def_pointer_filter(result_type.spelling)}.from_ptr(value)
 
 ''')
 
@@ -235,6 +245,11 @@ cimport cpp_imgui
 
         for cursors in self.typedef_struct_list:
             self._generate_typedef_struct(pxd, pyx, pyi, cursors[-1])
+
+
+        pxd.write('''
+cdef extern from "imgui.h" namespace "ImGui":
+''')
 
         for cursors in self.functions:
             self._generate_function(pxd, pyx, pyi, cursors[-1])
