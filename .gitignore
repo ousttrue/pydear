@@ -2,4 +2,5 @@
 *.egg-info
 /src/cydeer/_version.py
 /src/cydeer/imgui
+/src/cydeer/imgui.pyi
 /typings/

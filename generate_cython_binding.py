@@ -1,6 +1,7 @@
 import pathlib
 import io
 import logging
+import re
 from clang import cindex
 logger = logging.getLogger(__name__)
 
@@ -8,6 +9,69 @@ logger = logging.getLogger(__name__)
 def get_type(cursor: cindex.Cursor):
     name = cursor.spelling
     return (name, cursor.type.spelling)
+
+
+IMPOINTER_PATTERN = re.compile(r'(Im\w+)(\s*\*)(.*)')
+CONST_IMPOINTER_PATTERN = re.compile(r'const (Im\w+)(\s*\*)(.*)')
+
+
+def def_pointer_filter(src: str) -> str:
+    #  src.replace('[]', '*')
+    m = IMPOINTER_PATTERN.match(src)
+    if not m:
+        m = CONST_IMPOINTER_PATTERN.match(src)
+    if m:
+        return f'{m.group(1)}{m.group(3)}'
+    else:
+        return src
+
+
+IM_PATTERN = re.compile(r'(.*)(Im\w+)(.*)')
+
+
+def pyx_type_filter(src: str) -> str:
+    m = IM_PATTERN.match(src)
+    if m:
+        return f'{m.group(1)}cpp_imgui.{m.group(2)}{m.group(3)}'
+    else:
+        return src
+
+
+def symbol_filter(src: str) -> str:
+    match src:
+        case 'in':
+            return '_' + src
+        case _:
+            return src
+
+
+FP_PATTERN = re.compile(r'(.*)\(\*\)(.*)')
+
+
+def type_name(t: str, name: str) -> str:
+    m = FP_PATTERN.match(t)
+    if m:
+        # function pointer
+        return f'{m.group(1)}(*{name}){m.group(2)}'
+    else:
+        return f'{t} {name}'
+
+
+def is_forward_declaration(cursor: cindex.Cursor) -> bool:
+    '''
+    https://joshpeterson.github.io/identifying-a-forward-declaration-with-libclang    
+    '''
+    definition = cursor.get_definition()
+
+    # If the definition is null, then there is no definition in this translation
+    # unit, so this cursor must be a forward declaration.
+    if not definition:
+        return True
+
+    # If there is a definition, then the forward declaration and the definition
+    # are in the same translation unit. This cursor is the forward declaration if
+    # it is _not_ the definition.
+    return cursor != definition
 
 
 class Parser:
@@ -61,42 +125,103 @@ class Parser:
         import pycindex
         pycindex.traverse(self.tu, self.callback)
 
-    def _generate_function(self, pyd: io.IOBase, pyx: io.IOBase, cursor: cindex.Cursor):
+    def _generate_typedef_struct(self, pxd: io.IOBase, pyx: io.IOBase, pyi: io.IOBase, cursor: cindex.Cursor):
+        match cursor.kind:
+            case cindex.CursorKind.TYPEDEF_DECL:
+                underlying_type = cursor.underlying_typedef_type
+                pxd.write(
+                    f'    ctypedef {type_name(underlying_type.spelling, cursor.spelling)}\n')
+            case cindex.CursorKind.STRUCT_DECL:
+                #
+                # pxd
+                #
+                pxd.write(f'    struct {cursor.spelling}')
+                has_children = False
+                for child in cursor.get_children():
+                    if '<' in child.type.spelling:
+                        # TODO: template
+                        logger.warn(
+                            f'{cursor.spelling}.{child.spelling}: {child.type.spelling}')
+                        break
+
+                    match child.kind:
+                        case cindex.CursorKind.FIELD_DECL:
+                            if not has_children:
+                                pxd.write(':\n')
+                                has_children = True
+                            pxd.write(
+                                f'        {type_name(child.type.spelling, child.spelling)}\n')
+                if not has_children:
+                    pxd.write('\n')
+
+                #
+                # pyx
+                #
+                if cursor.spelling == 'ImGuiContext':
+                    pass
+                if has_children:
+                    pyx.write(f'cdef class {cursor.spelling}:\n')
+                    for child in cursor.get_children():
+                        if '<' in child.type.spelling:
+                            # TODO: template
+                            break
+
+                        match child.kind:
+                            case cindex.CursorKind.FIELD_DECL:
+                                pyx.write(
+                                    f'     cdef {type_name(pyx_type_filter(child.type.spelling), child.spelling)}\n')
+                    pyx.write('\n')
+                else:
+                    if not cursor.get_definition():
+                        pyx.write(f'cdef class {cursor.spelling}:\n')
+                        pyx.write('    pass\n\n')
+
+    def _generate_function(self, pxd: io.IOBase, pyx: io.IOBase, pyi: io.IOBase, cursor: cindex.Cursor):
         result_type = cursor.result_type
         params = [get_type(child) for child in cursor.get_children(
         ) if child.kind == cindex.CursorKind.PARM_DECL]
 
         #
-        # pyd
+        # pxd
         #
-        pyd.write('''cdef extern from "imgui.h":
-
-''')
-
-        pyd.write(
-            f'{result_type.spelling} {cursor.spelling}({", ".join(f"{param_type} {param_name}" for param_name, param_type in params)})\n')
+        pxd.write(
+            f'    {result_type.spelling} {cursor.spelling}({", ".join(f"{param_type} {param_name}" for param_name, param_type in params)})\n')
 
         #
         # pyx
         #
-        pyx.write('''cimport imgui
+        pyx.write(f'''def {cursor.spelling}({", ".join(f"{def_pointer_filter(param_type)} {symbol_filter(param_name)}" for param_name, param_type in params)})->{def_pointer_filter(result_type.spelling)}:
+    return cpp_imgui.{cursor.spelling}({", ".join(symbol_filter(param_name) for param_name, param_type in params)})
 
 ''')
-        pyx.write(
-            f'{result_type.spelling} {cursor.spelling}({", ".join(f"{param_type} {param_name}" for param_name, param_type in params)})\n')
 
         #
         # pyi
         #
 
-    def generate(self, ext_dir: pathlib.Path):
-        ext_dir.mkdir(parents=True, exist_ok=True)
-        with (ext_dir / 'imgui.pyd').open('w') as pyd:
-            with (ext_dir / 'imgui.pyx').open('w') as pyx:
-                self._generate_function(pyd, pyx, self.functions[0][-1])
+    def generate(self, pxd: io.IOBase, pyx: io.IOBase, pyi: io.IOBase):
+        pxd.write('''from libcpp cimport bool
+cdef extern from "imgui.h":
+
+''')
+        pyx.write('''from libcpp cimport bool
+cimport cpp_imgui
+
+''')
+
+        for cursors in self.typedef_struct_list:
+            self._generate_typedef_struct(pxd, pyx, pyi, cursors[-1])
+
+        for cursors in self.functions:
+            self._generate_function(pxd, pyx, pyi, cursors[-1])
+            break
 
 
-def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path):
+def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path):
     parser = Parser(imgui_dir / 'imgui.h')
     parser.traverse()
-    parser.generate(ext_dir)
+    ext_dir.mkdir(parents=True, exist_ok=True)
+    with (ext_dir / 'cpp_imgui.pxd').open('w') as pxd:
+        with (ext_dir / 'imgui.pyx').open('w') as pyx:
+            with pyi_path.open('w') as pyi:
+                parser.generate(pxd, pyx, pyi)
