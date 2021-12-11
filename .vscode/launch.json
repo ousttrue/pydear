@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "setup build_ext",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/setup.py",
+            "args": [
+                "build_ext"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "generate clang.cindex stub",
+            "type": "python",
+            "request": "launch",
+            "module": "pycindex.generate_cindex_stub",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+    ]
+}

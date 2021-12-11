@@ -1,0 +1,5 @@
+*.pyc
+*.egg-info
+/src/cydeer/_version.py
+/src/cydeer/imgui
+/typings/
