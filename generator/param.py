@@ -76,7 +76,7 @@ class Param(NamedTuple):
                 return f'{name}: Tuple[float, float]'
             case 'const ImVec4 &':
                 return f'{name}: Tuple[float, float, float, float]'
-            case 'void *':
+            case 'void *' | 'const void *':
                 return f'unsigned char[::1] {name}'
             case _:
                 if self.cursor.type.kind == cindex.TypeKind.POINTER:

@@ -21,6 +21,8 @@ class ResultType(NamedTuple):
                 return 'str'
             case 'ImVec2':
                 return 'Tuple[float, float]'
+            case 'ImU32' | 'ImGuiID':
+                return 'int'
             case _:
                 return def_pointer_filter(result_spelling)
 
@@ -35,11 +37,14 @@ class ResultType(NamedTuple):
             case cindex.TypeKind.LVALUEREFERENCE:
                 return f'{self.py_type}.from_ptr(&value)'
             case _:
-                if result_type.spelling == 'ImVec2':
-                    # copy by value
-                    return '(value.x, value.y)'
-                else:
-                    raise NotImplementedError(f'result_type.kind')
+                match result_type.spelling:
+                    case 'ImVec2':
+                        # copy by value
+                        return '(value.x, value.y)'
+                    case 'ImU32' | 'ImGuiID':
+                        return 'value'
+                    case _:
+                        raise NotImplementedError(f'result_type.kind')
 
     @property
     def is_void(self) -> bool:
