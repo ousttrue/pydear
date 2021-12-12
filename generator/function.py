@@ -23,7 +23,8 @@ class ResultType(NamedTuple):
 
     @property
     def is_void(self) -> bool:
-        return self.cursor.result_type == cindex.TypeKind.VOID
+        is_void = self.cursor.result_type.kind == cindex.TypeKind.VOID
+        return is_void
 
 
 class Param(NamedTuple):
@@ -63,9 +64,13 @@ class FunctionDecl(NamedTuple):
         ) if child.kind == cindex.CursorKind.PARM_DECL]
 
         if result_type.is_void:
-            raise NotImplementedError()
+            pyx.write(f'''def {cursor.spelling}({", ".join(param.py_type_name for param in params)}):
+        cpp_imgui.{cursor.spelling}({", ".join(param.py_to_c for param in params)})
+
+''')
         else:
             pyx.write(f'''def {cursor.spelling}({", ".join(param.py_type_name for param in params)})->{result_type.py_type}:
         value = cpp_imgui.{cursor.spelling}({", ".join(param.py_to_c for param in params)})
         return {result_type.c_to_py}
+
 ''')
