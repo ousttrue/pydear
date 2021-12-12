@@ -2,7 +2,7 @@ import logging
 from setuptools import Extension, setup
 from Cython.Build import cythonize
 import pathlib
-import generate_cython_binding
+import generator
 HERE = pathlib.Path(__file__).parent
 PYI_PATH = HERE / 'src/cydeer/imgui.pyi'
 EXT_DIR = HERE / 'src/cydeer/imgui'
@@ -10,7 +10,7 @@ IMGUI_DIR = HERE / '_external/imgui'
 logging.basicConfig(level=logging.DEBUG)
 
 # generate pyd, pyx, pyi from imgui.h
-generate_cython_binding.generate(IMGUI_DIR, EXT_DIR, PYI_PATH)
+generator.generate(IMGUI_DIR, EXT_DIR, PYI_PATH)
 
 extensions = [Extension('cydeer.imgui',
                         sources=[
