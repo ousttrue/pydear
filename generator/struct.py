@@ -1,7 +1,54 @@
 from typing import NamedTuple, Tuple
 import io
+import re
 from clang import cindex
 from . import utils
+
+
+def is_forward_declaration(cursor: cindex.Cursor) -> bool:
+    '''
+    https://joshpeterson.github.io/identifying-a-forward-declaration-with-libclang    
+    '''
+    definition = cursor.get_definition()
+
+    # If the definition is null, then there is no definition in this translation
+    # unit, so this cursor must be a forward declaration.
+    if not definition:
+        return True
+
+    # If there is a definition, then the forward declaration and the definition
+    # are in the same translation unit. This cursor is the forward declaration if
+    # it is _not_ the definition.
+    return cursor != definition
+
+
+IM_PATTERN = re.compile(r'\bIm\w+')
+TEMPLAE_PATTERN = re.compile(r'<[^>]+>')
+
+
+def pxd_type_filter(src: str) -> str:
+    def rep_typearg(m):
+        ret = f'[{m.group(0)[1:-1]}]'
+        return ret
+    dst = TEMPLAE_PATTERN.sub(rep_typearg, src)
+
+    return dst
+
+
+def pyx_type_filter(src: str) -> str:
+    def add_prefix(m):
+        if m.group(0) == 'ImGuiTextRange':
+            return m.group(0)
+        ret = f'cpp_imgui.{m.group(0)}'
+        return ret
+    dst = IM_PATTERN.sub(add_prefix, src)
+
+    def rep_typearg(m):
+        ret = f'[{m.group(0)[1:-1]}]'
+        return ret
+    dst = TEMPLAE_PATTERN.sub(rep_typearg, dst)
+
+    return dst
 
 
 class StructDecl(NamedTuple):
@@ -29,7 +76,7 @@ class StructDecl(NamedTuple):
                         pxd.write(':\n')
                         has_children = True
                     pxd.write(
-                        f'        {utils.type_name(utils.pxd_type_filter(child.type.spelling), child.spelling)}\n')
+                        f'        {utils.type_name(pxd_type_filter(child.type.spelling), child.spelling)}\n')
 
         if not has_children:
             pxd.write(':\n')
@@ -66,6 +113,6 @@ class StructDecl(NamedTuple):
             match child.kind:
                 case cindex.CursorKind.FIELD_DECL:
                     pyx.write(
-                        f'    cdef {utils.type_name(utils.pyx_type_filter(child.type.spelling), child.spelling)}\n')
+                        f'    cdef {utils.type_name(pyx_type_filter(child.type.spelling), child.spelling)}\n')
 
         pyx.write('\n')
