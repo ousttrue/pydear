@@ -72,7 +72,7 @@ class Param(NamedTuple):
         match self.cursor.type.spelling:
             case 'const char *':
                 return f'{name}: bytes'
-            case 'const ImVec2 &':
+            case 'const ImVec2 &' | 'ImVec2':
                 return f'{name}: Tuple[float, float]'
             case 'const ImVec4 &':
                 return f'{name}: Tuple[float, float, float, float]'
@@ -111,7 +111,7 @@ class Param(NamedTuple):
         match self.cursor.type.spelling:
             case 'const char *':
                 return f'{name}'
-            case 'const ImVec2 &':
+            case 'const ImVec2 &' | 'ImVec2':
                 return f"cpp_imgui.ImVec2({name}[0], {name}[1])"
             case 'const ImVec4 &':
                 return f"cpp_imgui.ImVec4({name}[0], {name}[1], {name}[2], {name}[3])"

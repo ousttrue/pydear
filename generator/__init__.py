@@ -27,7 +27,7 @@ cimport cpp_imgui
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
 
-                for i, definition in enumerate(parser.functions[:160]):
+                for i, definition in enumerate(parser.functions[:200]):
                     if definition.cursors[-1].spelling in (
                             'SetNextWindowSizeConstraints',
                             'Combo',
@@ -37,6 +37,10 @@ cdef extern from "imgui.h" namespace "ImGui":
                             'TextDisabledV',
                             'TextColoredV',
                             'TextV',
+                            'InputTextWithHint',
+                            'InputTextMultiline',
+                            'ImGuiInputTextCallback',
+                            'InputText',
                     ):
                         # skip
                         continue
