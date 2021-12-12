@@ -27,7 +27,7 @@ cimport cpp_imgui
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
 
-                for i, definition in enumerate(parser.functions[:200]):
+                for i, definition in enumerate(parser.functions[:300]):
                     if definition.cursors[-1].spelling in (
                             'SetNextWindowSizeConstraints',
                             'Combo',
@@ -41,6 +41,16 @@ cdef extern from "imgui.h" namespace "ImGui":
                             'InputTextMultiline',
                             'ImGuiInputTextCallback',
                             'InputText',
+                            'ListBox',
+                            'TableGetColumnFlags',
+                            'PlotLines',
+                            'PlotHistogram',
+                            'LogTextV',
+                            'SetTooltipV',
+                            'TreeNodeExV',
+                            'TreeNodeV',
+                            'AcceptDragDropPayload',
+                            'GetDragDropPayload',
                     ):
                         # skip
                         continue

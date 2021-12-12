@@ -30,7 +30,7 @@ class ResultType(NamedTuple):
     def c_to_py(self) -> str:
         result_type = self.cursor.result_type
         match result_type.kind:
-            case cindex.TypeKind.BOOL | cindex.TypeKind.FLOAT:
+            case cindex.TypeKind.BOOL | cindex.TypeKind.FLOAT | cindex.TypeKind.INT:
                 return 'value'
             case cindex.TypeKind.POINTER:
                 return f'{self.py_type}.from_ptr(value)'
