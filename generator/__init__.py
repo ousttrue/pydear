@@ -27,8 +27,17 @@ cimport cpp_imgui
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
 
-                for i, definition in enumerate(parser.functions[:120]):
-                    if definition.cursors[-1].spelling in ('SetNextWindowSizeConstraints',):
+                for i, definition in enumerate(parser.functions[:160]):
+                    if definition.cursors[-1].spelling in (
+                            'SetNextWindowSizeConstraints',
+                            'Combo',
+                            'LabelTextV',
+                            'BulletTextV',
+                            'TextWrappedV',
+                            'TextDisabledV',
+                            'TextColoredV',
+                            'TextV',
+                    ):
                         # skip
                         continue
                     definition.write_pxd(pxd)

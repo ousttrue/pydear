@@ -78,19 +78,31 @@ class Param(NamedTuple):
                 return f'{name}: Tuple[float, float, float, float]'
             case 'void *' | 'const void *':
                 return f'unsigned char[::1] {name}'
+            case 'ImTextureID':
+                return f'{name}: int'
             case _:
-                if self.cursor.type.kind == cindex.TypeKind.POINTER:
-                    if is_wrap(self.cursor.type):
-                        return f"{def_pointer_filter(param_type)} {name}"
-                    # TODO: null check
-                    # TODO: default value
-                    # bool *
-                    return f"{self.cursor.type.get_pointee().spelling}[::1] {name}"
-                else:
-                    if is_wrap(self.cursor.type):
-                        return f"cpp_imgui.{param_type} {name}"
-                    else:
-                        return f"{param_type} {name}"
+                match self.cursor.type.kind:
+                    case cindex.TypeKind.POINTER:
+                        if is_wrap(self.cursor.type):
+                            return f"{def_pointer_filter(param_type)} {name}"
+                        # TODO: null check
+                        # TODO: default value
+                        # bool *
+                        return f"{self.cursor.type.get_pointee().spelling}[::1] {name}"
+                    case cindex.TypeKind.INCOMPLETEARRAY:
+                        raise NotImplementedError()
+                    case cindex.TypeKind.VARIABLEARRAY:
+                        raise NotImplementedError()
+                    case cindex.TypeKind.CONSTANTARRAY:
+                        if is_wrap(self.cursor.type):
+                            raise NotImplementedError()
+                        # float [2]
+                        return f"{self.cursor.type.get_array_element_type().spelling}[::1] {name}"
+                    case _:
+                        if is_wrap(self.cursor.type):
+                            return f"cpp_imgui.{param_type} {name}"
+                        else:
+                            return f"{param_type} {name}"
 
     @property
     def py_to_c(self) -> str:
@@ -103,13 +115,16 @@ class Param(NamedTuple):
                 return f"cpp_imgui.ImVec2({name}[0], {name}[1])"
             case 'const ImVec4 &':
                 return f"cpp_imgui.ImVec4({name}[0], {name}[1], {name}[2], {name}[3])"
+            case 'ImTextureID':
+                return f'<cpp_imgui.ImTextureID>{name}'
             case _:
-                if self.cursor.type.kind == cindex.TypeKind.POINTER:
-                    if is_wrap(self.cursor.type):
-                        return f'{name}._ptr'
-                    # TODO: null check
-                    # TODO: default value
-                    # bool *
-                    return f'&{name}[0]'
-                else:
-                    return f"{name}"
+                match self.cursor.type.kind:
+                    case cindex.TypeKind.POINTER | cindex.TypeKind.CONSTANTARRAY:
+                        if is_wrap(self.cursor.type):
+                            return f'{name}._ptr'
+                        # TODO: null check
+                        # TODO: default value
+                        # bool *
+                        return f'&{name}[0]'
+                    case _:
+                        return f"{name}"
