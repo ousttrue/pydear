@@ -3,6 +3,7 @@ import io
 import re
 from clang import cindex
 from . import utils
+from .param import Param
 
 
 def is_forward_declaration(cursor: cindex.Cursor) -> bool:
@@ -60,27 +61,34 @@ class StructDecl(NamedTuple):
             # TODO: nested type
             return
 
-        match cursor.kind:
-            case cindex.CursorKind.CLASS_TEMPLATE:
-                pxd.write(f'    cdef cppclass {cursor.spelling}[T]')
-            case cindex.CursorKind.STRUCT_DECL:
+        constructors = [child for child in cursor.get_children(
+        ) if child.kind == cindex.CursorKind.CONSTRUCTOR]
+        if cursor.kind == cindex.CursorKind.CLASS_TEMPLATE:
+            pxd.write(f'    cppclass {cursor.spelling}[T]')
+            constructors.clear()
+        elif constructors:
+            pxd.write(f'    cppclass {cursor.spelling}')
+        else:
+            definition = cursor.get_definition()
+            if definition and any(child for child in definition.get_children() if child.kind == cindex.CursorKind.CONSTRUCTOR):
+                pxd.write(f'    cppclass {cursor.spelling}')
+            else:
                 pxd.write(f'    struct {cursor.spelling}')
-            case _:
-                raise RuntimeError()
 
-        has_children = False
-        for child in cursor.get_children():
-            match child.kind:
-                case cindex.CursorKind.FIELD_DECL:
-                    if not has_children:
-                        pxd.write(':\n')
-                        has_children = True
-                    pxd.write(
-                        f'        {utils.type_name(pxd_type_filter(child.type.spelling), child.spelling)}\n')
-
-        if not has_children:
+        fields = [cursor for cursor in cursor.get_children(
+        ) if cursor.kind == cindex.CursorKind.FIELD_DECL]
+        if constructors or fields:
             pxd.write(':\n')
-            pxd.write('        pass\n')
+            for child in constructors:
+                params = [Param(child) for child in child.get_children(
+                ) if child.kind == cindex.CursorKind.PARM_DECL]
+                pxd.write(
+                    f'        {cursor.spelling}({", ".join(param.c_type_name for param in params)})\n')
+
+            for child in fields:
+                pxd.write(
+                    f'        {utils.type_name(pxd_type_filter(child.type.spelling), child.spelling)}\n')
+        pxd.write('\n')
 
     def write_pyx(self, pyx: io.IOBase):
         '''

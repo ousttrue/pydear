@@ -13,7 +13,8 @@ def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.P
 cdef extern from "imgui.h":
 
 ''')
-                pyx.write('''from libcpp cimport bool
+                pyx.write('''from typing import Tuple
+from libcpp cimport bool
 cimport cpp_imgui
 
 ''')
@@ -26,6 +27,9 @@ cimport cpp_imgui
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
 
-                for i, definition in enumerate(parser.functions[:20]):
+                for i, definition in enumerate(parser.functions[:40]):
+                    if definition.cursors[-1].spelling in ('SetNextWindowSizeConstraints',):
+                        # skip
+                        continue
                     definition.write_pxd(pxd)
                     definition.write_pyx(pyx)
