@@ -21,7 +21,7 @@ class ResultType(NamedTuple):
                 return 'str'
             case 'ImVec2':
                 return 'Tuple[float, float]'
-            case 'ImU32' | 'ImGuiID':
+            case 'ImU32' | 'ImGuiID' | 'ImGuiMouseCursor':
                 return 'int'
             case _:
                 return def_pointer_filter(result_spelling)
@@ -30,7 +30,7 @@ class ResultType(NamedTuple):
     def c_to_py(self) -> str:
         result_type = self.cursor.result_type
         match result_type.kind:
-            case cindex.TypeKind.BOOL | cindex.TypeKind.FLOAT | cindex.TypeKind.INT:
+            case cindex.TypeKind.BOOL | cindex.TypeKind.FLOAT | cindex.TypeKind.INT | cindex.TypeKind.DOUBLE:
                 return 'value'
             case cindex.TypeKind.POINTER:
                 return f'{self.py_type}.from_ptr(value)'
@@ -41,7 +41,10 @@ class ResultType(NamedTuple):
                     case 'ImVec2':
                         # copy by value
                         return '(value.x, value.y)'
-                    case 'ImU32' | 'ImGuiID':
+                    case 'ImVec4':
+                        # copy by value
+                        return '(value.x, value.y, value.z, value.w)'
+                    case 'ImU32' | 'ImGuiID' | 'ImGuiMouseCursor':
                         return 'value'
                     case _:
                         raise NotImplementedError(f'result_type.kind')
