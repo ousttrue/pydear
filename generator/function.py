@@ -21,6 +21,8 @@ class ResultType(NamedTuple):
                 return 'str'
             case 'ImVec2':
                 return 'Tuple[float, float]'
+            case 'ImVec4':
+                return 'Tuple[float, float, float, float]'
             case 'ImU32' | 'ImGuiID' | 'ImGuiMouseCursor':
                 return 'int'
             case _:

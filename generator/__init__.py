@@ -27,7 +27,8 @@ cimport cpp_imgui
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
 
-                for i, definition in enumerate(parser.functions[:330]):
+                for definition in parser.functions:
+                    # TODO: callback param... etc
                     if definition.cursors[-1].spelling in (
                             'SetNextWindowSizeConstraints',
                             'Combo',
@@ -53,6 +54,11 @@ cdef extern from "imgui.h" namespace "ImGui":
                             'GetDragDropPayload',
                             'GetAllocatorFunctions',
                             'MemAlloc',
+                            'SetStateStorage',
+                            'GetStateStorage',
+                            'ColorConvertU32ToFloat4',
+                            'ColorConvertFloat4ToU32',
+                            'SetAllocatorFunctions',
                     ):
                         # skip
                         continue
