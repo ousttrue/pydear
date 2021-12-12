@@ -7,8 +7,22 @@ def get_type(cursor: cindex.Cursor):
     return (name, cursor.type.spelling)
 
 
-IMPOINTER_PATTERN = re.compile(r'(Im\w+)(\s*\*)(.*)')
-CONST_IMPOINTER_PATTERN = re.compile(r'const (Im\w+)(\s*\*)(.*)')
+IMPOINTER_PATTERN = re.compile(r'(Im\w+)(\s*[\*&])(.*)')
+CONST_IMPOINTER_PATTERN = re.compile(r'const (Im\w+)(\s*[\*&])(.*)')
+
+
+def is_pointer(src: str) -> bool:
+    if re.search(r'\s*\*', src):
+        return True
+    else:
+        return False
+
+
+def is_reference(src: str) -> bool:
+    if re.search(r'\s*&', src):
+        return True
+    else:
+        return False
 
 
 def def_pointer_filter(src: str) -> str:

@@ -26,6 +26,6 @@ cimport cpp_imgui
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
 
-                for i, definition in enumerate(parser.functions[:2]):
+                for i, definition in enumerate(parser.functions[:10]):
                     definition.write_pxd(pxd)
                     definition.write_pyx(pyx)

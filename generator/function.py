@@ -19,7 +19,13 @@ class ResultType(NamedTuple):
 
     @property
     def c_to_py(self) -> str:
-        return f'{self.py_type}.from_ptr(value)'
+        result_type = self.cursor.result_type
+        if utils.is_pointer(result_type.spelling):
+            return f'{self.py_type}.from_ptr(value)'
+        elif utils.is_reference(result_type.spelling):
+            return f'{self.py_type}.from_ptr(&value)'
+        else:
+            raise NotImplementedError()
 
     @property
     def is_void(self) -> bool:
