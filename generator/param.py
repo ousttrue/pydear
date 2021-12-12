@@ -74,6 +74,8 @@ class Param(NamedTuple):
                 return f'{name}: bytes'
             case 'const ImVec2 &':
                 return f'{name}: Tuple[float, float]'
+            case 'const ImVec4 &':
+                return f'{name}: Tuple[float, float, float, float]'
             case 'void *':
                 return f'unsigned char[::1] {name}'
             case _:
@@ -99,6 +101,8 @@ class Param(NamedTuple):
                 return f'{name}'
             case 'const ImVec2 &':
                 return f"cpp_imgui.ImVec2({name}[0], {name}[1])"
+            case 'const ImVec4 &':
+                return f"cpp_imgui.ImVec4({name}[0], {name}[1], {name}[2], {name}[3])"
             case _:
                 if self.cursor.type.kind == cindex.TypeKind.POINTER:
                     if is_wrap(self.cursor.type):

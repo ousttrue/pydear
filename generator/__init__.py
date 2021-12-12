@@ -27,7 +27,7 @@ cimport cpp_imgui
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
 
-                for i, definition in enumerate(parser.functions[:40]):
+                for i, definition in enumerate(parser.functions[:80]):
                     if definition.cursors[-1].spelling in ('SetNextWindowSizeConstraints',):
                         # skip
                         continue
