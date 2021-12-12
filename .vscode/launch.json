@@ -22,5 +22,13 @@
             "console": "integratedTerminal",
             "justMyCode": false
         },
+        {
+            "name": "example_glfw_opengl3",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/example_glfw_opengl3.py",
+            "args": [],
+            "console": "integratedTerminal"
+        }
     ]
 }

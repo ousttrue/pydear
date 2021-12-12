@@ -12,14 +12,19 @@ logging.basicConfig(level=logging.DEBUG)
 # generate pyd, pyx, pyi from imgui.h
 generator.generate(IMGUI_DIR, EXT_DIR, PYI_PATH)
 
+
+def rel_path(src: pathlib.Path) -> str:
+    return str(src.relative_to(HERE)).replace('\\', '/')
+
+
 extensions = [Extension('cydeer.imgui',
                         sources=[
-                            str(EXT_DIR / 'imgui.pyx'),  # generated
-                            str(IMGUI_DIR / 'imgui.cpp'),
-                            str(IMGUI_DIR / 'imgui_widgets.cpp'),
-                            str(IMGUI_DIR / 'imgui_draw.cpp'),
-                            str(IMGUI_DIR / 'imgui_tables.cpp'),
-                            str(IMGUI_DIR / 'imgui_demo.cpp'),
+                            rel_path(EXT_DIR / 'imgui.pyx'),  # generated
+                            rel_path(IMGUI_DIR / 'imgui.cpp'),
+                            rel_path(IMGUI_DIR / 'imgui_widgets.cpp'),
+                            rel_path(IMGUI_DIR / 'imgui_draw.cpp'),
+                            rel_path(IMGUI_DIR / 'imgui_tables.cpp'),
+                            rel_path(IMGUI_DIR / 'imgui_demo.cpp'),
                         ],
                         include_dirs=[str(IMGUI_DIR)],
                         language='c++',
