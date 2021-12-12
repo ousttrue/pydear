@@ -35,10 +35,15 @@ def get_type(cursor: cindex.Cursor):
 
 
 def is_wrap(type):
+    if type.kind != cindex.TypeKind.RECORD:
+        return False
     m = re.search(r'\bIm', type.spelling)
     if m:
-        # ImXXX
-        return True
+        if '**' in type.spelling:
+            return False
+        else:
+            # ImXXX
+            return True
     else:
         return False
 

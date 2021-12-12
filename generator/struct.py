@@ -34,8 +34,13 @@ class StructDecl(NamedTuple):
 
         constructors = [child for child in cursor.get_children(
         ) if child.kind == cindex.CursorKind.CONSTRUCTOR]
+
+        def param_filter(param: cindex.Cursor) -> bool:
+            if param.type.spelling == 'va_list':
+                return False
+            return True
         methods = [child for child in cursor.get_children(
-        ) if child.kind == cindex.CursorKind.CXX_METHOD and all(param.type.spelling != 'va_list' for param in child.get_children())]
+        ) if child.kind == cindex.CursorKind.CXX_METHOD and all(param_filter(param) for param in child.get_children())]
         if cursor.kind == cindex.CursorKind.CLASS_TEMPLATE:
             pxd.write(f'    cppclass {cursor.spelling}[T]')
             constructors.clear()
@@ -67,9 +72,9 @@ class StructDecl(NamedTuple):
             for child in methods:
                 params = [Param(child) for child in child.get_children(
                 ) if child.kind == cindex.CursorKind.PARM_DECL]
-                result_type = ResultType(child)
+                result = ResultType(child, child.result_type)
                 pxd.write(
-                    f'        {utils.template_filter(result_type.c_type)} {child.spelling}({", ".join(param.c_type_name for param in params)})\n')
+                    f'        {utils.template_filter(result.type.spelling)} {child.spelling}({", ".join(param.c_type_name for param in params)})\n')
 
         pxd.write('\n')
 
@@ -103,10 +108,18 @@ class StructDecl(NamedTuple):
         for child in cursor.get_children():
             match child.kind:
                 case cindex.CursorKind.FIELD_DECL:
-                    public = ''
-                    if not is_wrap(child.type) and child.type.kind != cindex.TypeKind.POINTER:
-                        public = 'public '
-                    pyx.write(
-                        f'    cdef {public}{utils.type_name(utils.pyx_type_filter(child.type.spelling), child.spelling)}\n')
+                    if '(*)' in child.type.spelling:
+                        # function pointer
+                        continue
+
+                    # public = ''
+                    # if not is_wrap(child.type) and child.type.kind != cindex.TypeKind.POINTER:
+                    #     public = 'public '
+                    result_type = ResultType(child, child.type)
+                    member = f'self._ptr.{child.spelling}'
+                    pyx.write(f'''    @property
+    def {child.spelling}(self)->{result_type.py_type}:
+        return {result_type.c_to_py(member)}
+''')
 
         pyx.write('\n')

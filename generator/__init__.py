@@ -19,16 +19,22 @@ cimport cpp_imgui
 
 ''')
 
-                for definition in parser.typedef_struct_list:
+                for definition in parser.typedef_struct_list[:90]:
                     definition.write_pxd(pxd)
                     definition.write_pyx(pyx)
 
-                # return
+                return
                 pxd.write('''
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
 
+                # TODO: overload
+                used = set()
                 for definition in parser.functions:
+                    if definition.cursors[-1].spelling in used:
+                        continue
+                    used.add(definition.cursors[-1].spelling)
+
                     # TODO: callback param... etc
                     if definition.cursors[-1].spelling in (
                             'SetNextWindowSizeConstraints',
