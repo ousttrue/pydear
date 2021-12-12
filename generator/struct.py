@@ -4,7 +4,7 @@ from clang import cindex
 from . import utils
 
 
-class Struct(NamedTuple):
+class StructDecl(NamedTuple):
     cursors: Tuple[cindex.Cursor, ...]
 
     def write_pxd(self, pxd: io.IOBase):

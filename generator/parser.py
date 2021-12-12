@@ -1,15 +1,14 @@
 from typing import NamedTuple, Tuple, List, Union
 import pathlib
-import io
 import logging
 from clang import cindex
-from . function import Function
-from . typedef import Typedef
-from . struct import Struct
+from . function import FunctionDecl
+from . typedef import TypedefDecl
+from . struct import StructDecl
 logger = logging.getLogger(__name__)
 
 
-class Enum(NamedTuple):
+class EnumDecl(NamedTuple):
     cursors: Tuple[cindex.Cursor, ...]
 
 
@@ -18,9 +17,9 @@ class Parser:
         import pycindex
         self.entrypoint = str(entrypoint)
         self.tu = pycindex.get_tu(self.entrypoint)
-        self.functions: List[Function] = []
-        self.enums: List[Enum] = []
-        self.typedef_struct_list: List[Union[Typedef, Struct]] = []
+        self.functions: List[FunctionDecl] = []
+        self.enums: List[EnumDecl] = []
+        self.typedef_struct_list: List[Union[TypedefDecl, StructDecl]] = []
 
     def callback(self, *cursor_path: cindex.Cursor) -> bool:
         cursor = cursor_path[-1]
@@ -47,15 +46,15 @@ class Parser:
                     if(cursor.spelling.startswith('operator ')):
                         pass
                     else:
-                        self.functions.append(Function(cursor_path))
+                        self.functions.append(FunctionDecl(cursor_path))
                 case cindex.CursorKind.ENUM_DECL:
-                    self.enums.append(Enum(cursor_path))
+                    self.enums.append(EnumDecl(cursor_path))
                 case cindex.CursorKind.TYPEDEF_DECL:
-                    self.typedef_struct_list.append(Typedef(cursor_path))
+                    self.typedef_struct_list.append(TypedefDecl(cursor_path))
                 case cindex.CursorKind.STRUCT_DECL:
-                    self.typedef_struct_list.append(Struct(cursor_path))
+                    self.typedef_struct_list.append(StructDecl(cursor_path))
                 case cindex.CursorKind.CLASS_TEMPLATE:
-                    self.typedef_struct_list.append(Struct(cursor_path))
+                    self.typedef_struct_list.append(StructDecl(cursor_path))
                 case _:
                     logger.debug(cursor.kind)
         else:
