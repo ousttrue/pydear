@@ -23,6 +23,7 @@ cimport cpp_imgui
                     definition.write_pxd(pxd)
                     definition.write_pyx(pyx)
 
+                # return
                 pxd.write('''
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
@@ -64,3 +65,4 @@ cdef extern from "imgui.h" namespace "ImGui":
                         continue
                     definition.write_pxd(pxd)
                     definition.write_pyx(pyx)
+                    definition.write_pyi(pyi)

@@ -1,9 +1,9 @@
 from typing import NamedTuple, Tuple
 import io
-import re
 from clang import cindex
 from . import utils
-from .param import Param
+from .param import Param, is_wrap
+from .result import ResultType
 
 
 def is_forward_declaration(cursor: cindex.Cursor) -> bool:
@@ -23,35 +23,6 @@ def is_forward_declaration(cursor: cindex.Cursor) -> bool:
     return cursor != definition
 
 
-IM_PATTERN = re.compile(r'\bIm\w+')
-TEMPLAE_PATTERN = re.compile(r'<[^>]+>')
-
-
-def pxd_type_filter(src: str) -> str:
-    def rep_typearg(m):
-        ret = f'[{m.group(0)[1:-1]}]'
-        return ret
-    dst = TEMPLAE_PATTERN.sub(rep_typearg, src)
-
-    return dst
-
-
-def pyx_type_filter(src: str) -> str:
-    def add_prefix(m):
-        if m.group(0) == 'ImGuiTextRange':
-            return m.group(0)
-        ret = f'cpp_imgui.{m.group(0)}'
-        return ret
-    dst = IM_PATTERN.sub(add_prefix, src)
-
-    def rep_typearg(m):
-        ret = f'[{m.group(0)[1:-1]}]'
-        return ret
-    dst = TEMPLAE_PATTERN.sub(rep_typearg, dst)
-
-    return dst
-
-
 class StructDecl(NamedTuple):
     cursors: Tuple[cindex.Cursor, ...]
 
@@ -63,14 +34,17 @@ class StructDecl(NamedTuple):
 
         constructors = [child for child in cursor.get_children(
         ) if child.kind == cindex.CursorKind.CONSTRUCTOR]
+        methods = [child for child in cursor.get_children(
+        ) if child.kind == cindex.CursorKind.CXX_METHOD and all(param.type.spelling != 'va_list' for param in child.get_children())]
         if cursor.kind == cindex.CursorKind.CLASS_TEMPLATE:
             pxd.write(f'    cppclass {cursor.spelling}[T]')
             constructors.clear()
-        elif constructors:
+        elif constructors or methods:
             pxd.write(f'    cppclass {cursor.spelling}')
         else:
             definition = cursor.get_definition()
             if definition and any(child for child in definition.get_children() if child.kind == cindex.CursorKind.CONSTRUCTOR):
+                # forward decl
                 pxd.write(f'    cppclass {cursor.spelling}')
             else:
                 pxd.write(f'    struct {cursor.spelling}')
@@ -79,15 +53,24 @@ class StructDecl(NamedTuple):
         ) if cursor.kind == cindex.CursorKind.FIELD_DECL]
         if constructors or fields:
             pxd.write(':\n')
+
+            for child in fields:
+                pxd.write(
+                    f'        {utils.type_name(utils.template_filter(child.type.spelling), child.spelling)}\n')
+
             for child in constructors:
                 params = [Param(child) for child in child.get_children(
                 ) if child.kind == cindex.CursorKind.PARM_DECL]
                 pxd.write(
                     f'        {cursor.spelling}({", ".join(param.c_type_name for param in params)})\n')
 
-            for child in fields:
+            for child in methods:
+                params = [Param(child) for child in child.get_children(
+                ) if child.kind == cindex.CursorKind.PARM_DECL]
+                result_type = ResultType(child)
                 pxd.write(
-                    f'        {utils.type_name(pxd_type_filter(child.type.spelling), child.spelling)}\n')
+                    f'        {utils.template_filter(result_type.c_type)} {child.spelling}({", ".join(param.c_type_name for param in params)})\n')
+
         pxd.write('\n')
 
     def write_pyx(self, pyx: io.IOBase):
@@ -120,7 +103,10 @@ class StructDecl(NamedTuple):
         for child in cursor.get_children():
             match child.kind:
                 case cindex.CursorKind.FIELD_DECL:
+                    public = ''
+                    if not is_wrap(child.type) and child.type.kind != cindex.TypeKind.POINTER:
+                        public = 'public '
                     pyx.write(
-                        f'    cdef {utils.type_name(pyx_type_filter(child.type.spelling), child.spelling)}\n')
+                        f'    cdef {public}{utils.type_name(utils.pyx_type_filter(child.type.spelling), child.spelling)}\n')
 
         pyx.write('\n')

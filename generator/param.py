@@ -1,6 +1,7 @@
 from typing import NamedTuple
 from clang import cindex
 import re
+from . import utils
 
 
 def symbol_filter(src: str) -> str:
@@ -12,10 +13,6 @@ def symbol_filter(src: str) -> str:
             return '_' + src
         case _:
             return src
-
-
-IMPOINTER_PATTERN = re.compile(r'(Im\w+)(\s*[\*&])(.*)')
-CONST_IMPOINTER_PATTERN = re.compile(r'const (Im\w+)(\s*[\*&])(.*)')
 
 
 def is_pointer(src: str) -> bool:
@@ -30,17 +27,6 @@ def is_reference(src: str) -> bool:
         return True
     else:
         return False
-
-
-def def_pointer_filter(src: str) -> str:
-    #  src.replace('[]', '*')
-    m = IMPOINTER_PATTERN.match(src)
-    if not m:
-        m = CONST_IMPOINTER_PATTERN.match(src)
-    if m:
-        return f'{m.group(1)}{m.group(3)}'
-    else:
-        return src
 
 
 def get_type(cursor: cindex.Cursor):
@@ -63,7 +49,7 @@ class Param(NamedTuple):
     @property
     def c_type_name(self) -> str:
         param_name, param_type = get_type(self.cursor)
-        return f"{param_type} {param_name}"
+        return f"{utils.template_filter(param_type)} {param_name}"
 
     @property
     def py_type_name(self) -> str:
@@ -84,7 +70,7 @@ class Param(NamedTuple):
                 match self.cursor.type.kind:
                     case cindex.TypeKind.POINTER:
                         if is_wrap(self.cursor.type):
-                            return f"{def_pointer_filter(param_type)} {name}"
+                            return f"{utils.def_pointer_filter(param_type)} {name}"
                         # TODO: null check
                         # TODO: default value
                         # bool *
@@ -121,7 +107,7 @@ class Param(NamedTuple):
                 match self.cursor.type.kind:
                     case cindex.TypeKind.POINTER | cindex.TypeKind.CONSTANTARRAY:
                         if is_wrap(self.cursor.type):
-                            return f'{name}._ptr'
+                            return f'({name}._ptr if {name} else NULL)'
                         # TODO: null check
                         # TODO: default value
                         # bool *
