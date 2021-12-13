@@ -1,3 +1,4 @@
+from typing import Iterable, Generator
 import re
 
 
@@ -55,3 +56,7 @@ def pyx_type_filter(src: str) -> str:
     dst = TEMPLAE_PATTERN.sub(rep_typearg, dst)
 
     return dst
+
+
+def comma_join(src: Iterable[str]) -> str:
+    return ', '.join(src)

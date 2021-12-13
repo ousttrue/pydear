@@ -30,7 +30,7 @@ cdef extern from "imgui.h":
 
             definition.write_pxd(pxd, excludes=EXCLUDE_TYPES)
 
-        # funcs namespace
+        # namespace ImGui
         pxd.write('''
 cdef extern from "imgui.h" namespace "ImGui":
 ''')

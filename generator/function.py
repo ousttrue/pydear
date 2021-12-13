@@ -2,8 +2,8 @@ from typing import NamedTuple, Tuple
 import io
 from clang import cindex
 from .param import Param, is_wrap
-from .result import ResultType
-from generator import param
+from .result import Result
+from . import utils
 
 
 class FunctionDecl(NamedTuple):
@@ -19,13 +19,13 @@ class FunctionDecl(NamedTuple):
                 if child.type.spelling in excludes:
                     return
                 params.append(Param(child))
-        result = ResultType(cursor, cursor.result_type)
-        pxd.write(
-            f'    {result.type.spelling} {cursor.spelling}({", ".join(param.c_type_name for param in params)})\n')
+        params = utils.comma_join(param.c_type_name for param in params)
+        result = Result(cursor, cursor.result_type)
+        pxd.write(f'    {result.type.spelling} {cursor.spelling}({params})\n')
 
     def write_pyx(self, pyx: io.IOBase):
         cursor = self.cursors[-1]
-        result = ResultType(cursor, cursor.result_type)
+        result = Result(cursor, cursor.result_type)
         params = [Param(child) for child in cursor.get_children(
         ) if child.kind == cindex.CursorKind.PARM_DECL]
 
@@ -46,7 +46,7 @@ class FunctionDecl(NamedTuple):
 
     def write_pyi(self, pyi: io.IOBase):
         cursor = self.cursors[-1]
-        result_type = ResultType(cursor, cursor.result_type)
+        result_type = Result(cursor, cursor.result_type)
         params = [Param(child) for child in cursor.get_children(
         ) if child.kind == cindex.CursorKind.PARM_DECL]
 

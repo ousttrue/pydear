@@ -6,7 +6,7 @@ from generator.param import is_wrap
 from . import utils
 
 
-class ResultType(NamedTuple):
+class Result(NamedTuple):
     cursor: cindex.Cursor
     type: cindex.Type
 

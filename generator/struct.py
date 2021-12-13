@@ -3,7 +3,7 @@ import io
 from clang import cindex
 from . import utils
 from .param import Param, is_wrap
-from .result import ResultType
+from .result import Result
 
 
 def is_forward_declaration(cursor: cindex.Cursor) -> bool:
@@ -80,7 +80,7 @@ class StructDecl(NamedTuple):
             for child in methods:
                 params = [Param(child) for child in child.get_children(
                 ) if child.kind == cindex.CursorKind.PARM_DECL]
-                result = ResultType(child, child.result_type)
+                result = Result(child, child.result_type)
                 pxd.write(
                     f'        {utils.template_filter(result.type.spelling)} {child.spelling}({", ".join(param.c_type_name for param in params)})\n')
 
@@ -124,7 +124,7 @@ class StructDecl(NamedTuple):
                         # public = ''
                         # if not is_wrap(child.type) and child.type.kind != cindex.TypeKind.POINTER:
                         #     public = 'public '
-                        result_type = ResultType(child, child.type)
+                        result_type = Result(child, child.type)
                         member = f'self._ptr.{child.spelling}'
                         pyx.write(f'''    @property
         def {child.spelling}(self)->{result_type.py_type}:
