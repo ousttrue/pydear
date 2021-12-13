@@ -10,6 +10,13 @@ EXCLUDE_TYPES = (
 INCLUDE_TYPES = {
     'ImFontAtlas',
     'ImGuiContext',
+    'ImGuiIO',
+}
+
+INCLUDE_FUNCS = {
+    'CreateContext',
+    'GetIO',
+    'GetCurrentContext',
 }
 
 
@@ -57,14 +64,9 @@ from libc.stdint cimport uintptr_t
             if definition.cursor.spelling in INCLUDE_TYPES:
                 definition.write_pyx_ctypes(pyx)
 
-        # TODO: overload
-        used = set()
-        for definition in parser.functions[:1]:
-            if definition.cursors[-1].spelling in used:
-                continue
-            used.add(definition.cursors[-1].spelling)
-
-            definition.write_pyx(pyx)
+        for definition in parser.functions:
+            if definition.cursor.spelling in INCLUDE_FUNCS:
+                definition.write_pyx(pyx)
 
     #
     # pyd

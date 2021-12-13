@@ -90,7 +90,7 @@ class TypeWrap(NamedTuple):
     @property
     def py_type(self) -> str:
         match self.type.kind:
-            case cindex.TypeKind.POINTER:
+            case cindex.TypeKind.POINTER | cindex.TypeKind.LVALUEREFERENCE:
                 pointee = self.type.get_pointee()
                 match pointee.kind:
                     case cindex.TypeKind.RECORD:
@@ -101,7 +101,7 @@ class TypeWrap(NamedTuple):
     @property
     def user_type_pointer(self) -> bool:
         match self.type.kind:
-            case cindex.TypeKind.POINTER:
+            case cindex.TypeKind.POINTER | cindex.TypeKind.LVALUEREFERENCE:
                 pointee = self.type.get_pointee()
                 match pointee.kind:
                     case cindex.TypeKind.RECORD:
@@ -158,7 +158,11 @@ class TypeWrap(NamedTuple):
     @property
     def pyx_type(self) -> str:
         if self.user_type_pointer:
-            return f'cpp_imgui.{self.c_type}'
+            if self.type.kind == cindex.TypeKind.LVALUEREFERENCE:
+                # reference to pointer
+                return f'cpp_imgui.{self.type.get_pointee().spelling} *'
+            else:
+                return f'cpp_imgui.{self.c_type}'
         return self.c_type
 
     @property

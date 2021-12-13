@@ -64,7 +64,7 @@ def main():
     #io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
     # Setup Dear ImGui style
-    ImGui.StyleColorsDark(None)
+    # ImGui.StyleColorsDark(None)
     #ImGui.StyleColorsClassic();
 
     # Setup Platform/Renderer backends

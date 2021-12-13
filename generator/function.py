@@ -8,6 +8,10 @@ from . import utils
 class FunctionDecl(NamedTuple):
     cursors: Tuple[cindex.Cursor, ...]
 
+    @property
+    def cursor(self):
+        return self.cursors[-1]
+
     def write_pxd(self, pxd: io.IOBase, *, excludes=()):
         cursor = self.cursors[-1]
         if cursor.result_type.spelling in excludes:
@@ -17,6 +21,13 @@ class FunctionDecl(NamedTuple):
         result = TypeWrap.from_function_result(cursor)
         pxd.write(
             f'    {result.c_type} {cursor.spelling}({utils.comma_join(params)})\n')
+
+    def call_assign(self, name: str, result, params):
+        if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
+            # reference to pointer
+            return f'cdef {result.pyx_type} {name} = &cpp_imgui.{self.cursor.spelling}({utils.comma_join(param.py_to_c for param in params)})'
+        else:
+            return f'cdef {result.pyx_type} {name} = cpp_imgui.{self.cursor.spelling}({utils.comma_join(param.py_to_c for param in params)})'
 
     def write_pyx(self, pyx: io.IOBase):
         cursor = self.cursors[-1]
@@ -30,7 +41,7 @@ class FunctionDecl(NamedTuple):
 ''')
         else:
             pyx.write(f'''def {cursor.spelling}({utils.comma_join(param.py_type_with_name for param in params)})->{result.py_type}:
-    cdef {result.pyx_type} value = cpp_imgui.{cursor.spelling}({utils.comma_join(param.py_to_c for param in params)})
+    {self.call_assign('value', result, params)}
     return {result.c_to_py('value')}
 
 ''')
@@ -48,7 +59,7 @@ class FunctionDecl(NamedTuple):
 ''')
         else:
             pyi.write(f'''def {cursor.spelling}({", ".join(param.py_type_name for param in params)})->{result_type.py_type}:
-    value = cpp_imgui.{cursor.spelling}({", ".join(param.py_to_c for param in params)})
+    {self.call_assign('value', params)}
     return {result_type.c_to_py('value')}
 
 ''')
