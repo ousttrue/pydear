@@ -8,16 +8,17 @@ EXCLUDE_TYPES = (
 )
 
 INCLUDE_TYPES = {
-    'ImFontAtlas',
-    'ImGuiContext',
-    'ImGuiIO',
+    'ImFontAtlas': False,
+    'ImGuiContext': False,
+    'ImGuiIO': True,
+    'ImVec2': True,
 }
 
-INCLUDE_FUNCS = {
+INCLUDE_FUNCS = (
     'CreateContext',
     'GetIO',
     'GetCurrentContext',
-}
+)
 
 
 def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path):
@@ -59,10 +60,19 @@ from libcpp cimport bool
 cimport cpp_imgui
 from libc.stdint cimport uintptr_t
 
+
+class ImVector(ctypes.Structure):
+    _fields_ = (
+        ('Size', ctypes.c_int),
+        ('Capacity', ctypes.c_int),
+        ('Data', ctypes.c_void_p),
+    )
+
 ''')
         for definition in parser.typedef_struct_list:
             if definition.cursor.spelling in INCLUDE_TYPES:
-                definition.write_pyx_ctypes(pyx)
+                definition.write_pyx_ctypes(
+                    pyx, include_fields=INCLUDE_TYPES[definition.cursor.spelling])
 
         for definition in parser.functions:
             if definition.cursor.spelling in INCLUDE_FUNCS:

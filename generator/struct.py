@@ -115,13 +115,18 @@ class StructDecl(NamedTuple):
 
             pyx.write('\n')
 
-    def write_pyx_ctypes(self, pyx: io.IOBase, *, write_property=False):
+    def write_pyx_ctypes(self, pyx: io.IOBase, *, include_fields=False):
         cursor = self.cursors[-1]
         definition = cursor.get_definition()
         if definition and definition != cursor:
             return
 
-        pyx.write(f'''class {cursor.spelling}(ctypes.Structure):
-    pass
-
-''')
+        pyx.write(f'class {cursor.spelling}(ctypes.Structure):\n')
+        fields = TypeWrap.get_struct_fields(cursor) if include_fields else []
+        if not fields:
+            pyx.write('    pass\n\n')
+        else:
+            pyx.write('    _fields_=[\n')
+            for field in fields:
+                pyx.write(f'        ("{field.name}", {field.get_ctypes_type()}),\n')
+            pyx.write('    ]\n\n')

@@ -1,5 +1,6 @@
-from typing import NamedTuple
+from typing import NamedTuple, Type, Tuple, Optional
 import re
+import ctypes
 from clang import cindex
 from . import utils
 
@@ -114,7 +115,7 @@ class TypeWrap(NamedTuple):
         '''
         primitive
         bytes: const char*... etc
-        wrap type pointer: ImFontAtlas *, ImGuiContext *        
+        wrap type pointer: ImFontAtlas *, ImGuiContext *
         '''
         name = self.name
         if self.user_type_pointer:
@@ -233,3 +234,62 @@ class TypeWrap(NamedTuple):
 #                         return f'({name}.x, {name}.y, {name}.z, {name}.w)'
 #                     case _:
 #                         return name
+    @property
+    def base_type(self) -> Optional['TypeWrap']:
+        match self.type.kind:
+            case cindex.TypeKind.TYPEDEF:
+                ref: cindex.Cursor = next(iter(
+                    c for c in self.cursor.get_children() if c.kind == cindex.CursorKind.TYPE_REF))
+                return TypeWrap(ref.referenced.underlying_typedef_type, ref.referenced)
+
+            case cindex.TypeKind.CONSTANTARRAY:
+                return TypeWrap(self.type.get_array_element_type(), self.cursor)
+
+            case _:
+                return None
+
+    def get_ctypes_type(self) -> str:
+        # match self.type.spelling:
+        #     case 'const char *':
+        #         return 'ctypes.c_char_p'
+        #     case 'void *':
+        #         return 'ctypes.c_void_p'
+
+        match self.type.kind:
+            case cindex.TypeKind.POINTER:
+                return 'ctypes.c_void_p'
+
+        if '(*)' in self.type.spelling:
+            # function pointer
+            return 'ctypes.c_void_p'
+
+        if self.type.spelling.startswith('ImVector<'):
+            return 'ImVector'
+
+        current = self
+        while True:
+            base = current.base_type
+            if not base:
+                break
+            current = base
+
+        ct = ''
+        match current.type.kind:
+            case cindex.TypeKind.BOOL:
+                ct = 'ctypes.c_bool'
+            case cindex.TypeKind.INT:
+                ct = 'ctypes.c_int32'
+            case cindex.TypeKind.USHORT:
+                ct = 'ctypes.c_uint16'
+            case cindex.TypeKind.FLOAT:
+                ct = 'ctypes.c_float'
+            case cindex.TypeKind.DOUBLE:
+                ct = 'ctypes.c_double'
+            case _:
+                ct = current.type.spelling
+
+        if self.type.kind == cindex.TypeKind.CONSTANTARRAY:
+            n = self.type.get_array_size()
+            return f'{ct} * {n}'
+        else:
+            return ct
