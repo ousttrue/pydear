@@ -65,7 +65,7 @@ def main():
     # io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
     # Setup Dear ImGui style
-    # ImGui.StyleColorsDark(None)
+    ImGui.StyleColorsDark(None)
     # ImGui.StyleColorsClassic();
 
     # Setup Platform/Renderer backends
@@ -139,11 +139,11 @@ def main():
         # 3. Show another simple window.
         if show_another_window[0]:
 
-            ImGui.Begin(ctypes.create_string_buffer(
-                "Another Window"), show_another_window, 0)
+            msg = ctypes.create_string_buffer(b"Another Window")
+            ImGui.Begin(msg, show_another_window, 0)
             # Pass a pointer to our bool variable(the window will have a closing button that will clear the bool when clicked)
             ImGui.Text(ctypes.create_string_buffer(
-                "Hello from another window!"))
+                b"Hello from another window!"))
             # if (ImGui.Button("Close Me"))
             # show_another_window = false
             ImGui.End()

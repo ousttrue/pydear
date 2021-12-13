@@ -151,7 +151,7 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, last_array_buffer)
         gl.glBindVertexArray(last_vertex_array)
 
-    def render(self, draw_data):
+    def render(self, draw_data: imgui.ImDrawData):
         # perf: local for faster access
         io = self.io
 
@@ -210,68 +210,71 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
                               gl.GL_FALSE, ortho_projection)
         gl.glBindVertexArray(self._vao_handle)
 
-        for commands in draw_data.CmdLists:
-            idx_buffer_offset = 0
+        if draw_data.CmdLists:
+            cmd_lists = ctypes.cast(draw_data.CmdLists, ctypes.POINTER(
+                ctypes.POINTER(imgui.ImDrawList)))
+            # for commands in cmd_lists:
+            for i in range(draw_data.CmdListsCount):
+                commands = cmd_lists[i][0]
 
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self._vbo_handle)
-            # todo: check this (sizes)
-            gl.glBufferData(gl.GL_ARRAY_BUFFER, commands.vtx_buffer_size * imgui.VERTEX_SIZE,
-                            ctypes.c_void_p(commands.vtx_buffer_data), gl.GL_STREAM_DRAW)
+                gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self._vbo_handle)
+                # todo: check this (sizes)
+                gl.glBufferData(gl.GL_ARRAY_BUFFER,
+                                commands.VtxBuffer.Size * 20,
+                                ctypes.c_void_p(commands.VtxBuffer.Data), gl.GL_STREAM_DRAW)
 
-            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self._elements_handle)
-            # todo: check this (sizes)
-            gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, commands.idx_buffer_size *
-                            imgui.INDEX_SIZE, ctypes.c_void_p(commands.idx_buffer_data), gl.GL_STREAM_DRAW)
+                gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,
+                                self._elements_handle)
+                # todo: check this (sizes)
+                gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, commands.IdxBuffer.Size * 2,
+                                ctypes.c_void_p(commands.IdxBuffer.Data), gl.GL_STREAM_DRAW)
 
-            # todo: allow to iterate over _CmdList
-            for command in commands.commands:
-                gl.glBindTexture(gl.GL_TEXTURE_2D, command.texture_id)
+                # todo: allow to iterate over _CmdList
+                cmd_data = ctypes.cast(
+                    commands.CmdBuffer.Data, ctypes.POINTER(imgui.ImDrawCmd))
+                for j in range(commands.CmdBuffer.Size):
+                    command = cmd_data[j]
+                    if command.TextureId:
+                        gl.glBindTexture(gl.GL_TEXTURE_2D, command.TextureId)
 
-                # todo: use named tuple
-                x, y, z, w = command.clip_rect
-                gl.glScissor(int(x), int(fb_height - w),
-                             int(z - x), int(w - y))
+                    # todo: use named tuple
+                    rect = command.ClipRect
+                    gl.glScissor(int(rect.x), int(fb_height - rect.w),
+                                 int(rect.z - rect.x), int(rect.w - rect.y))
+                    gl.glDrawElements(gl.GL_TRIANGLES, command.ElemCount,
+                                      gl.GL_UNSIGNED_SHORT, ctypes.c_void_p(command.IdxOffset))
 
-                if imgui.INDEX_SIZE == 2:
-                    gltype = gl.GL_UNSIGNED_SHORT
-                else:
-                    gltype = gl.GL_UNSIGNED_INT
+            # restore modified GL state
+            gl.glUseProgram(last_program)
+            gl.glActiveTexture(last_active_texture)
+            gl.glBindTexture(gl.GL_TEXTURE_2D, last_texture)
+            gl.glBindVertexArray(last_vertex_array)
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, last_array_buffer)
+            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,
+                            last_element_array_buffer)
+            gl.glBlendEquationSeparate(
+                last_blend_equation_rgb, last_blend_equation_alpha)
+            gl.glBlendFunc(last_blend_src, last_blend_dst)
 
-                gl.glDrawElements(gl.GL_TRIANGLES, command.elem_count,
-                                  gltype, ctypes.c_void_p(idx_buffer_offset))
+            if last_enable_blend:
+                gl.glEnable(gl.GL_BLEND)
+            else:
+                gl.glDisable(gl.GL_BLEND)
 
-                idx_buffer_offset += command.elem_count * imgui.INDEX_SIZE
+            if last_enable_cull_face:
+                gl.glEnable(gl.GL_CULL_FACE)
+            else:
+                gl.glDisable(gl.GL_CULL_FACE)
 
-        # restore modified GL state
-        gl.glUseProgram(last_program)
-        gl.glActiveTexture(last_active_texture)
-        gl.glBindTexture(gl.GL_TEXTURE_2D, last_texture)
-        gl.glBindVertexArray(last_vertex_array)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, last_array_buffer)
-        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, last_element_array_buffer)
-        gl.glBlendEquationSeparate(
-            last_blend_equation_rgb, last_blend_equation_alpha)
-        gl.glBlendFunc(last_blend_src, last_blend_dst)
+            if last_enable_depth_test:
+                gl.glEnable(gl.GL_DEPTH_TEST)
+            else:
+                gl.glDisable(gl.GL_DEPTH_TEST)
 
-        if last_enable_blend:
-            gl.glEnable(gl.GL_BLEND)
-        else:
-            gl.glDisable(gl.GL_BLEND)
-
-        if last_enable_cull_face:
-            gl.glEnable(gl.GL_CULL_FACE)
-        else:
-            gl.glDisable(gl.GL_CULL_FACE)
-
-        if last_enable_depth_test:
-            gl.glEnable(gl.GL_DEPTH_TEST)
-        else:
-            gl.glDisable(gl.GL_DEPTH_TEST)
-
-        if last_enable_scissor_test:
-            gl.glEnable(gl.GL_SCISSOR_TEST)
-        else:
-            gl.glDisable(gl.GL_SCISSOR_TEST)
+            if last_enable_scissor_test:
+                gl.glEnable(gl.GL_SCISSOR_TEST)
+            else:
+                gl.glDisable(gl.GL_SCISSOR_TEST)
 
         gl.glViewport(last_viewport[0], last_viewport[1],
                       last_viewport[2], last_viewport[3])

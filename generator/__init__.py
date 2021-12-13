@@ -16,7 +16,11 @@ INCLUDE_TYPES = {
     'ImFontAtlas': IncludeFlags(fields=True, methods=('GetTexDataAsRGBA32', 'ClearTexData',)),
     'ImGuiIO': IncludeFlags(fields=True, methods=('o',)),
     'ImGuiContext': IncludeFlags(methods=('o',)),
-    'ImDrawData': IncludeFlags(fields=True, methods=('o',))
+    'ImDrawCmd': IncludeFlags(fields=True),
+    'ImDrawData': IncludeFlags(fields=True, methods=('o',)),
+    'ImDrawCmdHeader': IncludeFlags(),
+    'ImDrawListSplitter': IncludeFlags(),
+    'ImDrawList': IncludeFlags(fields=True, methods=('o',)),
 }
 
 INCLUDE_FUNCS = (
@@ -26,6 +30,7 @@ INCLUDE_FUNCS = (
     'NewFrame',
     'Render',
     'GetDrawData',
+    'StyleColorsDark',
     #
     'Begin',
     'End',
