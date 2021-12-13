@@ -91,8 +91,8 @@ def main():
 #     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 #     //IM_ASSERT(font != NULL);
 
-#     // Our state
-#     bool show_demo_window = true;
+    # Our state
+    show_demo_window = (ctypes.c_bool * 1)(True)
     show_another_window = (ctypes.c_bool * 1)(True)
     clear_color = (0.45, 0.55, 0.60, 1.00)
 
@@ -111,9 +111,9 @@ def main():
 #         ImGui_ImplGlfw_NewFrame();
         ImGui.NewFrame()
 
-#         // 1. Show the big demo window (Most of the sample code is in ImGui.ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-#         if (show_demo_window)
-#             ImGui.ShowDemoWindow(&show_demo_window);
+        # 1. Show the big demo window (Most of the sample code is in ImGui.ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        if show_demo_window[0]:
+            ImGui.ShowDemoWindow(show_demo_window)
 
 #         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
 #         {
@@ -150,7 +150,6 @@ def main():
             # show_another_window = false
             ImGui.End()
 
-        ImGui.ShowDemoWindow(None)
         ImGui.ShowMetricsWindow(None)
 
         # Rendering
