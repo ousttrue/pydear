@@ -110,8 +110,7 @@ class TypeWrap(NamedTuple):
 
         return False
 
-    @property
-    def ctypes_type(self) -> str:
+    def get_ctypes_type(self) -> str:
 
         if '(*)' in self.type.spelling:
             # function pointer
@@ -120,11 +119,11 @@ class TypeWrap(NamedTuple):
         if self.type.spelling.startswith('ImVector<'):
             return 'ImVector'
 
-        if self._is_user_type_pointer:
-            return self.type.get_pointee().spelling
+        # if self._is_user_type_pointer:
+        #     return self.type.get_pointee().spelling
 
         match self.type.kind:
-            case cindex.TypeKind.POINTER:
+            case cindex.TypeKind.POINTER | cindex.TypeKind.LVALUEREFERENCE:
                 return 'ctypes.c_void_p'
             case cindex.TypeKind.BOOL:
                 return 'ctypes.c_bool'
@@ -132,6 +131,8 @@ class TypeWrap(NamedTuple):
                 return 'ctypes.c_int32'
             case cindex.TypeKind.USHORT:
                 return 'ctypes.c_uint16'
+            case cindex.TypeKind.UINT:
+                return 'ctypes.c_uint32'
             case cindex.TypeKind.FLOAT:
                 return 'ctypes.c_float'
             case cindex.TypeKind.DOUBLE:
@@ -140,12 +141,12 @@ class TypeWrap(NamedTuple):
                 base = self._base_type
                 if not base:
                     raise RuntimeError()
-                return base.ctypes_type
+                return base.get_ctypes_type()
             case cindex.TypeKind.CONSTANTARRAY:
                 base = self._base_type
                 if not base:
                     raise RuntimeError()
-                return f'{base.ctypes_type} * {self.type.get_array_size()}'
+                return f'{base.get_ctypes_type()} * {self.type.get_array_size()}'
             case cindex.TypeKind.RECORD:
                 return self.type.spelling
             case _:
@@ -153,7 +154,7 @@ class TypeWrap(NamedTuple):
 
     @property
     def name_with_ctypes_type(self) -> str:
-        return f'{self.name}: {self.ctypes_type}'
+        return f'{self.name}: {self.get_ctypes_type()}'
 
     @property
     def pyx_cimport_type(self) -> str:
@@ -174,7 +175,7 @@ class TypeWrap(NamedTuple):
 
     def pointer_to_ctypes(self, name: str) -> str:
         if self._is_user_type_pointer:
-            return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self.ctypes_type}))[0]'
+            return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self.get_ctypes_type()}))[0]'
         return name
 
     @property

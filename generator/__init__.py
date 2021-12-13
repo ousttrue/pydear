@@ -11,8 +11,9 @@ EXCLUDE_TYPES = (
 
 INCLUDE_TYPES = {
     'ImVec2': IncludeFlags(fields=True, methods=('o',)),
+    'ImVec4': IncludeFlags(fields=True, methods=('o',)),
     'ImFont': IncludeFlags(methods=('o',)),
-    'ImFontAtlas': IncludeFlags(methods=('GetTexDataAsRGBA32',)),
+    'ImFontAtlas': IncludeFlags(fields=True, methods=('GetTexDataAsRGBA32', 'ClearTexData',)),
     'ImGuiIO': IncludeFlags(fields=True, methods=('o',)),
     'ImGuiContext': IncludeFlags(methods=('o',)),
 }

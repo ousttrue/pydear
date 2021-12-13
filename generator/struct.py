@@ -82,7 +82,7 @@ class StructDecl(NamedTuple):
             pyx.write('    _fields_=[\n')
             for field in fields:
                 pyx.write(
-                    f'        ("{field.name}", {field.ctypes_type}),\n')
+                    f'        ("{field.name}", {field.get_ctypes_type()}),\n')
             pyx.write('    ]\n\n')
 
         methods = TypeWrap.get_struct_methods(cursor, includes=flags.methods)
