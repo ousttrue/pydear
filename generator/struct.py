@@ -2,8 +2,7 @@ from typing import NamedTuple, Tuple
 import io
 from clang import cindex
 from . import utils
-from .param import Param, is_wrap
-from .result import Result
+from .typewrap import TypeWrap
 
 
 def is_forward_declaration(cursor: cindex.Cursor) -> bool:
@@ -36,22 +35,9 @@ class StructDecl(NamedTuple):
         constructors = [child for child in cursor.get_children(
         ) if child.kind == cindex.CursorKind.CONSTRUCTOR]
 
-        def method_filter(method: cindex.Cursor) -> bool:
-            if method.spelling == 'GetStateStorage':
-                pass
-            if method.kind != cindex.CursorKind.CXX_METHOD:
-                return False
-            for param in method.get_children():
-                if param.kind == cindex.CursorKind.PARM_DECL and param.type.spelling in excludes:
-                    return False
-            if method.result_type.spelling in excludes:
-                return False
-            return True
-        methods = [child for child in cursor.get_children(
-        ) if method_filter(child)]
+        methods = TypeWrap.get_struct_methods(cursor, excludes=excludes)
         if cursor.kind == cindex.CursorKind.CLASS_TEMPLATE:
             pxd.write(f'    cppclass {cursor.spelling}[T]')
-            constructors.clear()
         elif constructors or methods:
             pxd.write(f'    cppclass {cursor.spelling}')
         else:
@@ -62,27 +48,23 @@ class StructDecl(NamedTuple):
             else:
                 pxd.write(f'    struct {cursor.spelling}')
 
-        fields = [cursor for cursor in cursor.get_children(
-        ) if cursor.kind == cindex.CursorKind.FIELD_DECL]
+        fields = TypeWrap.get_struct_fields(cursor)
         if constructors or fields:
             pxd.write(':\n')
 
-            for child in fields:
-                pxd.write(
-                    f'        {utils.type_name(utils.template_filter(child.type.spelling), child.spelling)}\n')
+            for field in fields:
+                pxd.write(f'        {field.c_type_with_name}\n')
 
             for child in constructors:
-                params = [Param(child) for child in child.get_children(
-                ) if child.kind == cindex.CursorKind.PARM_DECL]
+                params = TypeWrap.get_function_params(child)
                 pxd.write(
-                    f'        {cursor.spelling}({", ".join(param.c_type_name for param in params)})\n')
+                    f'        {cursor.spelling}({utils.comma_join(param.c_type_with_name for param in params)})\n')
 
             for child in methods:
-                params = [Param(child) for child in child.get_children(
-                ) if child.kind == cindex.CursorKind.PARM_DECL]
-                result = Result(child, child.result_type)
+                params = TypeWrap.get_function_params(child)
+                result = TypeWrap.from_function_result(child)
                 pxd.write(
-                    f'        {utils.template_filter(result.type.spelling)} {child.spelling}({", ".join(param.c_type_name for param in params)})\n')
+                    f'        {result.c_type} {child.spelling}({utils.comma_join(param.c_type_with_name for param in params)})\n')
 
         pxd.write('\n')
 
@@ -124,7 +106,7 @@ class StructDecl(NamedTuple):
                         # public = ''
                         # if not is_wrap(child.type) and child.type.kind != cindex.TypeKind.POINTER:
                         #     public = 'public '
-                        result_type = Result(child, child.type)
+                        result_type = TypeWrap.from_struct_field(child)
                         member = f'self._ptr.{child.spelling}'
                         pyx.write(f'''    @property
         def {child.spelling}(self)->{result_type.py_type}:

@@ -60,3 +60,14 @@ def pyx_type_filter(src: str) -> str:
 
 def comma_join(src: Iterable[str]) -> str:
     return ', '.join(src)
+
+
+def symbol_filter(src: str) -> str:
+    '''
+    fix python reserved word
+    '''
+    match src:
+        case 'in' | 'id':
+            return '_' + src
+        case _:
+            return src

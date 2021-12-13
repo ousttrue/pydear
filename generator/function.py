@@ -1,8 +1,7 @@
 from typing import NamedTuple, Tuple
 import io
 from clang import cindex
-from .param import Param, is_wrap
-from .result import Result
+from .typewrap import TypeWrap
 from . import utils
 
 
@@ -13,19 +12,15 @@ class FunctionDecl(NamedTuple):
         cursor = self.cursors[-1]
         if cursor.result_type.spelling in excludes:
             return
-        params = []
-        for child in cursor.get_children():
-            if child.kind == cindex.CursorKind.PARM_DECL:
-                if child.type.spelling in excludes:
-                    return
-                params.append(Param(child))
-        params = utils.comma_join(param.c_type_name for param in params)
-        result = Result(cursor, cursor.result_type)
-        pxd.write(f'    {result.type.spelling} {cursor.spelling}({params})\n')
+        params = [param.c_type_with_name for param in TypeWrap.get_function_params(
+            cursor, excludes=excludes)]
+        result = TypeWrap.from_function_result(cursor)
+        pxd.write(
+            f'    {result.c_type} {cursor.spelling}({utils.comma_join(params)})\n')
 
     def write_pyx(self, pyx: io.IOBase):
         cursor = self.cursors[-1]
-        result = Result(cursor, cursor.result_type)
+        result = TypeWrap.from_function_result(cursor)
         params = [Param(child) for child in cursor.get_children(
         ) if child.kind == cindex.CursorKind.PARM_DECL]
 
@@ -46,7 +41,7 @@ class FunctionDecl(NamedTuple):
 
     def write_pyi(self, pyi: io.IOBase):
         cursor = self.cursors[-1]
-        result_type = Result(cursor, cursor.result_type)
+        result_type = TypeWrap.from_function_result(cursor)
         params = [Param(child) for child in cursor.get_children(
         ) if child.kind == cindex.CursorKind.PARM_DECL]
 
