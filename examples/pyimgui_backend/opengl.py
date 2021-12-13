@@ -1,14 +1,9 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-
 import OpenGL.GL as gl
 import cydeer.imgui as imgui
 import ctypes
 
-from .base import BaseOpenGLRenderer
 
-
-class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
+class ProgrammablePipelineRenderer:
     """Basic OpenGL integration base class."""
 
     VERTEX_SHADER_SRC = """
@@ -57,7 +52,22 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         self._elements_handle = None
         self._vao_handle = None
 
-        super(ProgrammablePipelineRenderer, self).__init__()
+        if not imgui.GetCurrentContext():
+            raise RuntimeError(
+                "No valid ImGui context. Use imgui.create_context() first and/or "
+                "imgui.set_current_context()."
+            )
+        self.io = imgui.GetIO()
+
+        self._font_texture = None
+
+        self.io.DeltaTime = 1.0 / 60.0
+
+        self._create_device_objects()
+        self.refresh_font_texture()
+
+    def shutdown(self):
+        self._invalidate_device_objects()
 
     def refresh_font_texture(self):
         # save texture state
