@@ -72,7 +72,9 @@ def main():
     # ImGui_ImplGlfw_InitForOpenGL(window, True)
     # ImGui_ImplOpenGL3_Init(glsl_version)
     from pyimgui_backend.glfw import GlfwRenderer
-    impl = GlfwRenderer(window)
+    impl_glfw = GlfwRenderer(window)
+    from pyimgui_backend.opengl import ProgrammablePipelineRenderer
+    impl_opengl = ProgrammablePipelineRenderer()
 
 #     // Load Fonts
 #     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui.PushFont()/PopFont() to select them.
@@ -102,7 +104,7 @@ def main():
         # - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
         # Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfw.poll_events()
-        impl.process_inputs()
+        impl_glfw.process_inputs()
 
 #         // Start the Dear ImGui frame
 #         ImGui_ImplOpenGL3_NewFrame();
@@ -158,7 +160,7 @@ def main():
                         clear_color[3])
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-        impl.render(ImGui.GetDrawData())
+        impl_opengl.render(ImGui.GetDrawData())
         # ImGui_ImplOpenGL3_RenderDrawData(ImGui.GetDrawData());
 
         glfw.swap_buffers(window)

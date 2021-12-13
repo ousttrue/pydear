@@ -1,16 +1,28 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-
 import glfw
 import cydeer.imgui as imgui
 
-from . import compute_fb_scale
-from .opengl import ProgrammablePipelineRenderer
+
+def compute_fb_scale(window_size, frame_buffer_size):
+    win_width, win_height = window_size
+    fb_width, fb_height = frame_buffer_size
+
+    # future: remove floats after dropping py27 support
+    if win_width != 0 and win_width != 0:
+        return float(fb_width) / win_width, float(fb_height) / win_height
+
+    return 1., 1.
 
 
-class GlfwRenderer(ProgrammablePipelineRenderer):
+class GlfwRenderer:
     def __init__(self, window, attach_callbacks=True):
-        super(GlfwRenderer, self).__init__()
+        if not imgui.GetCurrentContext():
+            raise RuntimeError(
+                "No valid ImGui context. Use imgui.create_context() first and/or "
+                "imgui.set_current_context()."
+            )
+        self.io = imgui.GetIO()
+        self.io.DeltaTime = 1.0 / 60.0
+
         self.window = window
 
         if attach_callbacks:
@@ -90,10 +102,8 @@ class GlfwRenderer(ProgrammablePipelineRenderer):
         )
 
     def char_callback(self, window, char):
-        io = imgui.get_io()
-
         if 0 < char < 0x10000:
-            io.add_input_character(char)
+            self.io.add_input_character(char)
 
     def resize_callback(self, window, width, height):
         self.io.display_size = width, height
@@ -106,7 +116,7 @@ class GlfwRenderer(ProgrammablePipelineRenderer):
         self.io.mouse_wheel = y_offset
 
     def process_inputs(self):
-        io = imgui.GetIO()
+        io = self.io
 
         w, h = glfw.get_window_size(self.window)
         fb_size = glfw.get_framebuffer_size(self.window)
@@ -116,11 +126,12 @@ class GlfwRenderer(ProgrammablePipelineRenderer):
         io.DisplayFramebufferScale = compute_fb_scale((w, h), fb_size)
         io.DeltaTime = 1.0/60
 
+        x = -1
+        y = -1
         if glfw.get_window_attrib(self.window, glfw.FOCUSED):
-            io.mouse_pos = glfw.get_cursor_pos(self.window)
-        else:
-            io.mouse_pos = -1, -1
-
+            x, y = glfw.get_cursor_pos(self.window)
+        io.MousePos.x = x
+        io.MousePos.y = y
         io.MouseDown[0] = glfw.get_mouse_button(self.window, 0)
         io.MouseDown[1] = glfw.get_mouse_button(self.window, 1)
         io.MouseDown[2] = glfw.get_mouse_button(self.window, 2)
@@ -131,6 +142,7 @@ class GlfwRenderer(ProgrammablePipelineRenderer):
             self.io.DeltaTime = current_time - self._gui_time
         else:
             self.io.DeltaTime = 1. / 60.
-        if(io.DeltaTime <= 0.0): io.DeltaTime = 1./ 1000.
+        if(io.DeltaTime <= 0.0):
+            io.DeltaTime = 1. / 1000.
 
         self._gui_time = current_time
