@@ -6,26 +6,10 @@ import ctypes
 
 logger = logging.getLogger(__name__)
 
-# // Dear ImGui: standalone example application for GLFW + OpenGL 3, using programmable pipeline
-# // (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
-# // If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-# // Read online: https://github.com/ocornut/imgui/tree/master/docs
-
-# #include "imgui.h"
-# #include "imgui_impl_glfw.h"
-# #include "imgui_impl_opengl3.h"
-# #include <stdio.h>
-# #if defined(IMGUI_IMPL_OPENGL_ES2)
-# #include <GLES2/gl2.h>
-# #endif
-# #include <GLFW/glfw3.h> // Will drag system OpenGL headers
-
-# // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
-# // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
-# // Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
-# #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
-# #pragma comment(lib, "legacy_stdio_definitions")
-# #endif
+# Dear ImGui: standalone example application for GLFW + OpenGL 3, using programmable pipeline
+# (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
+# If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
+# Read online: https://github.com/ocornut/imgui/tree/master/docs
 
 
 def glfw_error_callback(error: int, description: str):
@@ -106,9 +90,7 @@ def main():
         glfw.poll_events()
         impl_glfw.process_inputs()
 
-#         // Start the Dear ImGui frame
-#         ImGui_ImplOpenGL3_NewFrame();
-#         ImGui_ImplGlfw_NewFrame();
+        # Start the Dear ImGui frame
         ImGui.NewFrame()
 
         # 1. Show the big demo window (Most of the sample code is in ImGui.ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
@@ -166,15 +148,13 @@ def main():
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
         impl_opengl.render(ImGui.GetDrawData())
-        # ImGui_ImplOpenGL3_RenderDrawData(ImGui.GetDrawData());
 
         glfw.swap_buffers(window)
-#     }
 
-#     // Cleanup
-#     ImGui_ImplOpenGL3_Shutdown();
-#     ImGui_ImplGlfw_Shutdown();
-#     ImGui.DestroyContext();
+    # Cleanup
+    del impl_opengl
+    del impl_glfw
+    ImGui.DestroyContext(None)
 
     glfw.destroy_window(window)
     glfw.terminate()

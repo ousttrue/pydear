@@ -25,6 +25,7 @@ INCLUDE_TYPES = {
 
 INCLUDE_FUNCS = (
     'CreateContext',
+    'DestroyContext',
     'GetIO',
     'GetCurrentContext',
     'NewFrame',
