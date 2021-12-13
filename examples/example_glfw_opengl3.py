@@ -150,10 +150,16 @@ def main():
             # show_another_window = false
             ImGui.End()
 
+        ImGui.ShowDemoWindow(None)
+        ImGui.ShowMetricsWindow(None)
+
         # Rendering
         ImGui.Render()
+
         display_w, display_h = glfw.get_framebuffer_size(window)
         GL.glViewport(0, 0, display_w, display_h)
+        GL.glScissor(0, 0, display_w, display_h)
+
         GL.glClearColor(clear_color[0] * clear_color[3],
                         clear_color[1] * clear_color[3],
                         clear_color[2] * clear_color[3],
