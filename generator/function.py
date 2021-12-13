@@ -40,7 +40,7 @@ class FunctionDecl(NamedTuple):
 
 ''')
         else:
-            pyx.write(f'''def {cursor.spelling}({utils.comma_join(param.name_with_ctypes_type for param in params)})->{result.get_ctypes_type()}:
+            pyx.write(f'''def {cursor.spelling}({utils.comma_join(param.name_with_ctypes_type for param in params)})->{result.get_ctypes_type(user_type_pointer=True)}:
     {self.call_assign('value', result, params)}
     return {result.pointer_to_ctypes('value')}
 

@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 import OpenGL.GL as gl
-import imgui
+import cydeer.imgui as imgui
 import ctypes
 
 from .base import BaseOpenGLRenderer
@@ -64,11 +64,12 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         last_texture = gl.glGetIntegerv(gl.GL_TEXTURE_BINDING_2D)
 
         import ctypes
+        fonts = ctypes.cast(self.io.Fonts, ctypes.POINTER(imgui.ImFontAtlas))[0]
         p = (ctypes.c_void_p * 1)()
         width = (ctypes.c_int * 1)()
         height = (ctypes.c_int * 1)()
         channels = (ctypes.c_int * 1)()
-        self.io.Fonts.GetTexDataAsRGBA32(p, width, height, channels)
+        fonts.GetTexDataAsRGBA32(p, width, height, channels)
         pixels = (ctypes.c_ubyte *
                   (width[0] * height[0] * channels[0])).from_address(p[0])
 
@@ -85,9 +86,9 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, width[0],
                         height[0], 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, pixels)
 
-        self.io.Fonts.TextureId = self._font_texture
+        fonts.TextureId = self._font_texture
         gl.glBindTexture(gl.GL_TEXTURE_2D, last_texture)
-        self.io.Fonts.clear_tex_data()
+        fonts.ClearTexData()
 
     def _create_device_objects(self):
         # save state
@@ -138,11 +139,11 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         gl.glEnableVertexAttribArray(self._attrib_location_color)
 
         gl.glVertexAttribPointer(self._attrib_location_position, 2, gl.GL_FLOAT, gl.GL_FALSE,
-                                 imgui.VERTEX_SIZE, ctypes.c_void_p(imgui.VERTEX_BUFFER_POS_OFFSET))
+                                 20, ctypes.c_void_p(0))
         gl.glVertexAttribPointer(self._attrib_location_uv, 2, gl.GL_FLOAT, gl.GL_FALSE,
-                                 imgui.VERTEX_SIZE, ctypes.c_void_p(imgui.VERTEX_BUFFER_UV_OFFSET))
-        gl.glVertexAttribPointer(self._attrib_location_color, 4, gl.GL_UNSIGNED_BYTE,
-                                 gl.GL_TRUE, imgui.VERTEX_SIZE, ctypes.c_void_p(imgui.VERTEX_BUFFER_COL_OFFSET))
+                                 20, ctypes.c_void_p(8))
+        gl.glVertexAttribPointer(self._attrib_location_color, 4, gl.GL_UNSIGNED_BYTE, gl.GL_TRUE,
+                                 20, ctypes.c_void_p(16))
 
         # restore state
         gl.glBindTexture(gl.GL_TEXTURE_2D, last_texture)

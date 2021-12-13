@@ -110,7 +110,7 @@ class TypeWrap(NamedTuple):
 
         return False
 
-    def get_ctypes_type(self) -> str:
+    def get_ctypes_type(self, *, user_type_pointer=False) -> str:
 
         if '(*)' in self.type.spelling:
             # function pointer
@@ -119,8 +119,8 @@ class TypeWrap(NamedTuple):
         if self.type.spelling.startswith('ImVector<'):
             return 'ImVector'
 
-        # if self._is_user_type_pointer:
-        #     return self.type.get_pointee().spelling
+        if user_type_pointer and self._is_user_type_pointer:
+            return self.type.get_pointee().spelling
 
         match self.type.kind:
             case cindex.TypeKind.POINTER | cindex.TypeKind.LVALUEREFERENCE:
@@ -175,7 +175,7 @@ class TypeWrap(NamedTuple):
 
     def pointer_to_ctypes(self, name: str) -> str:
         if self._is_user_type_pointer:
-            return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self.get_ctypes_type()}))[0]'
+            return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self.get_ctypes_type(user_type_pointer=True)}))[0]'
         return name
 
     @property
