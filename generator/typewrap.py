@@ -164,7 +164,7 @@ class TypeWrap(NamedTuple):
     @property
     def py_to_c(self) -> str:
         if self.user_type_pointer:
-            return f'<cpp_imgui.{self.c_type}><uintptr_t>ctypes.addressof({self.name})'
+            return f'<cpp_imgui.{self.c_type}><uintptr_t>ctypes.addressof({self.name}) if {self.name} else NULL'
         return self.name
 #         param_name, param_type = get_type(self.cursor)
 #         name = symbol_filter(param_name)
