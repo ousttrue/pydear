@@ -26,21 +26,29 @@ def is_forward_declaration(cursor: cindex.Cursor) -> bool:
 class StructDecl(NamedTuple):
     cursors: Tuple[cindex.Cursor, ...]
 
-    def write_pxd(self, pxd: io.IOBase):
+    @property
+    def cursor(self) -> cindex.Cursor:
+        return self.cursors[-1]
+
+    def write_pxd(self, pxd: io.IOBase, *, excludes=()):
         cursor = self.cursors[-1]
-        if cursor.spelling in ('ImGuiTextFilter', 'ImGuiStorage'):
-            # TODO: nested type
-            return
 
         constructors = [child for child in cursor.get_children(
         ) if child.kind == cindex.CursorKind.CONSTRUCTOR]
 
-        def param_filter(param: cindex.Cursor) -> bool:
-            if param.type.spelling == 'va_list':
+        def method_filter(method: cindex.Cursor) -> bool:
+            if method.spelling == 'GetStateStorage':
+                pass
+            if method.kind != cindex.CursorKind.CXX_METHOD:
+                return False
+            for param in method.get_children():
+                if param.kind == cindex.CursorKind.PARM_DECL and param.type.spelling in excludes:
+                    return False
+            if method.result_type.spelling in excludes:
                 return False
             return True
         methods = [child for child in cursor.get_children(
-        ) if child.kind == cindex.CursorKind.CXX_METHOD and all(param_filter(param) for param in child.get_children())]
+        ) if method_filter(child)]
         if cursor.kind == cindex.CursorKind.CLASS_TEMPLATE:
             pxd.write(f'    cppclass {cursor.spelling}[T]')
             constructors.clear()
@@ -78,7 +86,7 @@ class StructDecl(NamedTuple):
 
         pxd.write('\n')
 
-    def write_pyx(self, pyx: io.IOBase):
+    def write_pyx(self, pyx: io.IOBase, *, write_property=False):
         '''
         wrapper `cdef class`
         '''
@@ -105,21 +113,22 @@ class StructDecl(NamedTuple):
         return instance                    
 ''')
 
-        for child in cursor.get_children():
-            match child.kind:
-                case cindex.CursorKind.FIELD_DECL:
-                    if '(*)' in child.type.spelling:
-                        # function pointer
-                        continue
+        if write_property:
+            for child in cursor.get_children():
+                match child.kind:
+                    case cindex.CursorKind.FIELD_DECL:
+                        if '(*)' in child.type.spelling:
+                            # function pointer
+                            continue
 
-                    # public = ''
-                    # if not is_wrap(child.type) and child.type.kind != cindex.TypeKind.POINTER:
-                    #     public = 'public '
-                    result_type = ResultType(child, child.type)
-                    member = f'self._ptr.{child.spelling}'
-                    pyx.write(f'''    @property
-    def {child.spelling}(self)->{result_type.py_type}:
-        return {result_type.c_to_py(member)}
-''')
+                        # public = ''
+                        # if not is_wrap(child.type) and child.type.kind != cindex.TypeKind.POINTER:
+                        #     public = 'public '
+                        result_type = ResultType(child, child.type)
+                        member = f'self._ptr.{child.spelling}'
+                        pyx.write(f'''    @property
+        def {child.spelling}(self)->{result_type.py_type}:
+            return {result_type.c_to_py(member)}
+    ''')
 
-        pyx.write('\n')
+            pyx.write('\n')

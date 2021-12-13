@@ -7,7 +7,11 @@ from . import utils
 class TypedefDecl(NamedTuple):
     cursors: Tuple[cindex.Cursor, ...]
 
-    def write_pxd(self, pxd: io.IOBase):
+    @property
+    def cursor(self) -> cindex.Cursor:
+        return self.cursors[-1]
+
+    def write_pxd(self, pxd: io.IOBase, *, excludes=()):
         cursor = self.cursors[-1]
         underlying_type = cursor.underlying_typedef_type
         pxd.write(

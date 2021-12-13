@@ -54,7 +54,13 @@ class Param(NamedTuple):
     @property
     def c_type_name(self) -> str:
         param_name, param_type = get_type(self.cursor)
-        return f"{utils.template_filter(param_type)} {param_name}"
+        param_name = symbol_filter(param_name)
+        param_type = utils.template_filter(param_type).replace('[]', '*')
+        m = re.match(r'(.*)\(\*\)(.*)', param_type)
+        if m:
+            return f"{m.group(1)}(*{param_name}){m.group(2)}"
+        else:
+            return f"{param_type} {param_name}"
 
     @property
     def py_type_name(self) -> str:

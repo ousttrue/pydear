@@ -3,16 +3,23 @@ import io
 from clang import cindex
 from .param import Param, is_wrap
 from .result import ResultType
+from generator import param
 
 
 class FunctionDecl(NamedTuple):
     cursors: Tuple[cindex.Cursor, ...]
 
-    def write_pxd(self, pxd: io.IOBase):
+    def write_pxd(self, pxd: io.IOBase, *, excludes=()):
         cursor = self.cursors[-1]
+        if cursor.result_type.spelling in excludes:
+            return
+        params = []
+        for child in cursor.get_children():
+            if child.kind == cindex.CursorKind.PARM_DECL:
+                if child.type.spelling in excludes:
+                    return
+                params.append(Param(child))
         result = ResultType(cursor, cursor.result_type)
-        params = [Param(child) for child in cursor.get_children(
-        ) if child.kind == cindex.CursorKind.PARM_DECL]
         pxd.write(
             f'    {result.type.spelling} {cursor.spelling}({", ".join(param.c_type_name for param in params)})\n')
 
