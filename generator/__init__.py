@@ -7,6 +7,11 @@ EXCLUDE_TYPES = (
     'ImGuiStorage *',
 )
 
+INCLUDE_TYPES = {
+    'ImFontAtlas',
+    'ImGuiContext',
+}
+
 
 def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path):
     from .parser import Parser
@@ -42,12 +47,15 @@ cdef extern from "imgui.h" namespace "ImGui":
     #
     with (ext_dir / 'imgui.pyx').open('w') as pyx:
         pyx.write('''from typing import Tuple
+import ctypes
 from libcpp cimport bool
 cimport cpp_imgui
+from libc.stdint cimport uintptr_t
 
 ''')
-        # for definition in parser.typedef_struct_list[:10]:
-        #     definition.write_pyx(pyx)
+        for definition in parser.typedef_struct_list:
+            if definition.cursor.spelling in INCLUDE_TYPES:
+                definition.write_pyx_ctypes(pyx)
 
         # TODO: overload
         used = set()

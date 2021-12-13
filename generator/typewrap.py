@@ -4,7 +4,7 @@ from clang import cindex
 from . import utils
 
 
-TEMPLAE_PATTERN = re.compile(r'<[^>]+>')
+TEMPLATE_PATTERN = re.compile(r'<[^>]+>')
 
 
 def template_filter(src: str) -> str:
@@ -14,7 +14,7 @@ def template_filter(src: str) -> str:
     def rep_typearg(m):
         ret = f'[{m.group(0)[1:-1]}]'
         return ret
-    dst = TEMPLAE_PATTERN.sub(rep_typearg, src)
+    dst = TEMPLATE_PATTERN.sub(rep_typearg, src)
 
     return dst
 
@@ -89,11 +89,25 @@ class TypeWrap(NamedTuple):
 
     @property
     def py_type(self) -> str:
+        match self.type.kind:
+            case cindex.TypeKind.POINTER:
+                pointee = self.type.get_pointee()
+                match pointee.kind:
+                    case cindex.TypeKind.RECORD:
+                        return pointee.spelling
+
         return self.c_type
 
     @property
-    def pyx_type(self) -> str:
-        return self.c_type
+    def user_type_pointer(self) -> bool:
+        match self.type.kind:
+            case cindex.TypeKind.POINTER:
+                pointee = self.type.get_pointee()
+                match pointee.kind:
+                    case cindex.TypeKind.RECORD:
+                        return True
+
+        return False
 
     @property
     def py_type_with_name(self) -> str:
@@ -103,6 +117,8 @@ class TypeWrap(NamedTuple):
         wrap type pointer: ImFontAtlas *, ImGuiContext *        
         '''
         name = self.name
+        if self.user_type_pointer:
+            return f'{name}: {self.py_type}'
         return f'{self.c_type} {name}'
         # match self.cursor.type.spelling:
         #     case 'const char *':
@@ -140,7 +156,15 @@ class TypeWrap(NamedTuple):
         #             return f"{param_type} {name}"
 
     @property
+    def pyx_type(self) -> str:
+        if self.user_type_pointer:
+            return f'cpp_imgui.{self.c_type}'
+        return self.c_type
+
+    @property
     def py_to_c(self) -> str:
+        if self.user_type_pointer:
+            return f'<cpp_imgui.{self.c_type}><uintptr_t>ctypes.addressof({self.name})'
         return self.name
 #         param_name, param_type = get_type(self.cursor)
 #         name = symbol_filter(param_name)
@@ -166,6 +190,8 @@ class TypeWrap(NamedTuple):
 #                         return f"{name}"
 
     def c_to_py(self, name: str) -> str:
+        if self.user_type_pointer:
+            return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self.py_type}))[0]'
         return name
         # result_type = self.type
 #         match result_type.kind:

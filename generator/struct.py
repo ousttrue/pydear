@@ -114,3 +114,14 @@ class StructDecl(NamedTuple):
     ''')
 
             pyx.write('\n')
+
+    def write_pyx_ctypes(self, pyx: io.IOBase, *, write_property=False):
+        cursor = self.cursors[-1]
+        definition = cursor.get_definition()
+        if definition and definition != cursor:
+            return
+
+        pyx.write(f'''class {cursor.spelling}(ctypes.Structure):
+    pass
+
+''')
