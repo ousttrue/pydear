@@ -2,6 +2,7 @@ import logging
 import glfw
 from OpenGL import GL
 import cydeer.imgui as ImGui
+import ctypes
 
 logger = logging.getLogger(__name__)
 
@@ -60,12 +61,12 @@ def main():
     # IMGUI_CHECKVERSION()
     ImGui.CreateContext(None)
     io = ImGui.GetIO()
-    #io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    #io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    # io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    # io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
     # Setup Dear ImGui style
     # ImGui.StyleColorsDark(None)
-    #ImGui.StyleColorsClassic();
+    # ImGui.StyleColorsClassic();
 
     # Setup Platform/Renderer backends
     # ImGui_ImplGlfw_InitForOpenGL(window, True)
@@ -90,7 +91,7 @@ def main():
 
 #     // Our state
 #     bool show_demo_window = true;
-#     bool show_another_window = false;
+    show_another_window = (ctypes.c_bool * 1)(True)
     clear_color = (0.45, 0.55, 0.60, 1.00)
 
     # Main loop
@@ -106,7 +107,7 @@ def main():
 #         // Start the Dear ImGui frame
 #         ImGui_ImplOpenGL3_NewFrame();
 #         ImGui_ImplGlfw_NewFrame();
-#         ImGui.NewFrame();
+        ImGui.NewFrame()
 
 #         // 1. Show the big demo window (Most of the sample code is in ImGui.ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
 #         if (show_demo_window)
@@ -135,19 +136,20 @@ def main():
 #             ImGui.End();
 #         }
 
-#         // 3. Show another simple window.
-#         if (show_another_window)
-#         {
-#             ImGui.Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-#             ImGui.Text("Hello from another window!");
-#             if (ImGui.Button("Close Me"))
-#                 show_another_window = false;
-#             ImGui.End();
-#         }
+        # 3. Show another simple window.
+        if show_another_window[0]:
 
-#         // Rendering
-#         ImGui.Render();
-#         int display_w, display_h;
+            ImGui.Begin(ctypes.create_string_buffer(
+                "Another Window"), show_another_window, 0)
+            # Pass a pointer to our bool variable(the window will have a closing button that will clear the bool when clicked)
+            ImGui.Text(ctypes.create_string_buffer(
+                "Hello from another window!"))
+            # if (ImGui.Button("Close Me"))
+            # show_another_window = false
+            ImGui.End()
+
+        # Rendering
+        ImGui.Render()
         display_w, display_h = glfw.get_framebuffer_size(window)
         GL.glViewport(0, 0, display_w, display_h)
         GL.glClearColor(clear_color[0] * clear_color[3],
@@ -155,7 +157,9 @@ def main():
                         clear_color[2] * clear_color[3],
                         clear_color[3])
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-#         ImGui_ImplOpenGL3_RenderDrawData(ImGui.GetDrawData());
+
+        impl.render(ImGui.GetDrawData())
+        # ImGui_ImplOpenGL3_RenderDrawData(ImGui.GetDrawData());
 
         glfw.swap_buffers(window)
 #     }

@@ -64,7 +64,8 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         last_texture = gl.glGetIntegerv(gl.GL_TEXTURE_BINDING_2D)
 
         import ctypes
-        fonts = ctypes.cast(self.io.Fonts, ctypes.POINTER(imgui.ImFontAtlas))[0]
+        fonts = ctypes.cast(
+            self.io.Fonts, ctypes.POINTER(imgui.ImFontAtlas))[0]
         p = (ctypes.c_void_p * 1)()
         width = (ctypes.c_int * 1)()
         height = (ctypes.c_int * 1)()
@@ -154,14 +155,16 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         # perf: local for faster access
         io = self.io
 
-        display_width, display_height = io.display_size
-        fb_width = int(display_width * io.display_fb_scale[0])
-        fb_height = int(display_height * io.display_fb_scale[1])
+        display_width = io.DisplaySize.x
+        display_height = io.DisplaySize.y
+        fb_width = int(display_width * io.DisplayFramebufferScale.x)
+        fb_height = int(display_height * io.DisplayFramebufferScale.y)
 
         if fb_width == 0 or fb_height == 0:
             return
 
-        draw_data.scale_clip_rects(*io.display_fb_scale)
+        # ToDo:
+        # draw_data.scale_clip_rects(io.FramebufferScale.x, io.FramebufferScale.y)
 
         # backup GL state
         # todo: provide cleaner version of this backup-restore code
@@ -207,7 +210,7 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
                               gl.GL_FALSE, ortho_projection)
         gl.glBindVertexArray(self._vao_handle)
 
-        for commands in draw_data.commands_lists:
+        for commands in draw_data.CmdLists:
             idx_buffer_offset = 0
 
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self._vbo_handle)

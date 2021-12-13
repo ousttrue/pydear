@@ -16,12 +16,20 @@ INCLUDE_TYPES = {
     'ImFontAtlas': IncludeFlags(fields=True, methods=('GetTexDataAsRGBA32', 'ClearTexData',)),
     'ImGuiIO': IncludeFlags(fields=True, methods=('o',)),
     'ImGuiContext': IncludeFlags(methods=('o',)),
+    'ImDrawData': IncludeFlags(fields=True, methods=('o',))
 }
 
 INCLUDE_FUNCS = (
     'CreateContext',
     'GetIO',
     'GetCurrentContext',
+    'NewFrame',
+    'Render',
+    'GetDrawData',
+    #
+    'Begin',
+    'End',
+    'Text',
 )
 
 

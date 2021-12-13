@@ -108,12 +108,13 @@ class GlfwRenderer(ProgrammablePipelineRenderer):
     def process_inputs(self):
         io = imgui.GetIO()
 
-        window_size = glfw.get_window_size(self.window)
+        w, h = glfw.get_window_size(self.window)
         fb_size = glfw.get_framebuffer_size(self.window)
 
-        io.display_size = window_size
-        io.display_fb_scale = compute_fb_scale(window_size, fb_size)
-        io.delta_time = 1.0/60
+        io.DisplaySize.x = w
+        io.DisplaySize.y = h
+        io.DisplayFramebufferScale = compute_fb_scale((w, h), fb_size)
+        io.DeltaTime = 1.0/60
 
         if glfw.get_window_attrib(self.window, glfw.FOCUSED):
             io.mouse_pos = glfw.get_cursor_pos(self.window)
