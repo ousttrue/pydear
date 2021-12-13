@@ -1,6 +1,9 @@
 import ctypes
+import logging
 from OpenGL import GL
 import cydeer.imgui as imgui
+
+logger = logging.getLogger(__name__)
 
 
 class ProgrammablePipelineRenderer:
@@ -72,6 +75,8 @@ class ProgrammablePipelineRenderer:
         height = (ctypes.c_int * 1)()
         channels = (ctypes.c_int * 1)()
         fonts.GetTexDataAsRGBA32(p, width, height, channels)
+        logger.debug(
+            f'GetTexDataAsRGBA32 => {width[0]} x {height[0]} x {channels[0]}')
         pixels = (ctypes.c_ubyte *
                   (width[0] * height[0] * channels[0])).from_address(p[0])
 
@@ -217,6 +222,7 @@ class ProgrammablePipelineRenderer:
             # for commands in cmd_lists:
             for i in range(draw_data.CmdListsCount):
                 commands = cmd_lists[i][0]
+                idx_buffer_offset = 0
 
                 GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._vbo_handle)
                 # todo: check this (sizes)
@@ -230,7 +236,7 @@ class ProgrammablePipelineRenderer:
                 GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, commands.IdxBuffer.Size * 2,
                                 ctypes.c_void_p(commands.IdxBuffer.Data), GL.GL_STREAM_DRAW)
 
-                # todo: allow to iterate over _CmdList
+                # todo: allow to iterate over _CmdList                
                 cmd_data = ctypes.cast(
                     commands.CmdBuffer.Data, ctypes.POINTER(imgui.ImDrawCmd))
                 for j in range(commands.CmdBuffer.Size):
@@ -242,8 +248,11 @@ class ProgrammablePipelineRenderer:
                     rect = command.ClipRect
                     GL.glScissor(int(rect.x), int(fb_height - rect.w),
                                  int(rect.z - rect.x), int(rect.w - rect.y))
+
                     GL.glDrawElements(GL.GL_TRIANGLES, command.ElemCount,
-                                      GL.GL_UNSIGNED_SHORT, ctypes.c_void_p(command.IdxOffset))
+                                      GL.GL_UNSIGNED_SHORT, ctypes.c_void_p(idx_buffer_offset))
+
+                    idx_buffer_offset += command.ElemCount * 2
 
             # restore modified GL state
             GL.glUseProgram(last_program)

@@ -32,6 +32,8 @@ INCLUDE_FUNCS = (
     'GetDrawData',
     'StyleColorsDark',
     #
+    'ShowDemoWindow',
+    'ShowMetricsWindow',
     'Begin',
     'End',
     'Text',
