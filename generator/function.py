@@ -25,9 +25,9 @@ class FunctionDecl(NamedTuple):
     def call_assign(self, name: str, result, params):
         if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
             # reference to pointer
-            return f'cdef {result.pyx_type} {name} = &cpp_imgui.{self.cursor.spelling}({utils.comma_join(param.py_to_c for param in params)})'
+            return f'cdef {result.pyx_cimport_type} {name} = &cpp_imgui.{self.cursor.spelling}({utils.comma_join(param.ctypes_to_pointer(param.name) for param in params)})'
         else:
-            return f'cdef {result.pyx_type} {name} = cpp_imgui.{self.cursor.spelling}({utils.comma_join(param.py_to_c for param in params)})'
+            return f'cdef {result.pyx_cimport_type} {name} = cpp_imgui.{self.cursor.spelling}({utils.comma_join(param.ctypes_to_pointer(param.name) for param in params)})'
 
     def write_pyx(self, pyx: io.IOBase):
         cursor = self.cursors[-1]
@@ -35,31 +35,13 @@ class FunctionDecl(NamedTuple):
         params = TypeWrap.get_function_params(cursor)
 
         if result.is_void:
-            pyx.write(f'''def {cursor.spelling}({utils.comma_join(param.py_type_with_name for param in params)}):
-    cpp_imgui.{cursor.spelling}({utils.comma_join(param.py_to_c for param in params)})
+            pyx.write(f'''def {cursor.spelling}({utils.comma_join(param.name_with_ctypes_type for param in params)}):
+    cpp_imgui.{cursor.spelling}({utils.comma_join(param.ctypes_to_pointer(param.name) for param in params)})
 
 ''')
         else:
-            pyx.write(f'''def {cursor.spelling}({utils.comma_join(param.py_type_with_name for param in params)})->{result.py_type}:
+            pyx.write(f'''def {cursor.spelling}({utils.comma_join(param.name_with_ctypes_type for param in params)})->{result.ctypes_type}:
     {self.call_assign('value', result, params)}
-    return {result.c_to_py('value')}
-
-''')
-
-    def write_pyi(self, pyi: io.IOBase):
-        cursor = self.cursors[-1]
-        result_type = TypeWrap.from_function_result(cursor)
-        params = [Param(child) for child in cursor.get_children(
-        ) if child.kind == cindex.CursorKind.PARM_DECL]
-
-        if result_type.is_void:
-            pyi.write(f'''def {cursor.spelling}({", ".join(param.py_type_name for param in params)}):
-    cpp_imgui.{cursor.spelling}({", ".join(param.py_to_c for param in params)})
-
-''')
-        else:
-            pyi.write(f'''def {cursor.spelling}({", ".join(param.py_type_name for param in params)})->{result_type.py_type}:
-    {self.call_assign('value', params)}
-    return {result_type.c_to_py('value')}
+    return {result.pointer_to_ctypes('value')}
 
 ''')

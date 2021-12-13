@@ -3,6 +3,7 @@ import io
 from clang import cindex
 from . import utils
 from .typewrap import TypeWrap
+from .include_flags import IncludeFlags
 
 
 def is_forward_declaration(cursor: cindex.Cursor) -> bool:
@@ -68,65 +69,41 @@ class StructDecl(NamedTuple):
 
         pxd.write('\n')
 
-    def write_pyx(self, pyx: io.IOBase, *, write_property=False):
-        '''
-        wrapper `cdef class`
-        '''
-        cursor = self.cursors[-1]
-        if cursor.spelling in ('ImGuiTextFilter', 'ImGuiStorage'):
-            # TODO: nested type
-            return
-        match cursor.kind:
-            case cindex.CursorKind.CLASS_TEMPLATE:
-                return
-
-        definition = cursor.get_definition()
-        if definition and definition != cursor:
-            # skip
-            return
-        pyx.write(f'''cdef class {cursor.spelling}:
-    cdef cpp_imgui.{cursor.spelling} *_ptr
-    @staticmethod
-    cdef from_ptr(cpp_imgui.{cursor.spelling}* ptr):
-        if ptr == NULL:
-            return None
-        instance = {cursor.spelling}()
-        instance._ptr = ptr
-        return instance                    
-''')
-
-        if write_property:
-            for child in cursor.get_children():
-                match child.kind:
-                    case cindex.CursorKind.FIELD_DECL:
-                        if '(*)' in child.type.spelling:
-                            # function pointer
-                            continue
-
-                        # public = ''
-                        # if not is_wrap(child.type) and child.type.kind != cindex.TypeKind.POINTER:
-                        #     public = 'public '
-                        result_type = TypeWrap.from_struct_field(child)
-                        member = f'self._ptr.{child.spelling}'
-                        pyx.write(f'''    @property
-        def {child.spelling}(self)->{result_type.py_type}:
-            return {result_type.c_to_py(member)}
-    ''')
-
-            pyx.write('\n')
-
-    def write_pyx_ctypes(self, pyx: io.IOBase, *, include_fields=False):
+    def write_pyx_ctypes(self, pyx: io.IOBase, *, flags: IncludeFlags = IncludeFlags()):
         cursor = self.cursors[-1]
         definition = cursor.get_definition()
         if definition and definition != cursor:
             return
 
         pyx.write(f'class {cursor.spelling}(ctypes.Structure):\n')
-        fields = TypeWrap.get_struct_fields(cursor) if include_fields else []
-        if not fields:
-            pyx.write('    pass\n\n')
-        else:
+        fields = TypeWrap.get_struct_fields(
+            cursor) if flags.fields else []
+        if fields:
             pyx.write('    _fields_=[\n')
             for field in fields:
-                pyx.write(f'        ("{field.name}", {field.get_ctypes_type()}),\n')
+                pyx.write(
+                    f'        ("{field.name}", {field.ctypes_type}),\n')
             pyx.write('    ]\n\n')
+
+        methods = TypeWrap.get_struct_methods(cursor, includes=flags.methods)
+        if methods:
+            for method in methods:
+                params = TypeWrap.get_function_params(method)
+                result = TypeWrap.from_function_result(method)
+
+                if result.is_void:
+                    pyx.write(f'''    def {method.spelling}(self, {utils.comma_join(param.name_with_ctypes_type for param in params)}):
+        cdef cpp_imgui.{self.cursor.spelling} *ptr = <cpp_imgui.{self.cursor.spelling}*><uintptr_t>ctypes.addressof(self)
+        ptr.{method.spelling}({utils.comma_join(param.ctypes_to_pointer(param.name) for param in params)})
+
+''')
+
+
+                # pyx.write(
+                #     f'    def {method.spelling}(self, {utils.comma_join(param.name for param in params)}):\n')
+                # pyx.write(
+                #     f'        (<cpp_imgui.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)).{method.spelling}({utils.comma_join(param.name for param in params)})\n')
+                # pyx.write(f'\n')
+
+        if not fields and not methods:
+            pyx.write('    pass\n\n')

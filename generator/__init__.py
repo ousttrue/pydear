@@ -1,4 +1,6 @@
 import pathlib
+from .include_flags import IncludeFlags
+
 
 EXCLUDE_TYPES = (
     'va_list',
@@ -8,10 +10,11 @@ EXCLUDE_TYPES = (
 )
 
 INCLUDE_TYPES = {
-    'ImFontAtlas': False,
-    'ImGuiContext': False,
-    'ImGuiIO': True,
-    'ImVec2': True,
+    'ImVec2': IncludeFlags(fields=True, methods=('o',)),
+    'ImFont': IncludeFlags(methods=('o',)),
+    'ImFontAtlas': IncludeFlags(methods=('GetTexDataAsRGBA32',)),
+    'ImGuiIO': IncludeFlags(fields=True, methods=('o',)),
+    'ImGuiContext': IncludeFlags(methods=('o',)),
 }
 
 INCLUDE_FUNCS = (
@@ -69,10 +72,14 @@ class ImVector(ctypes.Structure):
     )
 
 ''')
-        for definition in parser.typedef_struct_list:
-            if definition.cursor.spelling in INCLUDE_TYPES:
-                definition.write_pyx_ctypes(
-                    pyx, include_fields=INCLUDE_TYPES[definition.cursor.spelling])
+        # for definition in parser.typedef_struct_list:
+        #     if definition.cursor.spelling in INCLUDE_TYPES:
+        #         definition.write_pyx_ctypes(
+        #             pyx, flags=INCLUDE_TYPES[definition.cursor.spelling])
+        for k, v in INCLUDE_TYPES.items():
+            for definition in parser.typedef_struct_list:
+                if definition.cursor.spelling == k:
+                    definition.write_pyx_ctypes(pyx, flags=v)
 
         for definition in parser.functions:
             if definition.cursor.spelling in INCLUDE_FUNCS:

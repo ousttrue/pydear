@@ -63,7 +63,14 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         # save texture state
         last_texture = gl.glGetIntegerv(gl.GL_TEXTURE_BINDING_2D)
 
-        width, height, pixels = self.io.Fonts.get_tex_data_as_rgba32()
+        import ctypes
+        p = (ctypes.c_void_p * 1)()
+        width = (ctypes.c_int * 1)()
+        height = (ctypes.c_int * 1)()
+        channels = (ctypes.c_int * 1)()
+        self.io.Fonts.GetTexDataAsRGBA32(p, width, height, channels)
+        pixels = (ctypes.c_ubyte *
+                  (width[0] * height[0] * channels[0])).from_address(p[0])
 
         if self._font_texture is not None:
             gl.glDeleteTextures([self._font_texture])
@@ -71,13 +78,16 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         self._font_texture = gl.glGenTextures(1)
 
         gl.glBindTexture(gl.GL_TEXTURE_2D, self._font_texture)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, width, height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, pixels)
+        gl.glTexParameteri(
+            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+        gl.glTexParameteri(
+            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, width[0],
+                        height[0], 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, pixels)
 
-        self.io.fonts.texture_id = self._font_texture
+        self.io.Fonts.TextureId = self._font_texture
         gl.glBindTexture(gl.GL_TEXTURE_2D, last_texture)
-        self.io.fonts.clear_tex_data()
+        self.io.Fonts.clear_tex_data()
 
     def _create_device_objects(self):
         # save state
@@ -105,11 +115,16 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         gl.glDeleteShader(vertex_shader)
         gl.glDeleteShader(fragment_shader)
 
-        self._attrib_location_tex = gl.glGetUniformLocation(self._shader_handle, "Texture")
-        self._attrib_proj_mtx = gl.glGetUniformLocation(self._shader_handle, "ProjMtx")
-        self._attrib_location_position = gl.glGetAttribLocation(self._shader_handle, "Position")
-        self._attrib_location_uv = gl.glGetAttribLocation(self._shader_handle, "UV")
-        self._attrib_location_color = gl.glGetAttribLocation(self._shader_handle, "Color")
+        self._attrib_location_tex = gl.glGetUniformLocation(
+            self._shader_handle, "Texture")
+        self._attrib_proj_mtx = gl.glGetUniformLocation(
+            self._shader_handle, "ProjMtx")
+        self._attrib_location_position = gl.glGetAttribLocation(
+            self._shader_handle, "Position")
+        self._attrib_location_uv = gl.glGetAttribLocation(
+            self._shader_handle, "UV")
+        self._attrib_location_color = gl.glGetAttribLocation(
+            self._shader_handle, "Color")
 
         self._vbo_handle = gl.glGenBuffers(1)
         self._elements_handle = gl.glGenBuffers(1)
@@ -122,9 +137,12 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         gl.glEnableVertexAttribArray(self._attrib_location_uv)
         gl.glEnableVertexAttribArray(self._attrib_location_color)
 
-        gl.glVertexAttribPointer(self._attrib_location_position, 2, gl.GL_FLOAT, gl.GL_FALSE, imgui.VERTEX_SIZE, ctypes.c_void_p(imgui.VERTEX_BUFFER_POS_OFFSET))
-        gl.glVertexAttribPointer(self._attrib_location_uv, 2, gl.GL_FLOAT, gl.GL_FALSE, imgui.VERTEX_SIZE, ctypes.c_void_p(imgui.VERTEX_BUFFER_UV_OFFSET))
-        gl.glVertexAttribPointer(self._attrib_location_color, 4, gl.GL_UNSIGNED_BYTE, gl.GL_TRUE, imgui.VERTEX_SIZE, ctypes.c_void_p(imgui.VERTEX_BUFFER_COL_OFFSET))
+        gl.glVertexAttribPointer(self._attrib_location_position, 2, gl.GL_FLOAT, gl.GL_FALSE,
+                                 imgui.VERTEX_SIZE, ctypes.c_void_p(imgui.VERTEX_BUFFER_POS_OFFSET))
+        gl.glVertexAttribPointer(self._attrib_location_uv, 2, gl.GL_FLOAT, gl.GL_FALSE,
+                                 imgui.VERTEX_SIZE, ctypes.c_void_p(imgui.VERTEX_BUFFER_UV_OFFSET))
+        gl.glVertexAttribPointer(self._attrib_location_color, 4, gl.GL_UNSIGNED_BYTE,
+                                 gl.GL_TRUE, imgui.VERTEX_SIZE, ctypes.c_void_p(imgui.VERTEX_BUFFER_COL_OFFSET))
 
         # restore state
         gl.glBindTexture(gl.GL_TEXTURE_2D, last_texture)
@@ -150,12 +168,14 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         last_texture = gl.glGetIntegerv(gl.GL_TEXTURE_BINDING_2D)
         last_active_texture = gl.glGetIntegerv(gl.GL_ACTIVE_TEXTURE)
         last_array_buffer = gl.glGetIntegerv(gl.GL_ARRAY_BUFFER_BINDING)
-        last_element_array_buffer = gl.glGetIntegerv(gl.GL_ELEMENT_ARRAY_BUFFER_BINDING)
+        last_element_array_buffer = gl.glGetIntegerv(
+            gl.GL_ELEMENT_ARRAY_BUFFER_BINDING)
         last_vertex_array = gl.glGetIntegerv(gl.GL_VERTEX_ARRAY_BINDING)
         last_blend_src = gl.glGetIntegerv(gl.GL_BLEND_SRC)
         last_blend_dst = gl.glGetIntegerv(gl.GL_BLEND_DST)
         last_blend_equation_rgb = gl. glGetIntegerv(gl.GL_BLEND_EQUATION_RGB)
-        last_blend_equation_alpha = gl.glGetIntegerv(gl.GL_BLEND_EQUATION_ALPHA)
+        last_blend_equation_alpha = gl.glGetIntegerv(
+            gl.GL_BLEND_EQUATION_ALPHA)
         last_viewport = gl.glGetIntegerv(gl.GL_VIEWPORT)
         last_scissor_box = gl.glGetIntegerv(gl.GL_SCISSOR_BOX)
         last_enable_blend = gl.glIsEnabled(gl.GL_BLEND)
@@ -174,15 +194,16 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         gl.glViewport(0, 0, int(fb_width), int(fb_height))
 
         ortho_projection = (ctypes.c_float * 16)(
-             2.0/display_width, 0.0,                   0.0, 0.0,
-             0.0,               2.0/-display_height,   0.0, 0.0,
-             0.0,               0.0,                  -1.0, 0.0,
+            2.0/display_width, 0.0,                   0.0, 0.0,
+            0.0,               2.0/-display_height,   0.0, 0.0,
+            0.0,               0.0,                  -1.0, 0.0,
             -1.0,               1.0,                   0.0, 1.0
         )
 
         gl.glUseProgram(self._shader_handle)
         gl.glUniform1i(self._attrib_location_tex, 0)
-        gl.glUniformMatrix4fv(self._attrib_proj_mtx, 1, gl.GL_FALSE, ortho_projection)
+        gl.glUniformMatrix4fv(self._attrib_proj_mtx, 1,
+                              gl.GL_FALSE, ortho_projection)
         gl.glBindVertexArray(self._vao_handle)
 
         for commands in draw_data.commands_lists:
@@ -190,11 +211,13 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
 
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self._vbo_handle)
             # todo: check this (sizes)
-            gl.glBufferData(gl.GL_ARRAY_BUFFER, commands.vtx_buffer_size * imgui.VERTEX_SIZE, ctypes.c_void_p(commands.vtx_buffer_data), gl.GL_STREAM_DRAW)
+            gl.glBufferData(gl.GL_ARRAY_BUFFER, commands.vtx_buffer_size * imgui.VERTEX_SIZE,
+                            ctypes.c_void_p(commands.vtx_buffer_data), gl.GL_STREAM_DRAW)
 
             gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self._elements_handle)
             # todo: check this (sizes)
-            gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, commands.idx_buffer_size * imgui.INDEX_SIZE, ctypes.c_void_p(commands.idx_buffer_data), gl.GL_STREAM_DRAW)
+            gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, commands.idx_buffer_size *
+                            imgui.INDEX_SIZE, ctypes.c_void_p(commands.idx_buffer_data), gl.GL_STREAM_DRAW)
 
             # todo: allow to iterate over _CmdList
             for command in commands.commands:
@@ -202,14 +225,16 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
 
                 # todo: use named tuple
                 x, y, z, w = command.clip_rect
-                gl.glScissor(int(x), int(fb_height - w), int(z - x), int(w - y))
+                gl.glScissor(int(x), int(fb_height - w),
+                             int(z - x), int(w - y))
 
                 if imgui.INDEX_SIZE == 2:
                     gltype = gl.GL_UNSIGNED_SHORT
                 else:
                     gltype = gl.GL_UNSIGNED_INT
 
-                gl.glDrawElements(gl.GL_TRIANGLES, command.elem_count, gltype, ctypes.c_void_p(idx_buffer_offset))
+                gl.glDrawElements(gl.GL_TRIANGLES, command.elem_count,
+                                  gltype, ctypes.c_void_p(idx_buffer_offset))
 
                 idx_buffer_offset += command.elem_count * imgui.INDEX_SIZE
 
@@ -220,7 +245,8 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         gl.glBindVertexArray(last_vertex_array)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, last_array_buffer)
         gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, last_element_array_buffer)
-        gl.glBlendEquationSeparate(last_blend_equation_rgb, last_blend_equation_alpha)
+        gl.glBlendEquationSeparate(
+            last_blend_equation_rgb, last_blend_equation_alpha)
         gl.glBlendFunc(last_blend_src, last_blend_dst)
 
         if last_enable_blend:
@@ -243,8 +269,10 @@ class ProgrammablePipelineRenderer(BaseOpenGLRenderer):
         else:
             gl.glDisable(gl.GL_SCISSOR_TEST)
 
-        gl.glViewport(last_viewport[0], last_viewport[1], last_viewport[2], last_viewport[3])
-        gl.glScissor(last_scissor_box[0], last_scissor_box[1], last_scissor_box[2], last_scissor_box[3])
+        gl.glViewport(last_viewport[0], last_viewport[1],
+                      last_viewport[2], last_viewport[3])
+        gl.glScissor(last_scissor_box[0], last_scissor_box[1],
+                     last_scissor_box[2], last_scissor_box[3])
 
     def _invalidate_device_objects(self):
         if self._vao_handle > -1:
@@ -279,9 +307,12 @@ class FixedPipelineRenderer(BaseOpenGLRenderer):
 
         self._font_texture = gl.glGenTextures(1)
         gl.glBindTexture(gl.GL_TEXTURE_2D, self._font_texture)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_ALPHA, width, height, 0, gl.GL_ALPHA, gl.GL_UNSIGNED_BYTE, pixels)
+        gl.glTexParameteri(
+            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+        gl.glTexParameteri(
+            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_ALPHA, width,
+                        height, 0, gl.GL_ALPHA, gl.GL_UNSIGNED_BYTE, pixels)
 
         self.io.fonts.texture_id = self._font_texture
         # gl.glBindTexture(gl.GL_TEXTURE_2D, last_texture)
@@ -316,9 +347,11 @@ class FixedPipelineRenderer(BaseOpenGLRenderer):
         last_blend_src = gl.glGetIntegerv(gl.GL_BLEND_SRC)
         last_blend_dst = gl.glGetIntegerv(gl.GL_BLEND_DST)
         last_blend_equation_rgb = gl. glGetIntegerv(gl.GL_BLEND_EQUATION_RGB)
-        last_blend_equation_alpha = gl.glGetIntegerv(gl.GL_BLEND_EQUATION_ALPHA)
+        last_blend_equation_alpha = gl.glGetIntegerv(
+            gl.GL_BLEND_EQUATION_ALPHA)
 
-        gl.glPushAttrib(gl.GL_ENABLE_BIT | gl.GL_COLOR_BUFFER_BIT | gl.GL_TRANSFORM_BIT)
+        gl.glPushAttrib(gl.GL_ENABLE_BIT |
+                        gl.GL_COLOR_BUFFER_BIT | gl.GL_TRANSFORM_BIT)
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
         gl.glDisable(gl.GL_CULL_FACE)
@@ -342,26 +375,32 @@ class FixedPipelineRenderer(BaseOpenGLRenderer):
         for commands in draw_data.commands_lists:
             idx_buffer = commands.idx_buffer_data
 
-            gl.glVertexPointer(2, gl.GL_FLOAT, imgui.VERTEX_SIZE, ctypes.c_void_p(commands.vtx_buffer_data + imgui.VERTEX_BUFFER_POS_OFFSET))
-            gl.glTexCoordPointer(2, gl.GL_FLOAT, imgui.VERTEX_SIZE, ctypes.c_void_p(commands.vtx_buffer_data + imgui.VERTEX_BUFFER_UV_OFFSET))
-            gl.glColorPointer(4, gl.GL_UNSIGNED_BYTE, imgui.VERTEX_SIZE, ctypes.c_void_p(commands.vtx_buffer_data + imgui.VERTEX_BUFFER_COL_OFFSET))
+            gl.glVertexPointer(2, gl.GL_FLOAT, imgui.VERTEX_SIZE, ctypes.c_void_p(
+                commands.vtx_buffer_data + imgui.VERTEX_BUFFER_POS_OFFSET))
+            gl.glTexCoordPointer(2, gl.GL_FLOAT, imgui.VERTEX_SIZE, ctypes.c_void_p(
+                commands.vtx_buffer_data + imgui.VERTEX_BUFFER_UV_OFFSET))
+            gl.glColorPointer(4, gl.GL_UNSIGNED_BYTE, imgui.VERTEX_SIZE, ctypes.c_void_p(
+                commands.vtx_buffer_data + imgui.VERTEX_BUFFER_COL_OFFSET))
 
             for command in commands.commands:
                 gl.glBindTexture(gl.GL_TEXTURE_2D, command.texture_id)
 
                 x, y, z, w = command.clip_rect
-                gl.glScissor(int(x), int(fb_height - w), int(z - x), int(w - y))
+                gl.glScissor(int(x), int(fb_height - w),
+                             int(z - x), int(w - y))
 
                 if imgui.INDEX_SIZE == 2:
                     gltype = gl.GL_UNSIGNED_SHORT
                 else:
                     gltype = gl.GL_UNSIGNED_INT
 
-                gl.glDrawElements(gl.GL_TRIANGLES, command.elem_count, gltype, ctypes.c_void_p(idx_buffer))
+                gl.glDrawElements(gl.GL_TRIANGLES, command.elem_count,
+                                  gltype, ctypes.c_void_p(idx_buffer))
 
                 idx_buffer += (command.elem_count * imgui.INDEX_SIZE)
 
-        gl.glBlendEquationSeparate(last_blend_equation_rgb, last_blend_equation_alpha)
+        gl.glBlendEquationSeparate(
+            last_blend_equation_rgb, last_blend_equation_alpha)
         gl.glBlendFunc(last_blend_src, last_blend_dst)
 
         if last_enable_blend:
@@ -384,7 +423,8 @@ class FixedPipelineRenderer(BaseOpenGLRenderer):
         else:
             gl.glDisable(gl.GL_SCISSOR_TEST)
 
-        gl.glScissor(last_scissor_box[0], last_scissor_box[1], last_scissor_box[2], last_scissor_box[3])
+        gl.glScissor(last_scissor_box[0], last_scissor_box[1],
+                     last_scissor_box[2], last_scissor_box[3])
 
         gl.glDisableClientState(gl.GL_COLOR_ARRAY)
         gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY)
@@ -399,7 +439,8 @@ class FixedPipelineRenderer(BaseOpenGLRenderer):
         gl.glPopMatrix()
         gl.glPopAttrib()
 
-        gl.glViewport(last_viewport[0], last_viewport[1], last_viewport[2], last_viewport[3])
+        gl.glViewport(last_viewport[0], last_viewport[1],
+                      last_viewport[2], last_viewport[3])
 
     def _invalidate_device_objects(self):
         if self._font_texture > -1:
