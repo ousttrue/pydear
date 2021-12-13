@@ -21,20 +21,16 @@ class FunctionDecl(NamedTuple):
     def write_pyx(self, pyx: io.IOBase):
         cursor = self.cursors[-1]
         result = TypeWrap.from_function_result(cursor)
-        params = [Param(child) for child in cursor.get_children(
-        ) if child.kind == cindex.CursorKind.PARM_DECL]
+        params = TypeWrap.get_function_params(cursor)
 
         if result.is_void:
-            pyx.write(f'''def {cursor.spelling}({", ".join(param.py_type_name for param in params)}):
-        cpp_imgui.{cursor.spelling}({", ".join(param.py_to_c for param in params)})
+            pyx.write(f'''def {cursor.spelling}({utils.comma_join(param.py_type_with_name for param in params)}):
+        cpp_imgui.{cursor.spelling}({utils.comma_join(param.py_to_c for param in params)})
 
 ''')
         else:
-            prefix = ''
-            if is_wrap(result.type):
-                prefix = 'cpp_imgui.'
-            pyx.write(f'''def {cursor.spelling}({", ".join(param.py_type_name for param in params)})->{result.py_type}:
-        cdef {prefix}{result.type.spelling.replace("const ", "")} value = cpp_imgui.{cursor.spelling}({", ".join(param.py_to_c for param in params)})
+            pyx.write(f'''def {cursor.spelling}({utils.comma_join(param.py_type_with_name for param in params)})->{result.py_type}:
+        cdef {result.pyx_type} value = cpp_imgui.{cursor.spelling}({utils.comma_join(param.py_to_c for param in params)})
         return {result.c_to_py('value')}
 
 ''')

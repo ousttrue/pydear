@@ -33,15 +33,6 @@ IM_PATTERN = re.compile(r'\bIm\w+')
 TEMPLAE_PATTERN = re.compile(r'<[^>]+>')
 
 
-def template_filter(src: str) -> str:
-    def rep_typearg(m):
-        ret = f'[{m.group(0)[1:-1]}]'
-        return ret
-    dst = TEMPLAE_PATTERN.sub(rep_typearg, src)
-
-    return dst
-
-
 def pyx_type_filter(src: str) -> str:
     def add_prefix(m):
         if m.group(0) == 'ImGuiTextRange':

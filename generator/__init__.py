@@ -46,51 +46,16 @@ from libcpp cimport bool
 cimport cpp_imgui
 
 ''')
-        for definition in parser.typedef_struct_list[:1]:
-            definition.write_pyx(pyx)
+        # for definition in parser.typedef_struct_list[:10]:
+        #     definition.write_pyx(pyx)
 
         # TODO: overload
-        return
         used = set()
-        for definition in parser.functions:
+        for definition in parser.functions[:1]:
             if definition.cursors[-1].spelling in used:
                 continue
             used.add(definition.cursors[-1].spelling)
 
-            # TODO: callback param... etc
-            if definition.cursors[-1].spelling in (
-                    'SetNextWindowSizeConstraints',
-                    'Combo',
-                    'LabelTextV',
-                    'BulletTextV',
-                    'TextWrappedV',
-                    'TextDisabledV',
-                    'TextColoredV',
-                    'TextV',
-                    'InputTextWithHint',
-                    'InputTextMultiline',
-                    'ImGuiInputTextCallback',
-                    'InputText',
-                    'ListBox',
-                    'TableGetColumnFlags',
-                    'PlotLines',
-                    'PlotHistogram',
-                    'LogTextV',
-                    'SetTooltipV',
-                    'TreeNodeExV',
-                    'TreeNodeV',
-                    'AcceptDragDropPayload',
-                    'GetDragDropPayload',
-                    'GetAllocatorFunctions',
-                    'MemAlloc',
-                    'SetStateStorage',
-                    'GetStateStorage',
-                    'ColorConvertU32ToFloat4',
-                    'ColorConvertFloat4ToU32',
-                    'SetAllocatorFunctions',
-            ):
-                # skip
-                continue
             definition.write_pyx(pyx)
 
     #
