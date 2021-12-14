@@ -1,7 +1,7 @@
 import logging
 import glfw
 from OpenGL import GL
-import cydeer.imgui as ImGui
+import cydeer as ImGui
 import ctypes
 
 logger = logging.getLogger(__name__)
@@ -47,6 +47,7 @@ def main():
     io = ImGui.GetIO()
     # io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     # io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGui.ImGuiConfigFlags_.DockingEnable
 
     # Setup Dear ImGui style
     ImGui.StyleColorsDark()
@@ -78,9 +79,11 @@ def main():
     # Our state
     show_demo_window = (ctypes.c_bool * 1)(True)
     show_another_window = (ctypes.c_bool * 1)(True)
-    clear_color = (0.45, 0.55, 0.60, 1.00)
+    clear_color = (ctypes.c_float * 4)(0.45, 0.55, 0.60, 1.00)
 
     # Main loop
+    counter = [0]
+    f = (ctypes.c_float * 1)(0.0)
     while not glfw.window_should_close(window):
         # Poll and handle events (inputs, window resize, etc.)
         # You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -97,28 +100,32 @@ def main():
         if show_demo_window[0]:
             ImGui.ShowDemoWindow(show_demo_window)
 
-#         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-#         {
-#             static float f = 0.0f;
-#             static int counter = 0;
+        # 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+        def window2():
+            ImGui.Begin(b"Hello, world!")
+            # Create a window called "Hello, world!" and append into it.
 
-#             ImGui.Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+            ImGui.Text(b"This is some useful text.")
+            # Display some text(you can use a format strings too)
+            # Edit bools storing our window open/close state
+            ImGui.Checkbox(b"Demo Window", show_demo_window)
+            ImGui.Checkbox(b"Another Window", show_another_window)
 
-#             ImGui.Text("This is some useful text.");               // Display some text (you can use a format strings too)
-#             ImGui.Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-#             ImGui.Checkbox("Another Window", &show_another_window);
+            # Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui.SliderFloat(b"float", f, 0.0, 1.0)
+            # Edit 3 floats representing a color
+            ImGui.ColorEdit3(b"clear color", clear_color)
 
-#             ImGui.SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-#             ImGui.ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+            # Buttons return true when clicked (most widgets return true when edited/activated)
+            if ImGui.Button(b"Button"):
+                counter[0] += 1
+            ImGui.SameLine()
+            ImGui.Text(f"counter = {counter[0]}".encode('utf-8'))
 
-#             if (ImGui.Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-#                 counter++;
-#             ImGui.SameLine();
-#             ImGui.Text("counter = %d", counter);
-
-#             ImGui.Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui.GetIO().Framerate, ImGui.GetIO().Framerate);
-#             ImGui.End();
-#         }
+            ImGui.Text(
+                f"Application average {1000.0 / ImGui.GetIO().Framerate:.3f} ms/frame ({ImGui.GetIO().Framerate:.1f} FPS)".encode('utf-8'))
+            ImGui.End()
+        window2()
 
         # 3. Show another simple window.
         if show_another_window[0]:

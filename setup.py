@@ -7,10 +7,11 @@ HERE = pathlib.Path(__file__).parent
 PYI_PATH = HERE / 'src/cydeer/imgui.pyi'
 EXT_DIR = HERE / 'src/cydeer/imgui'
 IMGUI_DIR = HERE / '_external/imgui'
+ENUM_PATH = HERE / 'src/cydeer/imgui_enum.py'
 logging.basicConfig(level=logging.DEBUG)
 
 # generate pyd, pyx, pyi from imgui.h
-generator.generate(IMGUI_DIR, EXT_DIR, PYI_PATH)
+generator.generate(IMGUI_DIR, EXT_DIR, PYI_PATH, ENUM_PATH)
 
 
 def rel_path(src: pathlib.Path) -> str:

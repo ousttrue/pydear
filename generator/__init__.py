@@ -1,3 +1,6 @@
+'''
+use from setup.py
+'''
 import pathlib
 from . import function
 from . import wrap_flags
@@ -25,10 +28,15 @@ INCLUDE_FUNCS = (
     'Begin',
     'End',
     'Text',
+    'Checkbox',
+    'SliderFloat',
+    'ColorEdit3',
+    'Button',
+    'SameLine',
 )
 
 
-def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path):
+def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path, enum_py_path: pathlib.Path):
     from .parser import Parser
     parser = Parser(imgui_dir / 'imgui.h')
     parser.traverse()
@@ -91,3 +99,13 @@ class ImVector(ctypes.Structure):
     #
     with pyi_path.open('w') as pyi:
         pass
+
+    #
+    # enum
+    #
+    with enum_py_path.open('w') as enum_py:
+        enum_py.write('''from enum import IntEnum
+
+''')
+        for e in parser.enums:
+            e.write_to(enum_py)

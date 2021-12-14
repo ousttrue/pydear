@@ -61,9 +61,14 @@ PYX
 def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> List[str]:
     param_names = []
     for i, param in enumerate(params):
+        ct = param.pyx_cimport_type
         pyx.write(
-            f'{indent}cdef {param.pyx_cimport_type} p{i} = {wrap_flags.to_c(param.underlying_spelling, param.name)}\n')
-        param_names.append(f'p{i}')
+            f'{indent}{ct.cdef} p{i} = {wrap_flags.to_c(param.underlying_spelling, param.name)}\n')
+        if ct.is_reference:
+            # deref
+            param_names.append(f'p{i}[0]')
+        else:
+            param_names.append(f'p{i}')
     return param_names
 
 
@@ -96,7 +101,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
             ref = '&'
 
         pyx.write(
-            f'{indent}cdef {result.pyx_cimport_type} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
+            f'{indent}{result.pyx_cimport_type.cdef} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
         pyx.write(f"{indent}return {result.pointer_to_ctypes('value')}\n\n")
 
 
@@ -131,5 +136,5 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
             ref = '&'
 
         pyx.write(
-            f'{indent}cdef {result.pyx_cimport_type} value = {ref}ptr.{method.spelling}{cj(param_names)}\n\n')
+            f'{indent}{result.pyx_cimport_type.cdef} value = {ref}ptr.{method.spelling}{cj(param_names)}\n\n')
         pyx.write(f"{indent}return {result.pointer_to_ctypes('value')}\n\n")

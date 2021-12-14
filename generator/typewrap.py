@@ -1,5 +1,6 @@
 from typing import NamedTuple, Type, Tuple, Optional, List
 import logging
+import io
 import re
 import ctypes
 from clang import cindex
@@ -21,6 +22,27 @@ def template_filter(src: str) -> str:
     dst = TEMPLATE_PATTERN.sub(rep_typearg, src)
 
     return dst
+
+
+class PyxType(NamedTuple):
+    spelling: str
+    cpp_imgui: bool = False
+    is_reference: bool = False
+    is_const: bool = False
+
+    @property
+    def cdef(self) -> str:
+        spelling = wrap_flags.prepare(self.spelling)
+        sio = io.StringIO()
+        sio.write('cdef ')
+        if self.is_const:
+            sio.write('const ')
+        if self.cpp_imgui:
+            sio.write('cpp_imgui.')
+        sio.write(spelling.replace('const ', ''))
+        if self.is_reference:
+            sio.write(' *')
+        return sio.getvalue()
 
 
 class TypeWrap(NamedTuple):
@@ -164,23 +186,24 @@ class TypeWrap(NamedTuple):
                 raise NotImplementedError()
 
     @property
-    def pyx_cimport_type(self) -> str:
+    def pyx_cimport_type(self) -> PyxType:
+        '''
+        cdef
+        '''
+        is_const = self.type.is_const_qualified()
+        match self.type.kind:
+            case cindex.TypeKind.POINTER | cindex.TypeKind.LVALUEREFERENCE:
+                is_const = is_const or self.type.get_pointee().is_const_qualified()
         if self._is_user_type_pointer:
+            pointee = self.type.get_pointee()
             if self.type.kind == cindex.TypeKind.LVALUEREFERENCE:
                 # reference to pointer
-                return f'cpp_imgui.{self.type.get_pointee().spelling} *'
+                return PyxType(pointee.spelling, cpp_imgui=True, is_reference=True, is_const=is_const)
             else:
-                return f'cpp_imgui.{self.c_type}'
+                return PyxType(self.c_type, cpp_imgui=True, is_const=is_const)
         if self.type.spelling.startswith("Im"):
-            return f'cpp_imgui.{self.c_type}'
-        return self.c_type
-
-    def ctypes_to_pointer(self, name: str) -> str:
-        if self._is_user_type_pointer:
-            return f'<cpp_imgui.{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
-        if self.type.kind == cindex.TypeKind.POINTER:
-            return f'<{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
-        return name
+            return PyxType(self.c_type, cpp_imgui=True, is_const=is_const)
+        return PyxType(self.c_type, is_const=is_const)
 
     def pointer_to_ctypes(self, name: str) -> str:
         if self._is_user_type_pointer:
@@ -207,27 +230,31 @@ class TypeWrap(NamedTuple):
 
     @property
     def name_in_type_default_value(self) -> str:
-        default_value = None
+        tokens = []
         for child in self.cursor.get_children():
             # logger.debug(child.spelling)
             match child.kind:
-                case cindex.CursorKind.UNEXPOSED_EXPR | cindex.CursorKind.INTEGER_LITERAL:
+                case cindex.CursorKind.UNEXPOSED_EXPR | cindex.CursorKind.INTEGER_LITERAL | cindex.CursorKind.FLOATING_LITERAL | cindex.CursorKind.UNARY_OPERATOR:
                     # default_value = get_default_value(child)
                     # break
-                    default_value = True
+                    tokens = [
+                        token.spelling for token in self.cursor.get_tokens()]
+                    if '=' not in tokens:
+                        tokens = []
                 case _:
                     logger.debug(f'{self.cursor.spelling}: {child.kind}')
 
-        if default_value:
+        if tokens:
             # location: cindex.SourceLocation = default_value.location
             # logger.debug(f'{location.file}:{location.line}')
-            tokens = [token.spelling for token in self.cursor.get_tokens()]
             equal = tokens.index('=')
-            if equal < 0:
-                raise IndexError()
             value = ' '.join(tokens[equal+1:])
             if value == 'NULL':
                 value = 'None'
+            elif value.startswith('"'):
+                value = 'b' + value
+            elif value.endswith('f'):
+                value = value[:-1]
             return self.name + ': ' + wrap_flags.in_type(self.underlying_spelling) + '= ' + value
         else:
             return self.name + ': ' + wrap_flags.in_type(self.underlying_spelling)

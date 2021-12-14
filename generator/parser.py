@@ -4,11 +4,8 @@ import logging
 from clang import cindex
 from . typedef import TypedefDecl
 from . struct import StructDecl
+from .enum import EnumDecl
 logger = logging.getLogger(__name__)
-
-
-class EnumDecl(NamedTuple):
-    cursors: Tuple[cindex.Cursor, ...]
 
 
 class Parser:

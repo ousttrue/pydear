@@ -8,7 +8,11 @@ Cydeer for short.
 
 * generate cython imgui call by clang.cindex automatically
 * generate ctypes wrapper struct by clang.cindex automatically
+* pointer handling idea from luajit ffi
+
+## TODO
 * generate type information(.pyi stub) by clang.cindex automatically
+* overloaded function. dispatch ?
 
 ## Another python bindings
 

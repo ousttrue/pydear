@@ -1,7 +1,7 @@
 import ctypes
 import logging
 from OpenGL import GL
-import cydeer.imgui as imgui
+import cydeer as imgui
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,5 @@
 import glfw
-import cydeer.imgui as imgui
+import cydeer as imgui
 
 
 def compute_fb_scale(window_size, frame_buffer_size):
