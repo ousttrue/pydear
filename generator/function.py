@@ -58,7 +58,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
 
     if result.is_void:
         # TODO: default param
-        pyx.write(f'''def {function.spelling}{cj(param.name + ': ' + wrap_flags.in_type(param.base_spelling) for param in params)}:
+        pyx.write(f'''def {function.spelling}{cj(param.name + ': ' + wrap_flags.in_type(param.underlying_spelling) for param in params)}:
     cpp_imgui.{function.spelling}{cj(wrap_flags.to_c(param.c_type, param.name) for param in params)}
 
 ''')
@@ -67,8 +67,8 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
         if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
             # reference to pointer
             ref = '&'
-        pyx.write(f'''def {function.spelling}{cj(param.name + ': ' + wrap_flags.in_type(param.base_spelling) for param in params)}->{result.get_ctypes_type(user_type_pointer=True)}:
-    cdef {result.pyx_cimport_type} value = {ref}cpp_imgui.{function.spelling}{cj(wrap_flags.to_c(param.base_spelling, param.name) for param in params)}
+        pyx.write(f'''def {function.spelling}{cj(param.name + ': ' + wrap_flags.in_type(param.underlying_spelling) for param in params)}->{result.get_ctypes_type(user_type_pointer=True)}:
+    cdef {result.pyx_cimport_type} value = {ref}cpp_imgui.{function.spelling}{cj(wrap_flags.to_c(param.underlying_spelling, param.name) for param in params)}
     return {result.pointer_to_ctypes('value')}
 ''')
 
@@ -78,7 +78,7 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     result = TypeWrap.from_function_result(method)
 
     if result.is_void:
-        pyx.write(f'''    def {method.spelling}{self_cj(param.name + ': ' + wrap_flags.in_type(param.base_spelling) for param in params)}:
+        pyx.write(f'''    def {method.spelling}{self_cj(param.name + ': ' + wrap_flags.in_type(param.underlying_spelling) for param in params)}:
         cdef cpp_imgui.{cursor.spelling} *ptr = <cpp_imgui.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)
         ptr.{method.spelling}{cj(param.ctypes_to_pointer(param.name) for param in params)}
 

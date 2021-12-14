@@ -147,14 +147,13 @@ class TypeWrap(NamedTuple):
             case cindex.TypeKind.DOUBLE:
                 return 'ctypes.c_double'
             case cindex.TypeKind.TYPEDEF:
-                base = self._base_type
+                base = self._typedef_underlying_type
                 if not base:
                     raise RuntimeError()
                 return base.get_ctypes_type()
             case cindex.TypeKind.CONSTANTARRAY:
-                base = self._base_type
-                if not base:
-                    raise RuntimeError()
+                base = TypeWrap(
+                    self.type.get_array_element_type(), self.cursor)
                 return f'{base.get_ctypes_type()} * {self.type.get_array_size()}'
             case cindex.TypeKind.RECORD:
                 return self.type.spelling
@@ -184,22 +183,19 @@ class TypeWrap(NamedTuple):
         return name
 
     @property
-    def _base_type(self) -> Optional['TypeWrap']:
+    def _typedef_underlying_type(self) -> Optional['TypeWrap']:
         match self.type.kind:
             case cindex.TypeKind.TYPEDEF:
                 ref: cindex.Cursor = next(iter(
                     c for c in self.cursor.get_children() if c.kind == cindex.CursorKind.TYPE_REF))
                 return TypeWrap(ref.referenced.underlying_typedef_type, ref.referenced)
 
-            case cindex.TypeKind.CONSTANTARRAY:
-                return TypeWrap(self.type.get_array_element_type(), self.cursor)
-
             case _:
                 return None
 
     @property
-    def base_spelling(self) -> str:
-        base = self._base_type
+    def underlying_spelling(self) -> str:
+        base = self._typedef_underlying_type
         if base:
             return base.type.spelling
         return self.type.spelling
