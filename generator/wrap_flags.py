@@ -61,7 +61,7 @@ class DoublePointerResultInType(InType):
         return 'ctypes.c_void_p'
 
     def to_c(self, name: str) -> str:
-        return f'<uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+        return f'<{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
 
 IN_TYPE_MAP: Dict[str, InType] = {

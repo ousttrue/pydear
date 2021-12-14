@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, List
 import io
 from clang import cindex
 from .typewrap import TypeWrap
@@ -16,7 +16,13 @@ def self_cj(src: Iterable[str]) -> str:
     '''
     comma join
     '''
-    return '(self, ' + ', '.join(src) + ')'
+    sio = io.StringIO()
+    sio.write('(self')
+    for x in src:
+        sio.write(', ')
+        sio.write(x)
+    sio.write(')')
+    return sio.getvalue()
 
 
 '''
@@ -52,6 +58,15 @@ PYX
 '''
 
 
+def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> List[str]:
+    param_names = []
+    for i, param in enumerate(params):
+        pyx.write(
+            f'{indent}cdef {param.pyx_cimport_type} p{i} = {wrap_flags.to_c(param.underlying_spelling, param.name)}\n')
+        param_names.append(f'p{i}')
+    return param_names
+
+
 def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
     result = TypeWrap.from_function_result(function)
     params = TypeWrap.get_function_params(function)
@@ -59,7 +74,6 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
     # signature
     pyx.write(
         f"def {function.spelling}{cj(param.name_in_type_default_value for param in params)}")
-
     # return type
     if result.is_void:
         pyx.write(':\n')
@@ -67,18 +81,12 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
         pyx.write(f'->{result.get_ctypes_type(user_type_pointer=True)}:\n')
 
     # cdef parameters
-    def add_module(src: str) -> str:
-        if src.startswith("Im"):
-            return f'cpp_imgui.{src}'
-        return src
-    for i, param in enumerate(params):
-        pyx.write(
-            f'    cdef {add_module(param.underlying_spelling)} p{i} = {wrap_flags.to_c(param.underlying_spelling, param.name)}\n')
+    param_names = extract_parameters(pyx, params, '    ')
 
     # body
     if result.is_void:
         pyx.write(
-            f'    cpp_imgui.{function.spelling}{cj(f"p{i}" for i, param in enumerate(params))}\n\n')
+            f'    cpp_imgui.{function.spelling}{cj(param_names)}\n\n')
     else:
         ref = ''
         if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
@@ -86,7 +94,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
             ref = '&'
 
         pyx.write(
-            f'    cdef {result.pyx_cimport_type} value = {ref}cpp_imgui.{function.spelling}{cj(f"p{i}" for i, param in enumerate(params))}\n')
+            f'    cdef {result.pyx_cimport_type} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
         pyx.write(f"    return {result.pointer_to_ctypes('value')}\n\n")
 
 
@@ -94,9 +102,31 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     params = TypeWrap.get_function_params(method)
     result = TypeWrap.from_function_result(method)
 
+    # signature
+    pyx.write(
+        f'    def {method.spelling}{self_cj(param.name_in_type_default_value for param in params)}')
     if result.is_void:
-        pyx.write(f'''    def {method.spelling}{self_cj(param.name_in_type_default_value for param in params)}:
-        cdef cpp_imgui.{cursor.spelling} *ptr = <cpp_imgui.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)
-        ptr.{method.spelling}{cj(param.ctypes_to_pointer(param.name) for param in params)}
+        pyx.write(':\n')
+    else:
+        pyx.write(f'->{result.get_ctypes_type(user_type_pointer=True)}:\n')
 
-''')
+    # cdef parameters
+    param_names = extract_parameters(pyx, params, '        ')
+
+    # self to ptr
+    pyx.write(
+        f'        cdef cpp_imgui.{cursor.spelling} *ptr = <cpp_imgui.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)\n')
+
+    # body
+    if result.is_void:
+        pyx.write(
+            f'        ptr.{method.spelling}{cj(param_names)}\n\n')
+    else:
+        ref = ''
+        if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
+            # reference to pointer
+            ref = '&'
+
+        pyx.write(
+            f'        cdef {result.pyx_cimport_type} value = {ref}ptr.{method.spelling}{cj(param_names)}\n\n')
+        pyx.write(f"        return {result.pointer_to_ctypes('value')}\n\n")

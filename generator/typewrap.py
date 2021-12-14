@@ -171,6 +171,8 @@ class TypeWrap(NamedTuple):
                 return f'cpp_imgui.{self.type.get_pointee().spelling} *'
             else:
                 return f'cpp_imgui.{self.c_type}'
+        if self.type.spelling.startswith("Im"):
+            return f'cpp_imgui.{self.c_type}'
         return self.c_type
 
     def ctypes_to_pointer(self, name: str) -> str:
