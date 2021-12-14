@@ -68,7 +68,7 @@ cdef extern from "imgui.h":
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
         for cursors in parser.functions:
-            function.write_pxd(pxd, cursors[-1], excludes=EXCLUDE_TYPES)
+            function.write_pxd_function(pxd, cursors[-1], excludes=EXCLUDE_TYPES)
 
     #
     # pyx

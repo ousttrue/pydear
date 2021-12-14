@@ -4,6 +4,7 @@ from clang import cindex
 from . import utils
 from .typewrap import TypeWrap
 from .include_flags import IncludeFlags
+from . import function
 
 
 def is_forward_declaration(cursor: cindex.Cursor) -> bool:
@@ -57,27 +58,23 @@ class StructDecl(NamedTuple):
                 pxd.write(f'        {field.c_type_with_name}\n')
 
             for child in constructors:
-                params = TypeWrap.get_function_params(child)
-                pxd.write(
-                    f'        {cursor.spelling}({utils.comma_join(param.c_type_with_name for param in params)})\n')
+                function.write_pxd_constructor(pxd, cursor, child)
 
             for child in methods:
-                params = TypeWrap.get_function_params(child)
-                result = TypeWrap.from_function_result(child)
-                pxd.write(
-                    f'        {result.c_type} {child.spelling}({utils.comma_join(param.c_type_with_name for param in params)})\n')
+                function.write_pxd_method(pxd, child)
 
         pxd.write('\n')
 
     def write_pyx_ctypes(self, pyx: io.IOBase, *, flags: IncludeFlags = IncludeFlags()):
         cursor = self.cursors[-1]
+
         definition = cursor.get_definition()
         if definition and definition != cursor:
+            # skip forward decl
             return
 
         pyx.write(f'class {cursor.spelling}(ctypes.Structure):\n')
-        fields = TypeWrap.get_struct_fields(
-            cursor) if flags.fields else []
+        fields = TypeWrap.get_struct_fields(cursor) if flags.fields else []
         if fields:
             pyx.write('    _fields_=[\n')
             for field in fields:
@@ -88,22 +85,7 @@ class StructDecl(NamedTuple):
         methods = TypeWrap.get_struct_methods(cursor, includes=flags.methods)
         if methods:
             for method in methods:
-                params = TypeWrap.get_function_params(method)
-                result = TypeWrap.from_function_result(method)
-
-                if result.is_void:
-                    pyx.write(f'''    def {method.spelling}(self, {utils.comma_join(param.name_with_ctypes_type for param in params)}):
-        cdef cpp_imgui.{self.cursor.spelling} *ptr = <cpp_imgui.{self.cursor.spelling}*><uintptr_t>ctypes.addressof(self)
-        ptr.{method.spelling}({utils.comma_join(param.ctypes_to_pointer(param.name) for param in params)})
-
-''')
-
-
-                # pyx.write(
-                #     f'    def {method.spelling}(self, {utils.comma_join(param.name for param in params)}):\n')
-                # pyx.write(
-                #     f'        (<cpp_imgui.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)).{method.spelling}({utils.comma_join(param.name for param in params)})\n')
-                # pyx.write(f'\n')
+                function.write_pyx_method(pyx, cursor, method)
 
         if not fields and not methods:
             pyx.write('    pass\n\n')
