@@ -1,4 +1,4 @@
-from typing import NamedTuple, Tuple, Union
+from typing import NamedTuple, Tuple, Union, Callable, Dict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,16 +25,58 @@ WRAP_TYPES = {
 }
 
 
+class InType:
+    def __init__(self, c_type: str):
+        self.c_type = c_type
+
+    @property
+    def py_type(self) -> str:
+        return self.c_type
+
+    def to_c(self, name: str) -> str:
+        return name
+
+
+class CtypesArrayInType(InType):
+    @property
+    def py_type(self) -> str:
+        return 'ctypes.Array'
+
+    def to_c(self, name: str) -> str:
+        return f'<{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+
+
+class ZeroTerminatedBytesInType(InType):
+    @property
+    def py_type(self) -> str:
+        return 'bytes'
+
+    def to_c(self, name: str) -> str:
+        return f'<const char *>{name}'
+
+
+class DoublePointerResultInType(InType):
+    @property
+    def py_type(self) -> str:
+        return 'ctypes.c_void_p'
+
+    def to_c(self, name: str) -> str:
+        return f'<uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+
+
+IN_TYPE_MAP: Dict[str, InType] = {
+    'int': InType('int'),
+    'bool *': CtypesArrayInType('bool *'),
+    'int *': CtypesArrayInType('int *'),
+    'const char *': ZeroTerminatedBytesInType('const char *'),
+    'unsigned char **': DoublePointerResultInType('unsigned char **'),
+}
+
+
 def in_type(spelling: str):
-    match spelling:
-        case 'int':
-            return 'int'
-        case 'bool *' | 'int *':
-            return 'ctypes.Array'
-        case 'const char *':
-            return 'bytes'
-        case 'unsigned char **':
-            return 'ctypes.c_void_p'
+    value = IN_TYPE_MAP.get(spelling)
+    if value:
+        return value.py_type
 
     if spelling.endswith(' *'):
         deref = spelling[:-2]
@@ -45,15 +87,9 @@ def in_type(spelling: str):
 
 
 def to_c(spelling: str, name: str) -> str:
-    match spelling:
-        case 'int':
-            return name
-        case 'bool *':
-            return f'<{spelling}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
-        case 'const char *':
-            return f'<const char *>{name}'
-        case 'unsigned char **':
-            return f'<uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+    value = IN_TYPE_MAP.get(spelling)
+    if value:
+        return value.to_c(name)
 
     if spelling.endswith(' *'):
         deref = spelling[:-2]

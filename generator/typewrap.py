@@ -1,9 +1,12 @@
-from typing import NamedTuple, Type, Tuple, Optional
+from typing import NamedTuple, Type, Tuple, Optional, List
+import logging
 import re
 import ctypes
 from clang import cindex
 from . import utils
+from . import wrap_flags
 
+logger = logging.getLogger(__name__)
 
 TEMPLATE_PATTERN = re.compile(r'<[^>]+>')
 
@@ -199,3 +202,38 @@ class TypeWrap(NamedTuple):
         if base:
             return base.type.spelling
         return self.type.spelling
+
+    @property
+    def name_in_type_default_value(self) -> str:
+        default_value = None
+        for child in self.cursor.get_children():
+            # logger.debug(child.spelling)
+            if child.kind == cindex.CursorKind.UNEXPOSED_EXPR:
+                # default_value = get_default_value(child)
+                # break
+                default_value = True
+
+        if False:
+        # if default_value:
+            # location: cindex.SourceLocation = default_value.location
+            # logger.debug(f'{location.file}:{location.line}')
+            tokens = [token.spelling for token in self.cursor.get_tokens()]
+            equal = tokens.index('=')
+            if equal < 0:
+                raise IndexError()
+            value = ' '.join(tokens[equal+1:])
+            if value == 'NULL':
+                value = 'None'
+            return self.name + ': ' + wrap_flags.in_type(self.underlying_spelling) + '= ' + value
+        else:
+            return self.name + ': ' + wrap_flags.in_type(self.underlying_spelling)
+
+
+def get_default_value(cursor: cindex.Cursor) -> cindex.Cursor:
+    for child in cursor.get_children():
+        if child.kind == cindex.CursorKind.INTEGER_LITERAL:
+            return child
+        else:
+            raise NotImplementedError()
+
+    raise NotImplementedError()
