@@ -208,13 +208,15 @@ class TypeWrap(NamedTuple):
         default_value = None
         for child in self.cursor.get_children():
             # logger.debug(child.spelling)
-            if child.kind == cindex.CursorKind.UNEXPOSED_EXPR:
-                # default_value = get_default_value(child)
-                # break
-                default_value = True
+            match child.kind:
+                case cindex.CursorKind.UNEXPOSED_EXPR | cindex.CursorKind.INTEGER_LITERAL:
+                    # default_value = get_default_value(child)
+                    # break
+                    default_value = True
+                case _:
+                    logger.debug(f'{self.cursor.spelling}: {child.kind}')
 
-        if False:
-        # if default_value:
+        if default_value:
             # location: cindex.SourceLocation = default_value.location
             # logger.debug(f'{location.file}:{location.line}')
             tokens = [token.spelling for token in self.cursor.get_tokens()]

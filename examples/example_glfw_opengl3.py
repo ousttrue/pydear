@@ -43,13 +43,13 @@ def main():
 
     # Setup Dear ImGui context
     # IMGUI_CHECKVERSION()
-    ImGui.CreateContext(None)
+    ImGui.CreateContext()
     io = ImGui.GetIO()
     # io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     # io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
     # Setup Dear ImGui style
-    ImGui.StyleColorsDark(None)
+    ImGui.StyleColorsDark()
     # ImGui.StyleColorsClassic();
 
     # Setup Platform/Renderer backends
@@ -123,14 +123,14 @@ def main():
         # 3. Show another simple window.
         if show_another_window[0]:
 
-            ImGui.Begin(b"Another Window", show_another_window, 0)
+            ImGui.Begin(b"Another Window", show_another_window)
             # Pass a pointer to our bool variable(the window will have a closing button that will clear the bool when clicked)
             ImGui.Text(b"Hello from another window!")
             # if (ImGui.Button("Close Me"))
             # show_another_window = false
             ImGui.End()
 
-        ImGui.ShowMetricsWindow(None)
+        ImGui.ShowMetricsWindow()
 
         # Rendering
         ImGui.Render()
@@ -152,7 +152,7 @@ def main():
     # Cleanup
     del impl_opengl
     del impl_glfw
-    ImGui.DestroyContext(None)
+    ImGui.DestroyContext()
 
     glfw.destroy_window(window)
     glfw.terminate()

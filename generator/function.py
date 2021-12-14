@@ -53,9 +53,6 @@ PYX
 
 
 def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
-    if function.spelling == 'Begin':
-        pass
-
     result = TypeWrap.from_function_result(function)
     params = TypeWrap.get_function_params(function)
 
