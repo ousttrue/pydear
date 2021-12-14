@@ -2,7 +2,7 @@ from typing import NamedTuple, Tuple
 import io
 from clang import cindex
 from . import utils
-from .include_flags import IncludeFlags
+from .wrap_flags import WrapFlags
 
 
 class TypedefDecl(NamedTuple):
@@ -18,5 +18,5 @@ class TypedefDecl(NamedTuple):
         pxd.write(
             f'    ctypedef {utils.type_name(underlying_type.spelling, cursor.spelling)}\n')
 
-    def write_pyx_ctypes(self, pyx: io.IOBase, *, flags: IncludeFlags = IncludeFlags()):
+    def write_pyx_ctypes(self, pyx: io.IOBase, *, flags: WrapFlags = WrapFlags()):
         pass

@@ -1,6 +1,6 @@
 import pathlib
-from .include_flags import IncludeFlags
 from . import function
+from . import wrap_flags
 
 EXCLUDE_TYPES = (
     'va_list',
@@ -9,19 +9,6 @@ EXCLUDE_TYPES = (
     'ImGuiStorage *',
 )
 
-INCLUDE_TYPES = {
-    'ImVec2': IncludeFlags(fields=True, methods=('o',)),
-    'ImVec4': IncludeFlags(fields=True, methods=('o',)),
-    'ImFont': IncludeFlags(methods=('o',)),
-    'ImFontAtlas': IncludeFlags(fields=True, methods=('GetTexDataAsRGBA32', 'ClearTexData',)),
-    'ImGuiIO': IncludeFlags(fields=True, methods=('o',)),
-    'ImGuiContext': IncludeFlags(methods=('o',)),
-    'ImDrawCmd': IncludeFlags(fields=True),
-    'ImDrawData': IncludeFlags(fields=True, methods=('o',)),
-    'ImDrawCmdHeader': IncludeFlags(),
-    'ImDrawListSplitter': IncludeFlags(),
-    'ImDrawList': IncludeFlags(fields=True, methods=('o',)),
-}
 
 INCLUDE_FUNCS = (
     'CreateContext',
@@ -68,7 +55,8 @@ cdef extern from "imgui.h":
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
         for cursors in parser.functions:
-            function.write_pxd_function(pxd, cursors[-1], excludes=EXCLUDE_TYPES)
+            function.write_pxd_function(
+                pxd, cursors[-1], excludes=EXCLUDE_TYPES)
 
     #
     # pyx
@@ -89,18 +77,14 @@ class ImVector(ctypes.Structure):
     )
 
 ''')
-        # for definition in parser.typedef_struct_list:
-        #     if definition.cursor.spelling in INCLUDE_TYPES:
-        #         definition.write_pyx_ctypes(
-        #             pyx, flags=INCLUDE_TYPES[definition.cursor.spelling])
-        for k, v in INCLUDE_TYPES.items():
+        for k, v in wrap_flags.WRAP_TYPES.items():
             for cursors in parser.typedef_struct_list:
                 if cursors.cursor.spelling == k:
                     cursors.write_pyx_ctypes(pyx, flags=v)
 
         for cursors in parser.functions:
             if cursors[-1].spelling in INCLUDE_FUNCS:
-                function.write_pyx(pyx, cursors[-1])
+                function.write_pyx_function(pyx, cursors[-1])
 
     #
     # pyd

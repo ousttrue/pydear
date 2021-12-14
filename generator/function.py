@@ -2,6 +2,7 @@ from typing import Iterable
 import io
 from clang import cindex
 from .typewrap import TypeWrap
+from . import wrap_flags
 
 
 def cj(src: Iterable[str]) -> str:
@@ -59,18 +60,21 @@ def _call_assign(cursor: cindex.Cursor, name: str, result, params):
         return f'cdef {result.pyx_cimport_type} {name} = cpp_imgui.{cursor.spelling}{cj(param.ctypes_to_pointer(param.name) for param in params)}'
 
 
-def write_pyx(pyx: io.IOBase, cursor: cindex.Cursor):
-    result = TypeWrap.from_function_result(cursor)
-    params = TypeWrap.get_function_params(cursor)
+
+
+def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
+    result = TypeWrap.from_function_result(function)
+    params = TypeWrap.get_function_params(function)
 
     if result.is_void:
-        pyx.write(f'''def {cursor.spelling}{cj(param.name_with_ctypes_type for param in params)}:
-    cpp_imgui.{cursor.spelling}{cj(param.ctypes_to_pointer(param.name) for param in params)}
+        # TODO: default param
+        pyx.write(f'''def {function.spelling}{cj(param.name + ': ' + wrap_flags.in_type(param.type.spelling) for param in params)}:
+    cpp_imgui.{function.spelling}{cj(wrap_flags.to_pointer(param.c_type, param.name) for param in params)}
 
 ''')
     else:
-        pyx.write(f'''def {cursor.spelling}{cj(param.name_with_ctypes_type for param in params)}->{result.get_ctypes_type(user_type_pointer=True)}:
-    {_call_assign(cursor, 'value', result, params)}
+        pyx.write(f'''def {function.spelling}{cj(param.name_with_ctypes_type for param in params)}->{result.get_ctypes_type(user_type_pointer=True)}:
+    {_call_assign(function, 'value', result, params)}
     return {result.pointer_to_ctypes('value')}
 
 ''')

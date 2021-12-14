@@ -3,7 +3,7 @@ import io
 from clang import cindex
 from . import utils
 from .typewrap import TypeWrap
-from .include_flags import IncludeFlags
+from .wrap_flags import WrapFlags
 from . import function
 
 
@@ -65,7 +65,7 @@ class StructDecl(NamedTuple):
 
         pxd.write('\n')
 
-    def write_pyx_ctypes(self, pyx: io.IOBase, *, flags: IncludeFlags = IncludeFlags()):
+    def write_pyx_ctypes(self, pyx: io.IOBase, *, flags: WrapFlags = WrapFlags()):
         cursor = self.cursors[-1]
 
         definition = cursor.get_definition()
