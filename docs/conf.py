@@ -52,7 +52,20 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+# html_theme = 'alabaster'
+# html_theme = 'agogo'
+# html_theme = 'basic'
+html_theme = 'bizstyle'
+# html_theme = 'classic'
+# html_theme = 'default'
+# html_theme = 'epub'
+# html_theme = 'haiku'
+# html_theme = 'nature'
+# html_theme = 'nonav'
+# html_theme = 'pyramid'
+# html_theme = 'scrolls'
+# html_theme = 'sphinxdoc'
+# html_theme = 'traditional'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

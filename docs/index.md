@@ -2,11 +2,6 @@
 
 実装メモ。
 
-```{toctree}
-:maxdepth: 2
-:caption: Contents
-```
-
 ## cython + ctypes
 
 型の `wrap` を cython の `cdef class` ではなく、 `ctypes.Structure` で実装してみた。
@@ -36,19 +31,11 @@ class ImFontAtlas(ctypes.Structure):
 
 ## 個別の型変換
 
-### 引数
-
-#### bytes
-
-```python
-def some(src: bytes):
-    # cast で pointer を得る
-    cdef const char *p = <const char *>src
+```{toctree}
+:maxdepth: 2
+in/index
+out/index
 ```
-
-### ImVec2, ImVec4
-
-* NamedTuple にしたい
 
 ## Indices and tables
 
