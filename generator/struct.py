@@ -66,7 +66,7 @@ class StructDecl(NamedTuple):
 
         pxd.write('\n')
 
-    def write_pyx_ctypes(self, pyx: io.IOBase, *, flags: WrapFlags = WrapFlags()):
+    def write_pyx_ctypes(self, pyx: io.IOBase, *, flags: WrapFlags = WrapFlags(), pyi=False):
         cursor = self.cursors[-1]
 
         definition = cursor.get_definition()
@@ -86,7 +86,7 @@ class StructDecl(NamedTuple):
         methods = TypeWrap.get_struct_methods(cursor, includes=flags.methods)
         if methods:
             for method in methods:
-                function.write_pyx_method(pyx, cursor, method)
+                function.write_pyx_method(pyx, cursor, method, pyi=pyi)
 
         if not fields and not methods:
             pyx.write('    pass\n\n')

@@ -72,7 +72,7 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
     return param_names
 
 
-def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
+def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False):
     result = TypeWrap.from_function_result(function)
     params = TypeWrap.get_function_params(function)
 
@@ -81,9 +81,15 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
         f"def {function.spelling}{cj(param.name_in_type_default_value for param in params)}")
     # return type
     if result.is_void:
-        pyx.write(':\n')
+        pyx.write(':')
     else:
-        pyx.write(f'->{result.get_ctypes_type(user_type_pointer=True)}:\n')
+        pyx.write(f'->{result.get_ctypes_type(user_type_pointer=True)}:')
+
+    if pyi:
+        pyx.write(' ...\n')
+        return
+
+    pyx.write('\n')
 
     indent = '    '
 
@@ -105,7 +111,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
         pyx.write(f"{indent}return {result.pointer_to_ctypes('value')}\n\n")
 
 
-def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Cursor):
+def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Cursor, *, pyi=False):
     params = TypeWrap.get_function_params(method)
     result = TypeWrap.from_function_result(method)
 
@@ -113,9 +119,15 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     pyx.write(
         f'    def {method.spelling}{self_cj(param.name_in_type_default_value for param in params)}')
     if result.is_void:
-        pyx.write(':\n')
+        pyx.write(':')
     else:
-        pyx.write(f'->{result.get_ctypes_type(user_type_pointer=True)}:\n')
+        pyx.write(f'->{result.get_ctypes_type(user_type_pointer=True)}:')
+
+    if pyi:
+        pyx.write(' ...\n')
+        return
+
+    pyx.write('\n')
 
     indent = '        '
 

@@ -1,6 +1,7 @@
 '''
 use from setup.py
 '''
+from os import write
 import pathlib
 from . import function
 from . import wrap_flags
@@ -34,6 +35,17 @@ INCLUDE_FUNCS = (
     'Button',
     'SameLine',
 )
+
+
+IMVECTOR = '''
+class ImVector(ctypes.Structure):
+    _fields_ = (
+        ('Size', ctypes.c_int),
+        ('Capacity', ctypes.c_int),
+        ('Data', ctypes.c_void_p),
+    )
+
+'''
 
 
 def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path, enum_py_path: pathlib.Path):
@@ -76,15 +88,9 @@ from libcpp cimport bool
 cimport cpp_imgui
 from libc.stdint cimport uintptr_t
 
-
-class ImVector(ctypes.Structure):
-    _fields_ = (
-        ('Size', ctypes.c_int),
-        ('Capacity', ctypes.c_int),
-        ('Data', ctypes.c_void_p),
-    )
-
 ''')
+        pyx.write(IMVECTOR)
+
         for k, v in wrap_flags.WRAP_TYPES.items():
             for cursors in parser.typedef_struct_list:
                 if cursors.cursor.spelling == k:
@@ -95,10 +101,23 @@ class ImVector(ctypes.Structure):
                 function.write_pyx_function(pyx, cursors[-1])
 
     #
-    # pyd
+    # pyi
     #
     with pyi_path.open('w') as pyi:
-        pass
+        pyi.write('''import ctypes
+
+''')
+
+        pyi.write(IMVECTOR)
+
+        for k, v in wrap_flags.WRAP_TYPES.items():
+            for cursors in parser.typedef_struct_list:
+                if cursors.cursor.spelling == k:
+                    cursors.write_pyx_ctypes(pyi, flags=v, pyi=True)
+
+        for cursors in parser.functions:
+            if cursors[-1].spelling in INCLUDE_FUNCS:
+                function.write_pyx_function(pyi, cursors[-1], pyi=True)
 
     #
     # enum
