@@ -37,7 +37,8 @@ class StructDecl(NamedTuple):
         constructors = [child for child in cursor.get_children(
         ) if child.kind == cindex.CursorKind.CONSTRUCTOR]
 
-        methods = TypeWrap.get_struct_methods(cursor, excludes=excludes)
+        methods = TypeWrap.get_struct_methods(
+            cursor, excludes=excludes, includes=True)
         if cursor.kind == cindex.CursorKind.CLASS_TEMPLATE:
             pxd.write(f'    cppclass {cursor.spelling}[T]')
         elif constructors or methods:

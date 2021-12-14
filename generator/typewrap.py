@@ -52,7 +52,7 @@ class TypeWrap(NamedTuple):
         ) if child.kind == cindex.CursorKind.FIELD_DECL]
 
     @staticmethod
-    def get_struct_methods(cursor: cindex.Cursor, *, excludes=(), includes=()):
+    def get_struct_methods(cursor: cindex.Cursor, *, excludes=(), includes=False):
         def method_filter(method: cindex.Cursor) -> bool:
             if method.spelling == 'GetStateStorage':
                 pass
@@ -61,8 +61,17 @@ class TypeWrap(NamedTuple):
             for param in method.get_children():
                 if param.kind == cindex.CursorKind.PARM_DECL and param.type.spelling in excludes:
                     return False
-            if includes and method.spelling not in includes:
-                return False
+            match includes:
+                case True:
+                    # return True
+                    pass
+                case False:
+                    return False
+                case (*methods,):
+                    if method.spelling not in methods:
+                        return False
+                    else:
+                        pass
             if method.result_type.spelling in excludes:
                 return False
             return True
@@ -153,10 +162,6 @@ class TypeWrap(NamedTuple):
                 raise NotImplementedError()
 
     @property
-    def name_with_ctypes_type(self) -> str:
-        return f'{self.name}: {self.get_ctypes_type()}'
-
-    @property
     def pyx_cimport_type(self) -> str:
         if self._is_user_type_pointer:
             if self.type.kind == cindex.TypeKind.LVALUEREFERENCE:
@@ -191,3 +196,10 @@ class TypeWrap(NamedTuple):
 
             case _:
                 return None
+
+    @property
+    def base_spelling(self) -> str:
+        base = self._base_type
+        if base:
+            return base.type.spelling
+        return self.type.spelling

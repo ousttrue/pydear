@@ -55,11 +55,9 @@ PYX
 def _call_assign(cursor: cindex.Cursor, name: str, result, params):
     if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
         # reference to pointer
-        return f'cdef {result.pyx_cimport_type} {name} = &cpp_imgui.{cursor.spelling}{cj(param.ctypes_to_pointer(param.name) for param in params)}'
+        return f'cdef {result.pyx_cimport_type} {name} = &cpp_imgui.{cursor.spelling}{cj(wrap_flags.to_pointer(param.base_spelling, param.name) for param in params)}'
     else:
-        return f'cdef {result.pyx_cimport_type} {name} = cpp_imgui.{cursor.spelling}{cj(param.ctypes_to_pointer(param.name) for param in params)}'
-
-
+        return f'cdef {result.pyx_cimport_type} {name} = cpp_imgui.{cursor.spelling}{cj(wrap_flags.to_pointer(param.base_spelling, param.name) for param in params)}'
 
 
 def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
@@ -68,12 +66,12 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
 
     if result.is_void:
         # TODO: default param
-        pyx.write(f'''def {function.spelling}{cj(param.name + ': ' + wrap_flags.in_type(param.type.spelling) for param in params)}:
+        pyx.write(f'''def {function.spelling}{cj(param.name + ': ' + wrap_flags.in_type(param.base_spelling) for param in params)}:
     cpp_imgui.{function.spelling}{cj(wrap_flags.to_pointer(param.c_type, param.name) for param in params)}
 
 ''')
     else:
-        pyx.write(f'''def {function.spelling}{cj(param.name_with_ctypes_type for param in params)}->{result.get_ctypes_type(user_type_pointer=True)}:
+        pyx.write(f'''def {function.spelling}{cj(param.name + ': ' + wrap_flags.in_type(param.base_spelling) for param in params)}->{result.get_ctypes_type(user_type_pointer=True)}:
     {_call_assign(function, 'value', result, params)}
     return {result.pointer_to_ctypes('value')}
 
@@ -85,7 +83,7 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     result = TypeWrap.from_function_result(method)
 
     if result.is_void:
-        pyx.write(f'''    def {method.spelling}{self_cj(param.name_with_ctypes_type for param in params)}:
+        pyx.write(f'''    def {method.spelling}{self_cj(param.name + ': ' + wrap_flags.in_type(param.base_spelling) for param in params)}:
         cdef cpp_imgui.{cursor.spelling} *ptr = <cpp_imgui.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)
         ptr.{method.spelling}{cj(param.ctypes_to_pointer(param.name) for param in params)}
 

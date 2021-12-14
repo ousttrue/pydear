@@ -36,13 +36,19 @@ class ImFontAtlas(ctypes.Structure):
 
 ## 個別の型変換
 
+### 引数
+
+#### bytes
+
+```python
+def some(src: bytes):
+    # cast で pointer を得る
+    cdef const char *p = <const char *>src
+```
+
 ### ImVec2, ImVec4
 
 * NamedTuple にしたい
-
-### 文字列
-
-* str を渡せるようにする
 
 ## Indices and tables
 
