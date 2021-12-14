@@ -80,13 +80,15 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
     else:
         pyx.write(f'->{result.get_ctypes_type(user_type_pointer=True)}:\n')
 
+    indent = '    '
+
     # cdef parameters
-    param_names = extract_parameters(pyx, params, '    ')
+    param_names = extract_parameters(pyx, params, indent)
 
     # body
     if result.is_void:
         pyx.write(
-            f'    cpp_imgui.{function.spelling}{cj(param_names)}\n\n')
+            f'{indent}cpp_imgui.{function.spelling}{cj(param_names)}\n\n')
     else:
         ref = ''
         if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
@@ -94,8 +96,8 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
             ref = '&'
 
         pyx.write(
-            f'    cdef {result.pyx_cimport_type} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
-        pyx.write(f"    return {result.pointer_to_ctypes('value')}\n\n")
+            f'{indent}cdef {result.pyx_cimport_type} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
+        pyx.write(f"{indent}return {result.pointer_to_ctypes('value')}\n\n")
 
 
 def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Cursor):
@@ -110,17 +112,18 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     else:
         pyx.write(f'->{result.get_ctypes_type(user_type_pointer=True)}:\n')
 
-    # cdef parameters
-    param_names = extract_parameters(pyx, params, '        ')
+    indent = '        '
 
     # self to ptr
-    pyx.write(
-        f'        cdef cpp_imgui.{cursor.spelling} *ptr = <cpp_imgui.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)\n')
+    pyx.write(f'{indent}cdef cpp_imgui.{cursor.spelling} *ptr = <cpp_imgui.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)\n')
+
+    # cdef parameters
+    param_names = extract_parameters(pyx, params, indent)
 
     # body
     if result.is_void:
         pyx.write(
-            f'        ptr.{method.spelling}{cj(param_names)}\n\n')
+            f'{indent}ptr.{method.spelling}{cj(param_names)}\n\n')
     else:
         ref = ''
         if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
@@ -128,5 +131,5 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
             ref = '&'
 
         pyx.write(
-            f'        cdef {result.pyx_cimport_type} value = {ref}ptr.{method.spelling}{cj(param_names)}\n\n')
-        pyx.write(f"        return {result.pointer_to_ctypes('value')}\n\n")
+            f'{indent}cdef {result.pyx_cimport_type} value = {ref}ptr.{method.spelling}{cj(param_names)}\n\n')
+        pyx.write(f"{indent}return {result.pointer_to_ctypes('value')}\n\n")
