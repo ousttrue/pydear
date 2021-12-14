@@ -1,7 +1,26 @@
+from typing import Iterable
 import io
 from clang import cindex
 from .typewrap import TypeWrap
-from . import utils
+
+
+def cj(src: Iterable[str]) -> str:
+    '''
+    comma join
+    '''
+    return '(' + ', '.join(src) + ')'
+
+
+def self_cj(src: Iterable[str]) -> str:
+    '''
+    comma join
+    '''
+    return '(self, ' + ', '.join(src) + ')'
+
+
+'''
+PXD
+'''
 
 
 def write_pxd_function(pxd: io.IOBase, function: cindex.Cursor, *, excludes=()):
@@ -11,28 +30,33 @@ def write_pxd_function(pxd: io.IOBase, function: cindex.Cursor, *, excludes=()):
         function, excludes=excludes)]
     result = TypeWrap.from_function_result(function)
     pxd.write(
-        f'    {result.c_type} {function.spelling}({utils.comma_join(params)})\n')
+        f'    {result.c_type} {function.spelling}{cj(params)}\n')
 
 
 def write_pxd_constructor(pxd: io.IOBase, klass: cindex.Cursor, constructor: cindex.Cursor):
     params = TypeWrap.get_function_params(constructor)
     pxd.write(
-        f'        {klass.spelling}({utils.comma_join(param.c_type_with_name for param in params)})\n')
+        f'        {klass.spelling}{cj(param.c_type_with_name for param in params)}\n')
 
 
 def write_pxd_method(pxd: io.IOBase, method: cindex.Cursor):
     params = TypeWrap.get_function_params(method)
     result = TypeWrap.from_function_result(method)
     pxd.write(
-        f'        {result.c_type} {method.spelling}({utils.comma_join(param.c_type_with_name for param in params)})\n')
+        f'        {result.c_type} {method.spelling}{cj(param.c_type_with_name for param in params)}\n')
+
+
+'''
+PYX
+'''
 
 
 def _call_assign(cursor: cindex.Cursor, name: str, result, params):
     if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
         # reference to pointer
-        return f'cdef {result.pyx_cimport_type} {name} = &cpp_imgui.{cursor.spelling}({utils.comma_join(param.ctypes_to_pointer(param.name) for param in params)})'
+        return f'cdef {result.pyx_cimport_type} {name} = &cpp_imgui.{cursor.spelling}{cj(param.ctypes_to_pointer(param.name) for param in params)}'
     else:
-        return f'cdef {result.pyx_cimport_type} {name} = cpp_imgui.{cursor.spelling}({utils.comma_join(param.ctypes_to_pointer(param.name) for param in params)})'
+        return f'cdef {result.pyx_cimport_type} {name} = cpp_imgui.{cursor.spelling}{cj(param.ctypes_to_pointer(param.name) for param in params)}'
 
 
 def write_pyx(pyx: io.IOBase, cursor: cindex.Cursor):
@@ -40,12 +64,12 @@ def write_pyx(pyx: io.IOBase, cursor: cindex.Cursor):
     params = TypeWrap.get_function_params(cursor)
 
     if result.is_void:
-        pyx.write(f'''def {cursor.spelling}({utils.comma_join(param.name_with_ctypes_type for param in params)}):
-    cpp_imgui.{cursor.spelling}({utils.comma_join(param.ctypes_to_pointer(param.name) for param in params)})
+        pyx.write(f'''def {cursor.spelling}{cj(param.name_with_ctypes_type for param in params)}:
+    cpp_imgui.{cursor.spelling}{cj(param.ctypes_to_pointer(param.name) for param in params)}
 
 ''')
     else:
-        pyx.write(f'''def {cursor.spelling}({utils.comma_join(param.name_with_ctypes_type for param in params)})->{result.get_ctypes_type(user_type_pointer=True)}:
+        pyx.write(f'''def {cursor.spelling}{cj(param.name_with_ctypes_type for param in params)}->{result.get_ctypes_type(user_type_pointer=True)}:
     {_call_assign(cursor, 'value', result, params)}
     return {result.pointer_to_ctypes('value')}
 
@@ -57,8 +81,8 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     result = TypeWrap.from_function_result(method)
 
     if result.is_void:
-        pyx.write(f'''    def {method.spelling}(self, {utils.comma_join(param.name_with_ctypes_type for param in params)}):
+        pyx.write(f'''    def {method.spelling}{self_cj(param.name_with_ctypes_type for param in params)}:
         cdef cpp_imgui.{cursor.spelling} *ptr = <cpp_imgui.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)
-        ptr.{method.spelling}({utils.comma_join(param.ctypes_to_pointer(param.name) for param in params)})
+        ptr.{method.spelling}{cj(param.ctypes_to_pointer(param.name) for param in params)}
 
 ''')

@@ -49,10 +49,6 @@ def pyx_type_filter(src: str) -> str:
     return dst
 
 
-def comma_join(src: Iterable[str]) -> str:
-    return ', '.join(src)
-
-
 def symbol_filter(src: str) -> str:
     '''
     fix python reserved word
