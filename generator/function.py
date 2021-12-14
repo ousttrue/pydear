@@ -72,13 +72,15 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
     return param_names
 
 
-def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False):
+def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, overload=1):
     result = TypeWrap.from_function_result(function)
     params = TypeWrap.get_function_params(function)
 
+    overload = '' if overload == 1 else f'_{overload}'
+
     # signature
     pyx.write(
-        f"def {function.spelling}{cj(param.name_in_type_default_value for param in params)}")
+        f"def {function.spelling}{overload}{cj(param.name_in_type_default_value for param in params)}")
     # return type
     if result.is_void:
         pyx.write(':')

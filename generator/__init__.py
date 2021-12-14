@@ -96,9 +96,13 @@ from libc.stdint cimport uintptr_t
                 if cursors.cursor.spelling == k:
                     cursors.write_pyx_ctypes(pyx, flags=v)
 
+        overload = {}
         for cursors in parser.functions:
-            if cursors[-1].spelling in INCLUDE_FUNCS:
-                function.write_pyx_function(pyx, cursors[-1])
+            name = cursors[-1].spelling
+            if name in INCLUDE_FUNCS:
+                count = overload.get(name, 0) + 1
+                function.write_pyx_function(pyx, cursors[-1], overload=count)
+                overload[name] = count
 
     #
     # pyi
@@ -115,9 +119,14 @@ from libc.stdint cimport uintptr_t
                 if cursors.cursor.spelling == k:
                     cursors.write_pyx_ctypes(pyi, flags=v, pyi=True)
 
+        overload = {}
         for cursors in parser.functions:
-            if cursors[-1].spelling in INCLUDE_FUNCS:
-                function.write_pyx_function(pyi, cursors[-1], pyi=True)
+            name = cursors[-1].spelling
+            if name in INCLUDE_FUNCS:
+                count = overload.get(name, 0) + 1
+                function.write_pyx_function(
+                    pyi, cursors[-1], pyi=True, overload=count)
+                overload[name] = count
 
     #
     # enum
