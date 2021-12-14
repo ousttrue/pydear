@@ -70,11 +70,18 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
         pyx.write(f'->{result.get_ctypes_type(user_type_pointer=True)}:\n')
 
     # cdef parameters
+    def add_module(src: str) -> str:
+        if src.startswith("Im"):
+            return f'cpp_imgui.{src}'
+        return src
+    for i, param in enumerate(params):
+        pyx.write(
+            f'    cdef {add_module(param.underlying_spelling)} p{i} = {wrap_flags.to_c(param.underlying_spelling, param.name)}\n')
 
     # body
     if result.is_void:
         pyx.write(
-            f'    cpp_imgui.{function.spelling}{cj(wrap_flags.to_c(param.c_type, param.name) for param in params)}\n\n')
+            f'    cpp_imgui.{function.spelling}{cj(f"p{i}" for i, param in enumerate(params))}\n\n')
     else:
         ref = ''
         if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
@@ -82,7 +89,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
             ref = '&'
 
         pyx.write(
-            f'    cdef {result.pyx_cimport_type} value = {ref}cpp_imgui.{function.spelling}{cj(wrap_flags.to_c(param.underlying_spelling, param.name) for param in params)}\n')
+            f'    cdef {result.pyx_cimport_type} value = {ref}cpp_imgui.{function.spelling}{cj(f"p{i}" for i, param in enumerate(params))}\n')
         pyx.write(f"    return {result.pointer_to_ctypes('value')}\n\n")
 
 
