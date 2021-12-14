@@ -2,7 +2,6 @@ from typing import NamedTuple, Tuple, List, Union
 import pathlib
 import logging
 from clang import cindex
-from . function import FunctionDecl
 from . typedef import TypedefDecl
 from . struct import StructDecl
 logger = logging.getLogger(__name__)
@@ -17,7 +16,7 @@ class Parser:
         import pycindex
         self.entrypoint = str(entrypoint)
         self.tu = pycindex.get_tu(self.entrypoint)
-        self.functions: List[FunctionDecl] = []
+        self.functions: List[Tuple[cindex.Cursor, ...]] = []
         self.enums: List[EnumDecl] = []
         self.typedef_struct_list: List[Union[TypedefDecl, StructDecl]] = []
 
@@ -46,7 +45,7 @@ class Parser:
                     if(cursor.spelling.startswith('operator ')):
                         pass
                     else:
-                        self.functions.append(FunctionDecl(cursor_path))
+                        self.functions.append(cursor_path)
                 case cindex.CursorKind.ENUM_DECL:
                     self.enums.append(EnumDecl(cursor_path))
                 case cindex.CursorKind.TYPEDEF_DECL:

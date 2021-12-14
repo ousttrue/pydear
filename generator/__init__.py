@@ -1,6 +1,6 @@
 import pathlib
 from .include_flags import IncludeFlags
-
+from . import function
 
 EXCLUDE_TYPES = (
     'va_list',
@@ -56,19 +56,19 @@ def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.P
 cdef extern from "imgui.h":
 
 ''')
-        for definition in parser.typedef_struct_list:
-            if definition.cursor.spelling in EXCLUDE_TYPES:
+        for cursors in parser.typedef_struct_list:
+            if cursors.cursor.spelling in EXCLUDE_TYPES:
                 # TODO: nested type
                 continue
 
-            definition.write_pxd(pxd, excludes=EXCLUDE_TYPES)
+            cursors.write_pxd(pxd, excludes=EXCLUDE_TYPES)
 
         # namespace ImGui
         pxd.write('''
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
-        for definition in parser.functions:
-            definition.write_pxd(pxd, excludes=EXCLUDE_TYPES)
+        for cursors in parser.functions:
+            function.write_pxd(pxd, cursors[-1], excludes=EXCLUDE_TYPES)
 
     #
     # pyx
@@ -94,13 +94,13 @@ class ImVector(ctypes.Structure):
         #         definition.write_pyx_ctypes(
         #             pyx, flags=INCLUDE_TYPES[definition.cursor.spelling])
         for k, v in INCLUDE_TYPES.items():
-            for definition in parser.typedef_struct_list:
-                if definition.cursor.spelling == k:
-                    definition.write_pyx_ctypes(pyx, flags=v)
+            for cursors in parser.typedef_struct_list:
+                if cursors.cursor.spelling == k:
+                    cursors.write_pyx_ctypes(pyx, flags=v)
 
-        for definition in parser.functions:
-            if definition.cursor.spelling in INCLUDE_FUNCS:
-                definition.write_pyx(pyx)
+        for cursors in parser.functions:
+            if cursors[-1].spelling in INCLUDE_FUNCS:
+                function.write_pyx(pyx, cursors[-1])
 
     #
     # pyd
