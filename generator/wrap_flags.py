@@ -44,7 +44,7 @@ def in_type(spelling: str):
     raise NotImplementedError(spelling)
 
 
-def to_pointer(spelling: str, name: str) -> str:
+def to_c(spelling: str, name: str) -> str:
     match spelling:
         case 'int':
             return name

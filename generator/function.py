@@ -52,14 +52,6 @@ PYX
 '''
 
 
-def _call_assign(cursor: cindex.Cursor, name: str, result, params):
-    if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
-        # reference to pointer
-        return f'cdef {result.pyx_cimport_type} {name} = &cpp_imgui.{cursor.spelling}{cj(wrap_flags.to_pointer(param.base_spelling, param.name) for param in params)}'
-    else:
-        return f'cdef {result.pyx_cimport_type} {name} = cpp_imgui.{cursor.spelling}{cj(wrap_flags.to_pointer(param.base_spelling, param.name) for param in params)}'
-
-
 def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
     result = TypeWrap.from_function_result(function)
     params = TypeWrap.get_function_params(function)
@@ -67,14 +59,17 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor):
     if result.is_void:
         # TODO: default param
         pyx.write(f'''def {function.spelling}{cj(param.name + ': ' + wrap_flags.in_type(param.base_spelling) for param in params)}:
-    cpp_imgui.{function.spelling}{cj(wrap_flags.to_pointer(param.c_type, param.name) for param in params)}
+    cpp_imgui.{function.spelling}{cj(wrap_flags.to_c(param.c_type, param.name) for param in params)}
 
 ''')
     else:
+        ref = ''
+        if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
+            # reference to pointer
+            ref = '&'
         pyx.write(f'''def {function.spelling}{cj(param.name + ': ' + wrap_flags.in_type(param.base_spelling) for param in params)}->{result.get_ctypes_type(user_type_pointer=True)}:
-    {_call_assign(function, 'value', result, params)}
+    cdef {result.pyx_cimport_type} value = {ref}cpp_imgui.{function.spelling}{cj(wrap_flags.to_c(param.base_spelling, param.name) for param in params)}
     return {result.pointer_to_ctypes('value')}
-
 ''')
 
 
