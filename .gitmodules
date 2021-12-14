@@ -1,3 +1,6 @@
 [submodule "_external/imgui"]
 	path = _external/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "_external/pycindex"]
+	path = _external/pycindex
+	url = https://github.com/ousttrue/pycindex.git
