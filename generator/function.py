@@ -73,6 +73,7 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
 
 def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, overload=1):
     result = TypeWrap.from_function_result(function)
+    result_t = wrap_flags.get_type(result.underlying_spelling)
     params = TypeWrap.get_function_params(function)
 
     overload = '' if overload == 1 else f'_{overload}'
@@ -86,7 +87,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
     if result.is_void:
         pyx.write(':')
     else:
-        pyx.write(f'->{result.get_ctypes_type(user_type_pointer=True)}:')
+        pyx.write(f'->{result_t.py_type}:')
 
     if pyi:
         pyx.write(' ...\n')
@@ -109,7 +110,6 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
             # reference to pointer
             ref = '&'
 
-        result_t = wrap_flags.get_type(result.underlying_spelling)
         pyx.write(
             f'{indent}{result_t.cdef} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
         pyx.write(f"{indent}return {result.pointer_to_ctypes('value')}\n\n")
@@ -118,6 +118,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
 def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Cursor, *, pyi=False):
     params = TypeWrap.get_function_params(method)
     result = TypeWrap.from_function_result(method)
+    result_t = wrap_flags.get_type(result.underlying_spelling)
 
     # signature
     def name_type_default_value(param: TypeWrap) -> str:
@@ -127,7 +128,7 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     if result.is_void:
         pyx.write(':')
     else:
-        pyx.write(f'->{result.get_ctypes_type(user_type_pointer=True)}:')
+        pyx.write(f'->{result_t.py_type}:')
 
     if pyi:
         pyx.write(' ...\n')
@@ -153,7 +154,6 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
             # reference to pointer
             ref = '&'
 
-        result_t = wrap_flags.get_type(result.underlying_spelling)
         pyx.write(
             f'{indent}{result_t.cdef} value = {ref}ptr.{method.spelling}{cj(param_names)}\n\n')
         pyx.write(f"{indent}return {result.pointer_to_ctypes('value')}\n\n")

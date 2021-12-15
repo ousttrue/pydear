@@ -24,6 +24,15 @@ class InType:
         return f'cdef {self.c_type}'
 
 
+class VoidType(InType):
+    def __init__(self):
+        super().__init__('void')
+
+    @property
+    def py_type(self) -> str:
+        return 'None'
+
+
 class WrapFlags(InType):
     def __init__(self, c_type: str, *, fields: bool = False, methods: Union[bool, Tuple[str, ...]] = False):
         super().__init__(c_type)
@@ -38,6 +47,7 @@ class WrapFlags(InType):
     @property
     def cdef(self) -> str:
         return f'cdef cpp_imgui.{self.c_type} *'
+
 
 WRAP_TYPES = [
     WrapFlags('ImVec2', fields=True),
@@ -84,6 +94,7 @@ class DoublePointerResultInType(InType):
 
 
 IN_TYPE_MAP: List[InType] = [
+    VoidType(),
     InType('bool'),
     InType('int'),
     InType('float'),
