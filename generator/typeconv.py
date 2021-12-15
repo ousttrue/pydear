@@ -1,7 +1,7 @@
-import ctypes
-from typing import Tuple, Union, Optional, List
+from typing import Optional, List
 import logging
 import re
+from . import wraptypes
 
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class BaseType:
         return self.c_type
 
     @property
-    def cypes_type(self) -> str:
+    def field_ctypes_type(self) -> str:
         return self.py_type
 
     def to_c(self, name: str) -> str:
@@ -42,7 +42,7 @@ class BoolType(BaseType):
         return 'bool'
 
     @property
-    def cypes_type(self) -> str:
+    def field_ctypes_type(self) -> str:
         return 'ctypes.c_bool'
 
 
@@ -55,7 +55,7 @@ class UInt16Type(BaseType):
         return 'int'
 
     @property
-    def cypes_type(self) -> str:
+    def field_ctypes_type(self) -> str:
         return 'ctypes.c_uint16'
 
 
@@ -68,7 +68,7 @@ class UInt32Type(BaseType):
         return 'int'
 
     @property
-    def cypes_type(self) -> str:
+    def field_ctypes_type(self) -> str:
         return 'ctypes.c_uint32'
 
 
@@ -81,7 +81,7 @@ class UInt64Type(BaseType):
         return 'int'
 
     @property
-    def cypes_type(self) -> str:
+    def field_ctypes_type(self) -> str:
         return 'ctypes.c_uint64'
 
 
@@ -94,7 +94,7 @@ class Int32Type(BaseType):
         return 'int'
 
     @property
-    def cypes_type(self) -> str:
+    def field_ctypes_type(self) -> str:
         return 'ctypes.c_int32'
 
 
@@ -107,7 +107,7 @@ class FloatType(BaseType):
         return 'float'
 
     @property
-    def cypes_type(self) -> str:
+    def field_ctypes_type(self) -> str:
         return 'ctypes.c_float'
 
 
@@ -120,7 +120,7 @@ class DoubleType(BaseType):
         return 'float'
 
     @property
-    def cypes_type(self) -> str:
+    def field_ctypes_type(self) -> str:
         return 'ctypes.c_double'
 
 
@@ -133,43 +133,72 @@ class VoidInType(BaseType):
         return 'None'
 
 
-class WrapFlags(BaseType):
-    def __init__(self, c_type: str, *, fields: bool = False, methods: Union[bool, Tuple[str, ...]] = False):
-        super().__init__(c_type)
-        self.fields = fields
-        self.methods = methods
+class WrapInType(BaseType):
+    def __init__(self, name: str):
+        super().__init__(name)
+
+
+class WrapPointerInType(BaseType):
+    def __init__(self, name: str):
+        super().__init__(name + ' *')
+        self._name = name
+
+    def match(self, spelling: str) -> bool:
+        m = re.match(r'^(?:const )?(\w+)(?: \*)?$', spelling)
+        if m and m.group(1) == self._name:
+            return True
+        return False
+
+    @property
+    def py_type(self) -> str:
+        return self._name
+
+    @property
+    def field_ctypes_type(self) -> str:
+        return f'ctypes.c_void_p'
 
     def to_c(self, name: str) -> str:
-        # deref = get_deref(spelling)
-        # if deref and deref in WRAP_TYPES:
-        return f'<cpp_imgui.{self.c_type} *><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+        return f'<cpp_imgui.{self._name}*><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
     @property
     def cdef(self) -> str:
-        return f'cdef cpp_imgui.{self.c_type} *'
+        return f'cdef cpp_imgui.{self._name} *'
 
     def to_py(self, name: str) -> str:
-        return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self.py_type}))[0]'
+        return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self._name}))[0]'
 
 
-IMVECTOR_TYPE = WrapFlags('ImVector')
+class WrapReferenceInType(BaseType):
+    def __init__(self, name: str):
+        super().__init__(name + ' &')
+        self._name = name
 
-WRAP_TYPES = [
-    WrapFlags('ImVec2', fields=True),
-    WrapFlags('ImVec4', fields=True),
-    WrapFlags('ImFont'),
-    WrapFlags('ImFontAtlas', fields=True, methods=(
-        'GetTexDataAsRGBA32', 'ClearTexData',)),
-    WrapFlags('ImGuiIO', fields=True),
-    WrapFlags('ImGuiContext'),
-    WrapFlags('ImDrawCmd', fields=True),
-    WrapFlags('ImDrawData', fields=True),
-    WrapFlags('ImDrawCmdHeader'),
-    WrapFlags('ImDrawListSplitter'),
-    WrapFlags('ImDrawList', fields=True),
-    WrapFlags('ImGuiStyle'),
-    WrapFlags('ImGuiViewport'),
-]
+    def match(self, spelling: str) -> bool:
+        m = re.match(r'^(?:const )?(\w+)(?: &)?$', spelling)
+        if m and m.group(1) == self._name:
+            return True
+        return False
+
+    @property
+    def py_type(self) -> str:
+        return self._name
+
+    @property
+    def field_ctypes_type(self) -> str:
+        return self._name
+
+    def to_c(self, name: str) -> str:
+        return f'<cpp_imgui.{self._name}*><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+
+    @property
+    def cdef(self) -> str:
+        return f'cdef cpp_imgui.{self._name} *'
+
+    def to_py(self, name: str) -> str:
+        return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self._name}))[0]'
+
+
+IMVECTOR_TYPE = WrapInType('ImVector')
 
 
 class VoidPointerInType(BaseType):
@@ -199,6 +228,10 @@ class CtypesArrayInType(BaseType):
     def py_type(self) -> str:
         return 'ctypes.Array'
 
+    @property
+    def field_ctypes_type(self) -> str:
+        return 'ctypes.c_void_p'
+
     def to_c(self, name: str) -> str:
         return f'<{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
@@ -210,6 +243,10 @@ class BytesInType(BaseType):
     @property
     def py_type(self) -> str:
         return 'bytes'
+
+    @property
+    def field_ctypes_type(self) -> str:
+        return 'ctypes.c_void_p'
 
     def to_c(self, name: str) -> str:
         return f'<{self.c_type}>{name}'
@@ -245,19 +282,20 @@ IN_TYPE_MAP: List[BaseType] = [
     BytesInType('unsigned char *'),
     DoublePointerResultInType('unsigned char **'),
     DoublePointerResultInType('void **'),
+    # out
+    WrapInType('ImVec2'),
+    WrapInType('ImVec4'),
+    # field
+    WrapInType('ImDrawCmdHeader'),
+    WrapInType('ImDrawListSplitter'),
 ]
+for w in wraptypes.WRAP_TYPES:
+    IN_TYPE_MAP.append(WrapPointerInType(w.name))
+    IN_TYPE_MAP.append(WrapReferenceInType(w.name))
 
 
 def get_array_element_type(src: str) -> Optional[re.Match]:
-    return re.match(r'(\w+) (\[\w+\])', src)
-
-
-def get_deref(src: str) -> Optional[str]:
-    if src.endswith(' *'):
-        return src[:-2]
-    m = re.match(r'const (\w+) &', src)
-    if m:
-        return m.group(1)
+    return re.match(r'([ \w]+) \[(\w+)\]', src)
 
 
 def get_type(spelling: str) -> BaseType:
@@ -270,28 +308,13 @@ def get_type(spelling: str) -> BaseType:
     if spelling.startswith('ImVector<'):
         return IMVECTOR_TYPE
 
-    for t in WRAP_TYPES:
-        if t.match(spelling):
-            return t
-    deref = get_deref(spelling)
-    if deref:
-        for t in WRAP_TYPES:
-            if t.match(deref):
-                return t
-
-    m = re.match(r'(?:const )?(\w+) [&*]', spelling)
-    if m:
-        deref = m.group(1)
-        for t in WRAP_TYPES:
-            if t.match(deref):
-                return t
-
     for t in IN_TYPE_MAP:
         if t.match(spelling):
             return t
 
     if spelling.endswith('*') or spelling.endswith('&'):
         # unknown pointer
+        logger.debug(f'unknown void*: {spelling}')
         return VOID_POINTER
     if '(*)' in spelling:
         # function pointer
@@ -302,8 +325,9 @@ def get_type(spelling: str) -> BaseType:
 
 def get_field_type(spelling: str) -> str:
     array_type = get_array_element_type(spelling)
-    t = get_type(spelling).cypes_type
     if array_type:
-        return t + ' ' + array_type.group(2)
+        t = get_type(array_type.group(1)).field_ctypes_type
+        return t + '*' + array_type.group(2)
     else:
+        t = get_type(spelling).field_ctypes_type
         return t

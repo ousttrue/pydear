@@ -2,11 +2,21 @@ from typing import NamedTuple, Optional
 import logging
 import re
 from clang import cindex
-from . import utils
 
 logger = logging.getLogger(__name__)
 
 TEMPLATE_PATTERN = re.compile(r'<[^>]+>')
+
+
+def symbol_filter(src: str) -> str:
+    '''
+    fix python reserved word
+    '''
+    match src:
+        case 'in' | 'id':
+            return '_' + src
+        case _:
+            return src
 
 
 def template_filter(src: str) -> str:
@@ -80,7 +90,7 @@ class TypeWrap(NamedTuple):
 
     @property
     def name(self) -> str:
-        return utils.symbol_filter(self.cursor.spelling)
+        return symbol_filter(self.cursor.spelling)
 
     @property
     def is_void(self) -> bool:
@@ -119,10 +129,14 @@ class TypeWrap(NamedTuple):
 
     @property
     def underlying_spelling(self) -> str:
-        base = self._typedef_underlying_type
-        if base:
-            return base.type.spelling
-        return self.type.spelling
+        if self.type.kind == cindex.TypeKind.CONSTANTARRAY:
+            tw = TypeWrap(self.type.get_array_element_type(), self.cursor)
+            return f'{tw.underlying_spelling} [{self.type.get_array_size()}]'
+        else:
+            base = self._typedef_underlying_type
+            if base:
+                return base.type.spelling
+            return self.type.spelling
 
     @property
     def default_value(self) -> str:

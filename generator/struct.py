@@ -1,9 +1,8 @@
 from typing import NamedTuple, Tuple
 import io
 from clang import cindex
-from . import utils
 from .typewrap import TypeWrap
-from .typeconv import WrapFlags
+from .wraptypes import WrapFlags
 from . import function
 from generator import typeconv
 
