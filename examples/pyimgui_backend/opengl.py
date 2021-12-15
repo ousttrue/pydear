@@ -6,42 +6,99 @@ import cydeer as imgui
 logger = logging.getLogger(__name__)
 
 
+VERTEX_SHADER_SRC = """
+#version 330
+
+uniform mat4 ProjMtx;
+in vec2 Position;
+in vec2 UV;
+in vec4 Color;
+out vec2 Frag_UV;
+out vec4 Frag_Color;
+
+void main() {
+    Frag_UV = UV;
+    Frag_Color = Color;
+
+    gl_Position = ProjMtx * vec4(Position.xy, 0, 1);
+}
+"""
+
+FRAGMENT_SHADER_SRC = """
+#version 330
+
+uniform sampler2D Texture;
+in vec2 Frag_UV;
+in vec4 Frag_Color;
+out vec4 Out_Color;
+
+void main() {
+    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);
+}
+"""
+
+
+class Shader:
+    def __init__(self) -> None:
+        self._shader_handle = GL.glCreateProgram()
+        # note: no need to store shader parts handles after linking
+        vertex_shader = GL.glCreateShader(GL.GL_VERTEX_SHADER)
+        fragment_shader = GL.glCreateShader(GL.GL_FRAGMENT_SHADER)
+
+        GL.glShaderSource(vertex_shader, VERTEX_SHADER_SRC)
+        GL.glShaderSource(fragment_shader, FRAGMENT_SHADER_SRC)
+        GL.glCompileShader(vertex_shader)
+        GL.glCompileShader(fragment_shader)
+
+        GL.glAttachShader(self._shader_handle, vertex_shader)
+        GL.glAttachShader(self._shader_handle, fragment_shader)
+
+        GL.glLinkProgram(self._shader_handle)
+
+        # note: after linking shaders can be removed
+        GL.glDeleteShader(vertex_shader)
+        GL.glDeleteShader(fragment_shader)
+
+        self._attrib_location_tex = GL.glGetUniformLocation(
+            self._shader_handle, "Texture")
+        self._attrib_proj_mtx = GL.glGetUniformLocation(
+            self._shader_handle, "ProjMtx")
+        self._attrib_location_position = GL.glGetAttribLocation(
+            self._shader_handle, "Position")
+        self._attrib_location_uv = GL.glGetAttribLocation(
+            self._shader_handle, "UV")
+        self._attrib_location_color = GL.glGetAttribLocation(
+            self._shader_handle, "Color")
+
+    def enable_attributes(self):
+        GL.glEnableVertexAttribArray(self._attrib_location_position)
+        GL.glEnableVertexAttribArray(self._attrib_location_uv)
+        GL.glEnableVertexAttribArray(self._attrib_location_color)
+        GL.glVertexAttribPointer(self._attrib_location_position, 2, GL.GL_FLOAT, GL.GL_FALSE,
+                                 20, ctypes.c_void_p(0))
+        GL.glVertexAttribPointer(self._attrib_location_uv, 2, GL.GL_FLOAT, GL.GL_FALSE,
+                                 20, ctypes.c_void_p(8))
+        GL.glVertexAttribPointer(self._attrib_location_color, 4, GL.GL_UNSIGNED_BYTE, GL.GL_TRUE,
+                                 20, ctypes.c_void_p(16))
+
+    def use(self, w: int, h: int):
+        ortho_projection = (ctypes.c_float * 16)(
+            2.0/w, 0.0,                   0.0, 0.0,
+            0.0,               2.0/-h,   0.0, 0.0,
+            0.0,               0.0,                  -1.0, 0.0,
+            -1.0,               1.0,                   0.0, 1.0
+        )
+        GL.glUseProgram(self._shader_handle)
+        GL.glUniform1i(self._attrib_location_tex, 0)
+        GL.glUniformMatrix4fv(self._attrib_proj_mtx, 1,
+                              GL.GL_FALSE, ortho_projection)
+
+
 class ProgrammablePipelineRenderer:
     """Basic OpenGL integration base class."""
 
-    VERTEX_SHADER_SRC = """
-    #version 330
-
-    uniform mat4 ProjMtx;
-    in vec2 Position;
-    in vec2 UV;
-    in vec4 Color;
-    out vec2 Frag_UV;
-    out vec4 Frag_Color;
-
-    void main() {
-        Frag_UV = UV;
-        Frag_Color = Color;
-
-        gl_Position = ProjMtx * vec4(Position.xy, 0, 1);
-    }
-    """
-
-    FRAGMENT_SHADER_SRC = """
-    #version 330
-
-    uniform sampler2D Texture;
-    in vec2 Frag_UV;
-    in vec4 Frag_Color;
-    out vec4 Out_Color;
-
-    void main() {
-        Out_Color = Frag_Color * texture(Texture, Frag_UV.st);
-    }
-    """
-
     def __init__(self):
-        self._shader_handle = None
+        self._shader = None
         self._vert_handle = None
         self._fragment_handle = None
 
@@ -102,35 +159,7 @@ class ProgrammablePipelineRenderer:
 
         last_vertex_array = GL.glGetIntegerv(GL.GL_VERTEX_ARRAY_BINDING)
 
-        self._shader_handle = GL.glCreateProgram()
-        # note: no need to store shader parts handles after linking
-        vertex_shader = GL.glCreateShader(GL.GL_VERTEX_SHADER)
-        fragment_shader = GL.glCreateShader(GL.GL_FRAGMENT_SHADER)
-
-        GL.glShaderSource(vertex_shader, self.VERTEX_SHADER_SRC)
-        GL.glShaderSource(fragment_shader, self.FRAGMENT_SHADER_SRC)
-        GL.glCompileShader(vertex_shader)
-        GL.glCompileShader(fragment_shader)
-
-        GL.glAttachShader(self._shader_handle, vertex_shader)
-        GL.glAttachShader(self._shader_handle, fragment_shader)
-
-        GL.glLinkProgram(self._shader_handle)
-
-        # note: after linking shaders can be removed
-        GL.glDeleteShader(vertex_shader)
-        GL.glDeleteShader(fragment_shader)
-
-        self._attrib_location_tex = GL.glGetUniformLocation(
-            self._shader_handle, "Texture")
-        self._attrib_proj_mtx = GL.glGetUniformLocation(
-            self._shader_handle, "ProjMtx")
-        self._attrib_location_position = GL.glGetAttribLocation(
-            self._shader_handle, "Position")
-        self._attrib_location_uv = GL.glGetAttribLocation(
-            self._shader_handle, "UV")
-        self._attrib_location_color = GL.glGetAttribLocation(
-            self._shader_handle, "Color")
+        self._shader = Shader()
 
         self._vbo_handle = GL.glGenBuffers(1)
         self._elements_handle = GL.glGenBuffers(1)
@@ -139,16 +168,7 @@ class ProgrammablePipelineRenderer:
         GL.glBindVertexArray(self._vao_handle)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._vbo_handle)
 
-        GL.glEnableVertexAttribArray(self._attrib_location_position)
-        GL.glEnableVertexAttribArray(self._attrib_location_uv)
-        GL.glEnableVertexAttribArray(self._attrib_location_color)
-
-        GL.glVertexAttribPointer(self._attrib_location_position, 2, GL.GL_FLOAT, GL.GL_FALSE,
-                                 20, ctypes.c_void_p(0))
-        GL.glVertexAttribPointer(self._attrib_location_uv, 2, GL.GL_FLOAT, GL.GL_FALSE,
-                                 20, ctypes.c_void_p(8))
-        GL.glVertexAttribPointer(self._attrib_location_color, 4, GL.GL_UNSIGNED_BYTE, GL.GL_TRUE,
-                                 20, ctypes.c_void_p(16))
+        self._shader.enable_attributes()
 
         # restore state
         GL.glBindTexture(GL.GL_TEXTURE_2D, last_texture)
@@ -201,17 +221,7 @@ class ProgrammablePipelineRenderer:
 
         GL.glViewport(0, 0, int(fb_width), int(fb_height))
 
-        ortho_projection = (ctypes.c_float * 16)(
-            2.0/display_width, 0.0,                   0.0, 0.0,
-            0.0,               2.0/-display_height,   0.0, 0.0,
-            0.0,               0.0,                  -1.0, 0.0,
-            -1.0,               1.0,                   0.0, 1.0
-        )
-
-        GL.glUseProgram(self._shader_handle)
-        GL.glUniform1i(self._attrib_location_tex, 0)
-        GL.glUniformMatrix4fv(self._attrib_proj_mtx, 1,
-                              GL.GL_FALSE, ortho_projection)
+        self._shader.use(display_width, display_height)
         GL.glBindVertexArray(self._vao_handle)
 
         if draw_data.CmdLists:
