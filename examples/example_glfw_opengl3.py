@@ -58,8 +58,8 @@ def main():
     # ImGui_ImplOpenGL3_Init(glsl_version)
     from pyimgui_backend.glfw import GlfwRenderer
     impl_glfw = GlfwRenderer(window)
-    from pyimgui_backend.opengl import ProgrammablePipelineRenderer
-    impl_opengl = ProgrammablePipelineRenderer()
+    from pyimgui_backend.opengl import Renderer
+    impl_opengl = Renderer()
 
 #     // Load Fonts
 #     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui.PushFont()/PopFont() to select them.

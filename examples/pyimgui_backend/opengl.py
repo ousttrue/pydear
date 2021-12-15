@@ -1,5 +1,6 @@
 import ctypes
 import logging
+import contextlib
 from OpenGL import GL
 import cydeer as imgui
 
@@ -38,6 +39,91 @@ void main() {
 """
 
 
+@contextlib.contextmanager
+def save_texture():
+    last_texture = GL.glGetIntegerv(GL.GL_TEXTURE_BINDING_2D)
+    try:
+        yield
+    finally:
+        GL.glBindTexture(GL.GL_TEXTURE_2D, last_texture)
+
+
+@contextlib.contextmanager
+def save_state():
+    # save state
+    last_texture = GL.glGetIntegerv(GL.GL_TEXTURE_BINDING_2D)
+    last_array_buffer = GL.glGetIntegerv(GL.GL_ARRAY_BUFFER_BINDING)
+    last_vertex_array = GL.glGetIntegerv(GL.GL_VERTEX_ARRAY_BINDING)
+    try:
+        yield
+    finally:
+        # restore state
+        GL.glBindTexture(GL.GL_TEXTURE_2D, last_texture)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, last_array_buffer)
+        GL.glBindVertexArray(last_vertex_array)
+
+
+@contextlib.contextmanager
+def save_render_state():
+    last_program = GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM)
+    last_texture = GL.glGetIntegerv(GL.GL_TEXTURE_BINDING_2D)
+    last_active_texture = GL.glGetIntegerv(GL.GL_ACTIVE_TEXTURE)
+    last_array_buffer = GL.glGetIntegerv(GL.GL_ARRAY_BUFFER_BINDING)
+    last_element_array_buffer = GL.glGetIntegerv(
+        GL.GL_ELEMENT_ARRAY_BUFFER_BINDING)
+    last_vertex_array = GL.glGetIntegerv(GL.GL_VERTEX_ARRAY_BINDING)
+    last_blend_src = GL.glGetIntegerv(GL.GL_BLEND_SRC)
+    last_blend_dst = GL.glGetIntegerv(GL.GL_BLEND_DST)
+    last_blend_equation_rgb = GL. glGetIntegerv(GL.GL_BLEND_EQUATION_RGB)
+    last_blend_equation_alpha = GL.glGetIntegerv(
+        GL.GL_BLEND_EQUATION_ALPHA)
+    last_viewport = GL.glGetIntegerv(GL.GL_VIEWPORT)
+    last_scissor_box = GL.glGetIntegerv(GL.GL_SCISSOR_BOX)
+    last_enable_blend = GL.glIsEnabled(GL.GL_BLEND)
+    last_enable_cull_face = GL.glIsEnabled(GL.GL_CULL_FACE)
+    last_enable_depth_test = GL.glIsEnabled(GL.GL_DEPTH_TEST)
+    last_enable_scissor_test = GL.glIsEnabled(GL.GL_SCISSOR_TEST)
+    try:
+        yield
+    finally:
+        # restore modified GL state
+        GL.glUseProgram(last_program)
+        GL.glActiveTexture(last_active_texture)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, last_texture)
+        GL.glBindVertexArray(last_vertex_array)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, last_array_buffer)
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER,
+                        last_element_array_buffer)
+        GL.glBlendEquationSeparate(
+            last_blend_equation_rgb, last_blend_equation_alpha)
+        GL.glBlendFunc(last_blend_src, last_blend_dst)
+
+        if last_enable_blend:
+            GL.glEnable(GL.GL_BLEND)
+        else:
+            GL.glDisable(GL.GL_BLEND)
+
+        if last_enable_cull_face:
+            GL.glEnable(GL.GL_CULL_FACE)
+        else:
+            GL.glDisable(GL.GL_CULL_FACE)
+
+        if last_enable_depth_test:
+            GL.glEnable(GL.GL_DEPTH_TEST)
+        else:
+            GL.glDisable(GL.GL_DEPTH_TEST)
+
+        if last_enable_scissor_test:
+            GL.glEnable(GL.GL_SCISSOR_TEST)
+        else:
+            GL.glDisable(GL.GL_SCISSOR_TEST)
+
+        GL.glViewport(last_viewport[0], last_viewport[1],
+                      last_viewport[2], last_viewport[3])
+        GL.glScissor(last_scissor_box[0], last_scissor_box[1],
+                     last_scissor_box[2], last_scissor_box[3])
+
+
 class Shader:
     def __init__(self) -> None:
         self._shader_handle = GL.glCreateProgram()
@@ -70,6 +156,10 @@ class Shader:
         self._attrib_location_color = GL.glGetAttribLocation(
             self._shader_handle, "Color")
 
+    def __del__(self):
+        GL.glDeleteProgram(self._shader_handle)
+        self._shader_handle = 0
+
     def enable_attributes(self):
         GL.glEnableVertexAttribArray(self._attrib_location_position)
         GL.glEnableVertexAttribArray(self._attrib_location_uv)
@@ -94,86 +184,102 @@ class Shader:
                               GL.GL_FALSE, ortho_projection)
 
 
-class ProgrammablePipelineRenderer:
-    """Basic OpenGL integration base class."""
-
-    def __init__(self):
-        self._shader = None
-        self._vert_handle = None
-        self._fragment_handle = None
-
-        self._attrib_location_tex = None
-        self._attrib_proj_mtx = None
-        self._attrib_location_position = None
-        self._attrib_location_uv = None
-        self._attrib_location_color = None
-
-        self._vbo_handle = None
-        self._elements_handle = None
-        self._vao_handle = None
-
-        self._font_texture = None
-
-        self._create_device_objects()
-        self.refresh_font_texture()
-
-    def shutdown(self):
-        self._invalidate_device_objects()
-
-    def refresh_font_texture(self):
-        # save texture state
-        last_texture = GL.glGetIntegerv(GL.GL_TEXTURE_BINDING_2D)
-
-        io = imgui.GetIO()
-        fonts = ctypes.cast(
-            io.Fonts, ctypes.POINTER(imgui.ImFontAtlas))[0]
-        p = (ctypes.c_void_p * 1)()
-        width = (ctypes.c_int * 1)()
-        height = (ctypes.c_int * 1)()
-        channels = (ctypes.c_int * 1)()
-        fonts.GetTexDataAsRGBA32(p, width, height, channels)
-        pixels = (ctypes.c_ubyte *
-                  (width[0] * height[0] * channels[0])).from_address(p[0])
-
-        if self._font_texture is not None:
-            GL.glDeleteTextures([self._font_texture])
-
+class Texture:
+    def __init__(self, pixels: ctypes.c_void_p, width: int, height: int) -> None:
         self._font_texture = GL.glGenTextures(1)
-
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._font_texture)
         GL.glTexParameteri(
             GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
         GL.glTexParameteri(
             GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
-        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width[0],
-                        height[0], 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, pixels)
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width,
+                        height, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, pixels)
 
-        fonts.TexID = ctypes.c_void_p(int(self._font_texture))
-        GL.glBindTexture(GL.GL_TEXTURE_2D, last_texture)
-        fonts.ClearTexData()
+    def __del__(self):
+        if self._font_texture > -1:
+            GL.glDeleteTextures([self._font_texture])
+        self._font_texture = 0
 
-    def _create_device_objects(self):
-        # save state
-        last_texture = GL.glGetIntegerv(GL.GL_TEXTURE_BINDING_2D)
-        last_array_buffer = GL.glGetIntegerv(GL.GL_ARRAY_BUFFER_BINDING)
+    @property
+    def pointer(self) -> ctypes.c_void_p:
+        return ctypes.c_void_p(int(self._font_texture))
 
-        last_vertex_array = GL.glGetIntegerv(GL.GL_VERTEX_ARRAY_BINDING)
 
-        self._shader = Shader()
-
+class VertexBuffer:
+    def __init__(self) -> None:
         self._vbo_handle = GL.glGenBuffers(1)
         self._elements_handle = GL.glGenBuffers(1)
-
         self._vao_handle = GL.glGenVertexArrays(1)
         GL.glBindVertexArray(self._vao_handle)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._vbo_handle)
 
-        self._shader.enable_attributes()
+    def __del__(self):
+        if self._vao_handle > -1:
+            GL.glDeleteVertexArrays(1, [self._vao_handle])
+        if self._vbo_handle > -1:
+            GL.glDeleteBuffers(1, [self._vbo_handle])
+        if self._elements_handle > -1:
+            GL.glDeleteBuffers(1, [self._elements_handle])
+        self._vao_handle = self._vbo_handle = self._elements_handle = 0
 
-        # restore state
-        GL.glBindTexture(GL.GL_TEXTURE_2D, last_texture)
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, last_array_buffer)
-        GL.glBindVertexArray(last_vertex_array)
+    def bind(self):
+        GL.glBindVertexArray(self._vao_handle)
+
+    def data(self, vertices: ctypes.c_void_p, vertices_size: int, indices: ctypes.c_void_p, indices_size: int):
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._vbo_handle)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, vertices_size,
+                        vertices, GL.GL_STREAM_DRAW)
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self._elements_handle)
+        GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, indices_size,
+                        indices, GL.GL_STREAM_DRAW)
+
+    def draw(self, offset: int, count: int):
+        GL.glDrawElements(GL.GL_TRIANGLES, count,
+                          GL.GL_UNSIGNED_SHORT, ctypes.c_void_p(offset))
+
+
+class Renderer:
+    """Basic OpenGL integration base class."""
+
+    def __init__(self):
+        with save_state():
+            self._shader = Shader()
+            self._vertices = VertexBuffer()
+            self._shader.enable_attributes()
+        self._texture = None
+        self.refresh_font_texture()
+
+    def __del__(self):
+        del self._vertices
+        del self._shader
+        del self._texture
+        io = imgui.GetIO()
+        fonts = ctypes.cast(
+            io.Fonts, ctypes.POINTER(imgui.ImFontAtlas))[0]
+        fonts.TexID = 0
+
+    def refresh_font_texture(self):
+        if self._texture:
+            del self._texture
+
+        # save texture state
+        with save_texture():
+
+            io = imgui.GetIO()
+            fonts = ctypes.cast(
+                io.Fonts, ctypes.POINTER(imgui.ImFontAtlas))[0]
+            p = (ctypes.c_void_p * 1)()
+            width = (ctypes.c_int * 1)()
+            height = (ctypes.c_int * 1)()
+            channels = (ctypes.c_int * 1)()
+            fonts.GetTexDataAsRGBA32(p, width, height, channels)
+            pixels = (ctypes.c_ubyte *
+                      (width[0] * height[0] * channels[0])).from_address(p[0])
+
+            self._texture = Texture(pixels, width[0], height[0])
+            fonts.TexID = self._texture.pointer
+
+        fonts.ClearTexData()
 
     def render(self, draw_data):
         # perf: local for faster access
@@ -192,128 +298,47 @@ class ProgrammablePipelineRenderer:
 
         # backup GL state
         # todo: provide cleaner version of this backup-restore code
-        last_program = GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM)
-        last_texture = GL.glGetIntegerv(GL.GL_TEXTURE_BINDING_2D)
-        last_active_texture = GL.glGetIntegerv(GL.GL_ACTIVE_TEXTURE)
-        last_array_buffer = GL.glGetIntegerv(GL.GL_ARRAY_BUFFER_BINDING)
-        last_element_array_buffer = GL.glGetIntegerv(
-            GL.GL_ELEMENT_ARRAY_BUFFER_BINDING)
-        last_vertex_array = GL.glGetIntegerv(GL.GL_VERTEX_ARRAY_BINDING)
-        last_blend_src = GL.glGetIntegerv(GL.GL_BLEND_SRC)
-        last_blend_dst = GL.glGetIntegerv(GL.GL_BLEND_DST)
-        last_blend_equation_rgb = GL. glGetIntegerv(GL.GL_BLEND_EQUATION_RGB)
-        last_blend_equation_alpha = GL.glGetIntegerv(
-            GL.GL_BLEND_EQUATION_ALPHA)
-        last_viewport = GL.glGetIntegerv(GL.GL_VIEWPORT)
-        last_scissor_box = GL.glGetIntegerv(GL.GL_SCISSOR_BOX)
-        last_enable_blend = GL.glIsEnabled(GL.GL_BLEND)
-        last_enable_cull_face = GL.glIsEnabled(GL.GL_CULL_FACE)
-        last_enable_depth_test = GL.glIsEnabled(GL.GL_DEPTH_TEST)
-        last_enable_scissor_test = GL.glIsEnabled(GL.GL_SCISSOR_TEST)
+        with save_render_state():
+            GL.glEnable(GL.GL_BLEND)
+            GL.glBlendEquation(GL.GL_FUNC_ADD)
+            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+            GL.glDisable(GL.GL_CULL_FACE)
+            GL.glDisable(GL.GL_DEPTH_TEST)
+            GL.glEnable(GL.GL_SCISSOR_TEST)
+            GL.glActiveTexture(GL.GL_TEXTURE0)
 
-        GL.glEnable(GL.GL_BLEND)
-        GL.glBlendEquation(GL.GL_FUNC_ADD)
-        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-        GL.glDisable(GL.GL_CULL_FACE)
-        GL.glDisable(GL.GL_DEPTH_TEST)
-        GL.glEnable(GL.GL_SCISSOR_TEST)
-        GL.glActiveTexture(GL.GL_TEXTURE0)
+            GL.glViewport(0, 0, int(fb_width), int(fb_height))
 
-        GL.glViewport(0, 0, int(fb_width), int(fb_height))
+            self._shader.use(display_width, display_height)
+            self._vertices.bind()
 
-        self._shader.use(display_width, display_height)
-        GL.glBindVertexArray(self._vao_handle)
+            if draw_data.CmdLists:
+                cmd_lists = ctypes.cast(draw_data.CmdLists, ctypes.POINTER(
+                    ctypes.POINTER(imgui.ImDrawList)))
+                # for commands in cmd_lists:
+                for i in range(draw_data.CmdListsCount):
+                    commands = cmd_lists[i][0]
+                    idx_buffer_offset = 0
 
-        if draw_data.CmdLists:
-            cmd_lists = ctypes.cast(draw_data.CmdLists, ctypes.POINTER(
-                ctypes.POINTER(imgui.ImDrawList)))
-            # for commands in cmd_lists:
-            for i in range(draw_data.CmdListsCount):
-                commands = cmd_lists[i][0]
-                idx_buffer_offset = 0
+                    self._vertices.data(
+                        ctypes.c_void_p(
+                            commands.VtxBuffer.Data), commands.VtxBuffer.Size * 20,
+                        ctypes.c_void_p(
+                            commands.IdxBuffer.Data), commands.IdxBuffer.Size * 2)
 
-                GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._vbo_handle)
-                # todo: check this (sizes)
-                GL.glBufferData(GL.GL_ARRAY_BUFFER,
-                                commands.VtxBuffer.Size * 20,
-                                ctypes.c_void_p(commands.VtxBuffer.Data), GL.GL_STREAM_DRAW)
+                    # todo: allow to iterate over _CmdList
+                    cmd_data = ctypes.cast(
+                        commands.CmdBuffer.Data, ctypes.POINTER(imgui.ImDrawCmd))
+                    for j in range(commands.CmdBuffer.Size):
+                        command = cmd_data[j]
 
-                GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER,
-                                self._elements_handle)
-                # todo: check this (sizes)
-                GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, commands.IdxBuffer.Size * 2,
-                                ctypes.c_void_p(commands.IdxBuffer.Data), GL.GL_STREAM_DRAW)
-
-                # todo: allow to iterate over _CmdList
-                cmd_data = ctypes.cast(
-                    commands.CmdBuffer.Data, ctypes.POINTER(imgui.ImDrawCmd))
-                for j in range(commands.CmdBuffer.Size):
-                    command = cmd_data[j]
-                    if command.TextureId:
                         GL.glBindTexture(GL.GL_TEXTURE_2D, command.TextureId)
 
-                    # todo: use named tuple
-                    rect = command.ClipRect
-                    GL.glScissor(int(rect.x), int(fb_height - rect.w),
-                                 int(rect.z - rect.x), int(rect.w - rect.y))
+                        # todo: use named tuple
+                        rect = command.ClipRect
+                        GL.glScissor(int(rect.x), int(fb_height - rect.w),
+                                     int(rect.z - rect.x), int(rect.w - rect.y))
 
-                    GL.glDrawElements(GL.GL_TRIANGLES, command.ElemCount,
-                                      GL.GL_UNSIGNED_SHORT, ctypes.c_void_p(idx_buffer_offset))
-
-                    idx_buffer_offset += command.ElemCount * 2
-
-            # restore modified GL state
-            GL.glUseProgram(last_program)
-            GL.glActiveTexture(last_active_texture)
-            GL.glBindTexture(GL.GL_TEXTURE_2D, last_texture)
-            GL.glBindVertexArray(last_vertex_array)
-            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, last_array_buffer)
-            GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER,
-                            last_element_array_buffer)
-            GL.glBlendEquationSeparate(
-                last_blend_equation_rgb, last_blend_equation_alpha)
-            GL.glBlendFunc(last_blend_src, last_blend_dst)
-
-            if last_enable_blend:
-                GL.glEnable(GL.GL_BLEND)
-            else:
-                GL.glDisable(GL.GL_BLEND)
-
-            if last_enable_cull_face:
-                GL.glEnable(GL.GL_CULL_FACE)
-            else:
-                GL.glDisable(GL.GL_CULL_FACE)
-
-            if last_enable_depth_test:
-                GL.glEnable(GL.GL_DEPTH_TEST)
-            else:
-                GL.glDisable(GL.GL_DEPTH_TEST)
-
-            if last_enable_scissor_test:
-                GL.glEnable(GL.GL_SCISSOR_TEST)
-            else:
-                GL.glDisable(GL.GL_SCISSOR_TEST)
-
-        GL.glViewport(last_viewport[0], last_viewport[1],
-                      last_viewport[2], last_viewport[3])
-        GL.glScissor(last_scissor_box[0], last_scissor_box[1],
-                     last_scissor_box[2], last_scissor_box[3])
-
-    def _invalidate_device_objects(self):
-        if self._vao_handle > -1:
-            GL.glDeleteVertexArrays(1, [self._vao_handle])
-        if self._vbo_handle > -1:
-            GL.glDeleteBuffers(1, [self._vbo_handle])
-        if self._elements_handle > -1:
-            GL.glDeleteBuffers(1, [self._elements_handle])
-        self._vao_handle = self._vbo_handle = self._elements_handle = 0
-
-        GL.glDeleteProgram(self._shader_handle)
-        self._shader_handle = 0
-
-        if self._font_texture > -1:
-            GL.glDeleteTextures([self._font_texture])
-
-        io = imgui.GetIO()
-        io.fonts.texture_id = 0
-        self._font_texture = 0
+                        self._vertices.draw(
+                            idx_buffer_offset, command.ElemCount)
+                        idx_buffer_offset += command.ElemCount * 2
