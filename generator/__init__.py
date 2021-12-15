@@ -144,6 +144,7 @@ from libc.stdint cimport uintptr_t
     #
     with pyi_path.open('w') as pyi:
         pyi.write('''import ctypes
+from . imgui_enum import *
 
 ''')
 
@@ -152,7 +153,7 @@ from libc.stdint cimport uintptr_t
         for v in wraptypes.WRAP_TYPES:
             for cursors in parser.typedef_struct_list:
                 if cursors.cursor.spelling == v.name:
-                    cursors.write_pyx_ctypes(pyi, flags=v, pyi=True)
+                    cursors.write_pyi(pyi, flags=v)
 
         overload = {}
         for cursors in parser.functions:

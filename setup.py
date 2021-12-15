@@ -5,7 +5,7 @@ from Cython.Build import cythonize
 import pathlib
 HERE = pathlib.Path(__file__).parent
 sys.path.append(str(HERE / '_external/pycindex/src'))
-PYI_PATH = HERE / 'src/cydeer/imgui.pyi'
+PYI_PATH = HERE / 'src/cydeer/__init__.pyi'
 EXT_DIR = HERE / 'src/cydeer/imgui'
 IMGUI_DIR = HERE / '_external/imgui'
 ENUM_PATH = HERE / 'src/cydeer/imgui_enum.py'
@@ -51,6 +51,9 @@ setup(
         'cydeer',
         'cydeer.imgui',  # from imgui.h
     ],
+    package_data={
+        'cydeer': ['py.typed', '*.pyi']
+    },
     ext_modules=cythonize(extensions, compiler_directives={
                           'language_level': '3'}),
     use_scm_version={

@@ -1,9 +1,10 @@
 *.pyc
+*.pyd
+*.pyi
 *.egg-info
 *.whl
 /src/cydeer/_version.py
 /src/cydeer/imgui
-/src/cydeer/imgui.pyi
 /src/cydeer/imgui_enum.py
 /typings/
 /build/
