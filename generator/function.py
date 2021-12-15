@@ -78,8 +78,10 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
     overload = '' if overload == 1 else f'_{overload}'
 
     # signature
+    def name_type_default_value(param: TypeWrap) -> str:
+        return f'{param.name}: {wrap_flags.get_type(param.underlying_spelling).py_type}{param.default_value}'
     pyx.write(
-        f"def {function.spelling}{overload}{cj(param.name_in_type_default_value for param in params)}")
+        f"def {function.spelling}{overload}{cj(name_type_default_value(param) for param in params)}")
     # return type
     if result.is_void:
         pyx.write(':')
@@ -117,8 +119,10 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     result = TypeWrap.from_function_result(method)
 
     # signature
+    def name_type_default_value(param: TypeWrap) -> str:
+        return f'{param.name}: {wrap_flags.get_type(param.underlying_spelling).py_type}{param.default_value}'
     pyx.write(
-        f'    def {method.spelling}{self_cj(param.name_in_type_default_value for param in params)}')
+        f'    def {method.spelling}{self_cj(name_type_default_value(param) for param in params)}')
     if result.is_void:
         pyx.write(':')
     else:

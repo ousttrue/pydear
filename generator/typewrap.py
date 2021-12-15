@@ -229,14 +229,12 @@ class TypeWrap(NamedTuple):
         return self.type.spelling
 
     @property
-    def name_in_type_default_value(self) -> str:
+    def default_value(self) -> str:
         tokens = []
         for child in self.cursor.get_children():
             # logger.debug(child.spelling)
             match child.kind:
                 case cindex.CursorKind.UNEXPOSED_EXPR | cindex.CursorKind.INTEGER_LITERAL | cindex.CursorKind.FLOATING_LITERAL | cindex.CursorKind.UNARY_OPERATOR:
-                    # default_value = get_default_value(child)
-                    # break
                     tokens = [
                         token.spelling for token in self.cursor.get_tokens()]
                     if '=' not in tokens:
@@ -244,27 +242,15 @@ class TypeWrap(NamedTuple):
                 case _:
                     logger.debug(f'{self.cursor.spelling}: {child.kind}')
 
-        if tokens:
-            # location: cindex.SourceLocation = default_value.location
-            # logger.debug(f'{location.file}:{location.line}')
-            equal = tokens.index('=')
-            value = ' '.join(tokens[equal+1:])
-            if value == 'NULL':
-                value = 'None'
-            elif value.startswith('"'):
-                value = 'b' + value
-            elif value.endswith('f'):
-                value = value[:-1]
-            return self.name + ': ' + wrap_flags.get_type(self.underlying_spelling).py_type + '= ' + value
-        else:
-            return self.name + ': ' + wrap_flags.get_type(self.underlying_spelling).py_type
+        if not tokens:
+            return ''
 
-
-def get_default_value(cursor: cindex.Cursor) -> cindex.Cursor:
-    for child in cursor.get_children():
-        if child.kind == cindex.CursorKind.INTEGER_LITERAL:
-            return child
-        else:
-            raise NotImplementedError()
-
-    raise NotImplementedError()
+        equal = tokens.index('=')
+        value = ' '.join(tokens[equal+1:])
+        if value == 'NULL':
+            value = 'None'
+        elif value.startswith('"'):
+            value = 'b' + value
+        elif value.endswith('f'):
+            value = value[:-1]
+        return '= ' + value
