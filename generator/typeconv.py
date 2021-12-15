@@ -22,11 +22,10 @@ class BaseType:
     def field_ctypes_type(self) -> str:
         return self.py_type
 
-    def to_c(self, name: str) -> str:
+    def to_c(self, name: str, is_const: bool) -> str:
         return name
 
-    @property
-    def cdef(self) -> str:
+    def to_cdef(self, is_const: bool) -> str:
         return f'cdef {self.c_type}'
 
     def to_py(self, name: str) -> str:
@@ -135,20 +134,19 @@ class VoidInType(BaseType):
 
 class WrapInType(BaseType):
     def __init__(self, name: str,
-                 to_c: Optional[Callable[[str], str]] = None,
+                 to_c: Optional[Callable[[str, bool], str]] = None,
                  to_py: Optional[Callable[[str], str]] = None):
         super().__init__(name)
         self._to_c = to_c
         self._to_py = to_py
 
-    def to_c(self, name: str) -> str:
+    def to_c(self, name: str, is_const: bool) -> str:
         if self._to_c:
-            return self._to_c(name)
+            return self._to_c(name, is_const)
         else:
             return name
 
-    @property
-    def cdef(self) -> str:
+    def to_cdef(self, is_const: bool) -> str:
         return f'cdef cpp_imgui.{self.c_type}'
 
     def to_py(self, name: str) -> str:
@@ -177,11 +175,10 @@ class WrapPointerInType(BaseType):
     def field_ctypes_type(self) -> str:
         return f'ctypes.c_void_p'
 
-    def to_c(self, name: str) -> str:
+    def to_c(self, name: str, is_const: bool) -> str:
         return f'<cpp_imgui.{self._name}*><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
-    @property
-    def cdef(self) -> str:
+    def to_cdef(self, is_const: bool) -> str:
         return f'cdef cpp_imgui.{self._name} *'
 
     def to_py(self, name: str) -> str:
@@ -207,11 +204,10 @@ class WrapReferenceInType(BaseType):
     def field_ctypes_type(self) -> str:
         return self._name
 
-    def to_c(self, name: str) -> str:
+    def to_c(self, name: str, is_const: bool) -> str:
         return f'<cpp_imgui.{self._name}*><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
-    @property
-    def cdef(self) -> str:
+    def to_cdef(self, is_const: bool) -> str:
         return f'cdef cpp_imgui.{self._name} *'
 
     def to_py(self, name: str) -> str:
@@ -229,7 +225,7 @@ class VoidPointerInType(BaseType):
     def py_type(self) -> str:
         return 'ctypes.c_void_p'
 
-    def to_c(self, name: str) -> str:
+    def to_c(self, name: str, is_const: bool) -> str:
         return f'<void *><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
     def to_py(self, name: str) -> str:
@@ -244,7 +240,7 @@ class ConstVoidPointerInType(BaseType):
     def py_type(self) -> str:
         return 'ctypes.c_void_p'
 
-    def to_c(self, name: str) -> str:
+    def to_c(self, name: str, is_const: bool) -> str:
         return f'<const void *><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
     def to_py(self, name: str) -> str:
@@ -270,7 +266,7 @@ class CtypesArrayInType(BaseType):
     def field_ctypes_type(self) -> str:
         return 'ctypes.c_void_p'
 
-    def to_c(self, name: str) -> str:
+    def to_c(self, name: str, is_const: bool) -> str:
         return f'<{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
 
@@ -286,7 +282,7 @@ class BytesInType(BaseType):
     def field_ctypes_type(self) -> str:
         return 'ctypes.c_void_p'
 
-    def to_c(self, name: str) -> str:
+    def to_c(self, name: str, is_const: bool) -> str:
         return f'<{self.c_type}>{name}'
 
 
@@ -295,7 +291,7 @@ class DoublePointerResultInType(BaseType):
     def py_type(self) -> str:
         return 'ctypes.c_void_p'
 
-    def to_c(self, name: str) -> str:
+    def to_c(self, name: str, is_const: bool) -> str:
         return f'<{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
 
@@ -325,12 +321,12 @@ IN_TYPE_MAP: List[BaseType] = [
     DoublePointerResultInType('void **'),
     # out
     WrapInType('ImVec2',
-               lambda name: f'cpp_imgui.ImVec2({name}.x, {name}.y)',
+               lambda name, is_const: f'cpp_imgui.ImVec2({name}.x, {name}.y)',
                lambda name: f'({name}.x, {name}.y)'
                ),
     WrapInType(
         'ImVec4',
-        lambda name: f'cpp_imgui.ImVec4({name}.x, {name}.y, {name}.z, {name}.w)',
+        lambda name, is_const: f'cpp_imgui.ImVec4({name}.x, {name}.y, {name}.z, {name}.w)',
         lambda name: f'({name}.x, {name}.y, {name}.z, {name}.w)'
     ),
     # field

@@ -60,7 +60,9 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
     param_names = []
     for i, param in enumerate(params):
         t = typeconv.get_type(param.underlying_spelling)
-        pyx.write(f'{indent}{t.cdef} p{i} = {t.to_c(param.name)}\n')
+        is_const = param.type.is_const_qualified()
+        pyx.write(
+            f'{indent}{t.to_cdef(is_const)} p{i} = {t.to_c(param.name, is_const)}\n')
         if param.type.kind == cindex.TypeKind.LVALUEREFERENCE:
             # deref
             param_names.append(f'p{i}[0]')
@@ -71,6 +73,7 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
 
 def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, overload=1):
     result = TypeWrap.from_function_result(function)
+    result_is_const = result.type.is_const_qualified()
     result_t = typeconv.get_type(result.underlying_spelling)
     params = TypeWrap.get_function_params(function)
 
@@ -106,17 +109,17 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
         ref = ''
         if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
             # reference to pointer
-            # remove const
-            ref = f'<{result_t.cdef[4:]}>&'
+            ref = f'<{result_t.to_cdef(result_is_const)[4:]}>&'
 
         pyx.write(
-            f'{indent}{result_t.cdef} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
+            f'{indent}{result_t.to_cdef(result_is_const)} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
         pyx.write(f"{indent}return {result_t.to_py('value')}\n\n")
 
 
 def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Cursor, *, pyi=False):
     params = TypeWrap.get_function_params(method)
     result = TypeWrap.from_function_result(method)
+    result_is_const = result.type.is_const_qualified()
     result_t = typeconv.get_type(result.underlying_spelling)
 
     # signature
@@ -154,5 +157,5 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
             ref = '&'
 
         pyx.write(
-            f'{indent}{result_t.cdef} value = {ref}ptr.{method.spelling}{cj(param_names)}\n\n')
+            f'{indent}{result_t.to_cdef(result_is_const)} value = {ref}ptr.{method.spelling}{cj(param_names)}\n\n')
         pyx.write(f"{indent}return {result_t.to_py('value')}\n\n")
