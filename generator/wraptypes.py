@@ -34,4 +34,5 @@ WRAP_TYPES = [
     WrapFlags('ImDrawList', fields=True),
     WrapFlags('ImGuiStyle'),
     WrapFlags('ImGuiViewport'),
+    WrapFlags('ImGuiWindowClass'),
 ]

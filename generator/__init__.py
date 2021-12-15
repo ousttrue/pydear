@@ -39,12 +39,9 @@ INCLUDE_FUNCS = (
 )
 
 EXCLUDE_FUNCS = (
-    # function pointer
-    'GetAllocatorFunctions',
-    'SetAllocatorFunctions',
-    # return ImVec2 by value
-    # 'GetMouseDragDelta',
-    # 'GetMousePosOnOpeningCurrentPopup',
+    'CheckboxFlags',
+    'Combo',
+    'ListBox',
 )
 
 
@@ -66,8 +63,18 @@ def is_exclude_function(cursors: tuple) -> bool:
     if function.result_type.spelling in EXCLUDE_TYPES:
         return True
     for child in function.get_children():
-        if child.kind == cindex.CursorKind.PARM_DECL and child.type.spelling in EXCLUDE_TYPES:
-            return True
+        if child.kind == cindex.CursorKind.PARM_DECL:
+            if child.type.spelling in EXCLUDE_TYPES:
+                return True
+            if 'callback' in child.spelling:
+                # function pointer
+                return True
+            if 'func' in child.spelling:
+                # function pointer
+                return True
+            if '(*)' in child.type.spelling:
+                # function pointer
+                return True
     return False
 
 
@@ -126,7 +133,8 @@ from libc.stdint cimport uintptr_t
                 continue
 
             name = cursors[-1].spelling
-            if name in INCLUDE_FUNCS:
+            if True:
+                # if name in INCLUDE_FUNCS:
                 count = overload.get(name, 0) + 1
                 function.write_pyx_function(pyx, cursors[-1], overload=count)
                 overload[name] = count
@@ -152,7 +160,8 @@ from libc.stdint cimport uintptr_t
                 continue
 
             name = cursors[-1].spelling
-            if name in INCLUDE_FUNCS:
+            if True:
+                # if name in INCLUDE_FUNCS:
                 count = overload.get(name, 0) + 1
                 function.write_pyx_function(
                     pyi, cursors[-1], pyi=True, overload=count)

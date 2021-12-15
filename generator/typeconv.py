@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Callable
 import logging
 import re
 from . import wraptypes
@@ -134,8 +134,28 @@ class VoidInType(BaseType):
 
 
 class WrapInType(BaseType):
-    def __init__(self, name: str):
+    def __init__(self, name: str,
+                 to_c: Optional[Callable[[str], str]] = None,
+                 to_py: Optional[Callable[[str], str]] = None):
         super().__init__(name)
+        self._to_c = to_c
+        self._to_py = to_py
+
+    def to_c(self, name: str) -> str:
+        if self._to_c:
+            return self._to_c(name)
+        else:
+            return name
+
+    @property
+    def cdef(self) -> str:
+        return f'cdef cpp_imgui.{self.c_type}'
+
+    def to_py(self, name: str) -> str:
+        if self._to_py:
+            return self._to_py(name)
+        else:
+            return name
 
 
 class WrapPointerInType(BaseType):
@@ -216,11 +236,29 @@ class VoidPointerInType(BaseType):
         return f'ctypes.c_void_p(<uintptr_t>{name})'
 
 
+class ConstVoidPointerInType(BaseType):
+    def __init__(self):
+        super().__init__('const void *')
+
+    @property
+    def py_type(self) -> str:
+        return 'ctypes.c_void_p'
+
+    def to_c(self, name: str) -> str:
+        return f'<const void *><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+
+    def to_py(self, name: str) -> str:
+        return f'ctypes.c_void_p(<uintptr_t>{name})'
+
+
 class CtypesArrayInType(BaseType):
+    def __init__(self, name: str):
+        super().__init__(name + ' *')
+        self._name = name
+
     def match(self, spelling: str) -> bool:
-        if spelling == self.c_type:
-            return True
-        if spelling.replace('&', '*') == self.c_type:
+        m = re.match(r'^(?:const )?(\w+)(?: [\*&])?$', spelling)
+        if m and m.group(1) == self._name:
             return True
         return False
 
@@ -261,6 +299,7 @@ class DoublePointerResultInType(BaseType):
         return f'<{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
 
+CONST_VOID_POINTER = ConstVoidPointerInType()
 VOID_POINTER = VoidPointerInType()
 
 IN_TYPE_MAP: List[BaseType] = [
@@ -273,18 +312,27 @@ IN_TYPE_MAP: List[BaseType] = [
     FloatType(),
     DoubleType(),
     VOID_POINTER,
-    CtypesArrayInType('bool *'),
-    CtypesArrayInType('int *'),
-    CtypesArrayInType('unsigned int *'),
-    CtypesArrayInType('float *'),
-    CtypesArrayInType('size_t *'),
+    CONST_VOID_POINTER,
+    CtypesArrayInType('bool'),
+    CtypesArrayInType('int'),
+    CtypesArrayInType('unsigned int'),
+    CtypesArrayInType('float'),
+    CtypesArrayInType('double'),
+    CtypesArrayInType('size_t'),
     BytesInType('const char *'),
     BytesInType('unsigned char *'),
     DoublePointerResultInType('unsigned char **'),
     DoublePointerResultInType('void **'),
     # out
-    WrapInType('ImVec2'),
-    WrapInType('ImVec4'),
+    WrapInType('ImVec2',
+               lambda name: f'cpp_imgui.ImVec2({name}.x, {name}.y)',
+               lambda name: f'({name}.x, {name}.y)'
+               ),
+    WrapInType(
+        'ImVec4',
+        lambda name: f'cpp_imgui.ImVec4({name}.x, {name}.y, {name}.z, {name}.w)',
+        lambda name: f'({name}.x, {name}.y, {name}.z, {name}.w)'
+    ),
     # field
     WrapInType('ImDrawCmdHeader'),
     WrapInType('ImDrawListSplitter'),
@@ -314,8 +362,12 @@ def get_type(spelling: str) -> BaseType:
 
     if spelling.endswith('*') or spelling.endswith('&'):
         # unknown pointer
-        logger.debug(f'unknown void*: {spelling}')
-        return VOID_POINTER
+        if spelling.startswith('const '):
+            logger.debug(f'unknown: const void*: {spelling}')
+            return CONST_VOID_POINTER
+        else:
+            logger.debug(f'unknown: void*: {spelling}')
+            return VOID_POINTER
     if '(*)' in spelling:
         # function pointer
         return VOID_POINTER

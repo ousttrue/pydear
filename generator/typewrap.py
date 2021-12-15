@@ -143,7 +143,7 @@ class TypeWrap(NamedTuple):
         for child in self.cursor.get_children():
             # logger.debug(child.spelling)
             match child.kind:
-                case cindex.CursorKind.UNEXPOSED_EXPR | cindex.CursorKind.INTEGER_LITERAL | cindex.CursorKind.FLOATING_LITERAL | cindex.CursorKind.UNARY_OPERATOR:
+                case cindex.CursorKind.UNEXPOSED_EXPR | cindex.CursorKind.INTEGER_LITERAL | cindex.CursorKind.FLOATING_LITERAL | cindex.CursorKind.CXX_BOOL_LITERAL_EXPR | cindex.CursorKind.UNARY_OPERATOR:
                     tokens = [
                         token.spelling for token in self.cursor.get_tokens()]
                     if '=' not in tokens:
@@ -162,5 +162,12 @@ class TypeWrap(NamedTuple):
             value = 'None'
         elif value.startswith('"'):
             value = 'b' + value
+        elif value == 'true':
+            value = 'True'
+        elif value == 'false':
+            value = 'False'
+
+        value = value.replace('FLT_MAX', '3.402823466e+38')
+        value = value.replace('FLT_MIN', '1.175494351e-38')
         value = re.sub(r'([0-9\.])f', r'\1', value)
         return '= ' + value

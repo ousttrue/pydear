@@ -106,7 +106,8 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
         ref = ''
         if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
             # reference to pointer
-            ref = '&'
+            # remove const
+            ref = f'<{result_t.cdef[4:]}>&'
 
         pyx.write(
             f'{indent}{result_t.cdef} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
