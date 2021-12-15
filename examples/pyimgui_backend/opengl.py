@@ -75,8 +75,6 @@ class ProgrammablePipelineRenderer:
         height = (ctypes.c_int * 1)()
         channels = (ctypes.c_int * 1)()
         fonts.GetTexDataAsRGBA32(p, width, height, channels)
-        logger.debug(
-            f'GetTexDataAsRGBA32 => {width[0]} x {height[0]} x {channels[0]}')
         pixels = (ctypes.c_ubyte *
                   (width[0] * height[0] * channels[0])).from_address(p[0])
 

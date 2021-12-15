@@ -255,9 +255,9 @@ class TypeWrap(NamedTuple):
                 value = 'b' + value
             elif value.endswith('f'):
                 value = value[:-1]
-            return self.name + ': ' + wrap_flags.in_type(self.underlying_spelling) + '= ' + value
+            return self.name + ': ' + wrap_flags.get_type(self.underlying_spelling).py_type + '= ' + value
         else:
-            return self.name + ': ' + wrap_flags.in_type(self.underlying_spelling)
+            return self.name + ': ' + wrap_flags.get_type(self.underlying_spelling).py_type
 
 
 def get_default_value(cursor: cindex.Cursor) -> cindex.Cursor:

@@ -63,7 +63,7 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
     for i, param in enumerate(params):
         ct = param.pyx_cimport_type
         pyx.write(
-            f'{indent}{ct.cdef} p{i} = {wrap_flags.to_c(param.underlying_spelling, param.name)}\n')
+            f'{indent}{ct.cdef} p{i} = {wrap_flags.get_type(param.underlying_spelling).to_c(param.name)}\n')
         if ct.is_reference:
             # deref
             param_names.append(f'p{i}[0]')

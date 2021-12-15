@@ -110,7 +110,7 @@ def get_deref(src: str) -> Optional[str]:
         return m.group(1)
 
 
-def get_type(spelling: str) -> Optional[InType]:
+def get_type(spelling: str) -> InType:
     spelling = prepare(spelling)
 
     deref = get_deref(spelling)
@@ -130,18 +130,4 @@ def get_type(spelling: str) -> Optional[InType]:
         if t.match(spelling):
             return t
 
-
-def in_type(spelling: str):
-    value = get_type(spelling)
-    if value:
-        return value.py_type
-
-    raise NotImplementedError(spelling)
-
-
-def to_c(spelling: str, name: str) -> str:
-    value = get_type(spelling)
-    if value:
-        return value.to_c(name)
-
-    raise NotImplementedError(spelling)
+    raise RuntimeError()
