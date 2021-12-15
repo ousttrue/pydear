@@ -19,12 +19,9 @@ class InType:
     def to_c(self, name: str) -> str:
         return name
 
-# def const_ref(src: str) -> str:
-#     if 'const' in src:
-#         src = src.replace('const ', '')
-#         return 'const cpp_imgui.' + prepare(src).replace('&', '*')
-#     else:
-#         return 'cpp_imgui.' + prepare(src).replace('&', '*')
+    @property
+    def cdef(self) -> str:
+        return f'cdef {self.c_type}'
 
 
 class WrapFlags(InType):
@@ -38,6 +35,9 @@ class WrapFlags(InType):
         # if deref and deref in WRAP_TYPES:
         return f'<cpp_imgui.{self.c_type} *><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
+    @property
+    def cdef(self) -> str:
+        return f'cdef cpp_imgui.{self.c_type} *'
 
 WRAP_TYPES = [
     WrapFlags('ImVec2', fields=True),

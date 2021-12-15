@@ -61,10 +61,9 @@ PYX
 def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> List[str]:
     param_names = []
     for i, param in enumerate(params):
-        ct = param.pyx_cimport_type
-        pyx.write(
-            f'{indent}{ct.cdef} p{i} = {wrap_flags.get_type(param.underlying_spelling).to_c(param.name)}\n')
-        if ct.is_reference:
+        t = wrap_flags.get_type(param.underlying_spelling)
+        pyx.write(f'{indent}{t.cdef} p{i} = {t.to_c(param.name)}\n')
+        if param.type.kind == cindex.TypeKind.LVALUEREFERENCE:
             # deref
             param_names.append(f'p{i}[0]')
         else:
