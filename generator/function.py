@@ -30,11 +30,9 @@ PXD
 '''
 
 
-def write_pxd_function(pxd: io.IOBase, function: cindex.Cursor, *, excludes=()):
-    if function.result_type.spelling in excludes:
-        return
+def write_pxd_function(pxd: io.IOBase, function: cindex.Cursor):
     params = [param.c_type_with_name for param in TypeWrap.get_function_params(
-        function, excludes=excludes)]
+        function)]
     result = TypeWrap.from_function_result(function)
     pxd.write(
         f'    {result.c_type} {function.spelling}{cj(params)}\n')

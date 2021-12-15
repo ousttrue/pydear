@@ -3,6 +3,7 @@ use from setup.py
 '''
 from os import write
 import pathlib
+from clang import cindex
 from . import function
 from . import typeconv
 from . import wraptypes
@@ -58,6 +59,18 @@ class ImVector(ctypes.Structure):
 '''
 
 
+def is_exclude_function(cursors: tuple) -> bool:
+    function: cindex.Cursor = cursors[-1]
+    if function.spelling in EXCLUDE_FUNCS:
+        return True
+    if function.result_type.spelling in EXCLUDE_TYPES:
+        return True
+    for child in function.get_children():
+        if child.kind == cindex.CursorKind.PARM_DECL and child.type.spelling in EXCLUDE_TYPES:
+            return True
+    return False
+
+
 def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path, enum_py_path: pathlib.Path):
     from .parser import Parser
     parser = Parser(imgui_dir / 'imgui.h')
@@ -85,8 +98,9 @@ cdef extern from "imgui.h":
 cdef extern from "imgui.h" namespace "ImGui":
 ''')
         for cursors in parser.functions:
-            function.write_pxd_function(
-                pxd, cursors[-1], excludes=EXCLUDE_TYPES)
+            if is_exclude_function(cursors):
+                continue
+            function.write_pxd_function(pxd, cursors[-1])
 
     #
     # pyx
@@ -108,13 +122,10 @@ from libc.stdint cimport uintptr_t
 
         overload = {}
         for cursors in parser.functions:
+            if is_exclude_function(cursors):
+                continue
+
             name = cursors[-1].spelling
-            # if cursors[-1].result_type.spelling in EXCLUDE_TYPES:
-            #     continue
-            # if cursors[-1].result_type.spelling in ("ImVec2", "ImVec4"):
-            #     # TODO: return by value
-            #     continue
-            # if name not in EXCLUDE_FUNCS:
             if name in INCLUDE_FUNCS:
                 count = overload.get(name, 0) + 1
                 function.write_pyx_function(pyx, cursors[-1], overload=count)
@@ -137,12 +148,9 @@ from libc.stdint cimport uintptr_t
 
         overload = {}
         for cursors in parser.functions:
-            # if cursors[-1].result_type.spelling in EXCLUDE_TYPES:
-            #     continue
-            # if cursors[-1].result_type.spelling in ("ImVec2", "ImVec4"):
-            #     # TODO: return by value
-            #     continue
-            # if name not in EXCLUDE_FUNCS:
+            if is_exclude_function(cursors):
+                continue
+
             name = cursors[-1].spelling
             if name in INCLUDE_FUNCS:
                 count = overload.get(name, 0) + 1

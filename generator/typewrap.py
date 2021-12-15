@@ -49,9 +49,8 @@ class TypeWrap(NamedTuple):
         return TypeWrap(cursor.type, cursor)
 
     @staticmethod
-    def get_function_params(cursor: cindex.Cursor, *, excludes=()):
-        return [TypeWrap.from_function_param(child) for child in cursor.get_children(
-        ) if child.kind == cindex.CursorKind.PARM_DECL and child.type.spelling not in excludes]
+    def get_function_params(cursor: cindex.Cursor):
+        return [TypeWrap.from_function_param(child) for child in cursor.get_children() if child.kind == cindex.CursorKind.PARM_DECL]
 
     @staticmethod
     def from_struct_field(cursor: cindex.Cursor):
