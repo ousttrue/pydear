@@ -58,6 +58,7 @@ class ProgrammablePipelineRenderer:
         self._font_texture = None
 
         self._create_device_objects()
+        self.refresh_font_texture()
 
     def shutdown(self):
         self._invalidate_device_objects()
@@ -67,8 +68,6 @@ class ProgrammablePipelineRenderer:
         last_texture = GL.glGetIntegerv(GL.GL_TEXTURE_BINDING_2D)
 
         io = imgui.GetIO()
-        if not io.Fonts:
-            return
         fonts = ctypes.cast(
             io.Fonts, ctypes.POINTER(imgui.ImFontAtlas))[0]
         p = (ctypes.c_void_p * 1)()
@@ -157,9 +156,6 @@ class ProgrammablePipelineRenderer:
         GL.glBindVertexArray(last_vertex_array)
 
     def render(self, draw_data):
-        if not self._font_texture:
-            self.refresh_font_texture()
-
         # perf: local for faster access
         io = imgui.GetIO()
 

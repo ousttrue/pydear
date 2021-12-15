@@ -165,7 +165,7 @@ class WrapPointerInType(BaseType):
         return f'cdef cpp_imgui.{self._name} *'
 
     def to_py(self, name: str) -> str:
-        return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self._name}))[0]'
+        return f'ctypes.cast(ctypes.c_void_p(<uintptr_t>{name}), ctypes.POINTER({self._name}))[0]'
 
 
 class WrapReferenceInType(BaseType):
@@ -195,7 +195,7 @@ class WrapReferenceInType(BaseType):
         return f'cdef cpp_imgui.{self._name} *'
 
     def to_py(self, name: str) -> str:
-        return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self._name}))[0]'
+        return f'ctypes.cast(ctypes.c_void_p(<uintptr_t>{name}), ctypes.POINTER({self._name}))[0]'
 
 
 IMVECTOR_TYPE = WrapInType('ImVector')
@@ -213,7 +213,7 @@ class VoidPointerInType(BaseType):
         return f'<void *><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
     def to_py(self, name: str) -> str:
-        return f'ctypes.c_void_p(<long long>{name})'
+        return f'ctypes.c_void_p(<uintptr_t>{name})'
 
 
 class CtypesArrayInType(BaseType):
