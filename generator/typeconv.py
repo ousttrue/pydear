@@ -1,3 +1,4 @@
+import ctypes
 from typing import Tuple, Union, Optional, List
 import logging
 import re
@@ -6,7 +7,7 @@ import re
 logger = logging.getLogger(__name__)
 
 
-class InType:
+class BaseType:
     def __init__(self, c_type: str):
         self.c_type = c_type
 
@@ -16,6 +17,10 @@ class InType:
     @property
     def py_type(self) -> str:
         return self.c_type
+
+    @property
+    def cypes_type(self) -> str:
+        return self.py_type
 
     def to_c(self, name: str) -> str:
         return name
@@ -28,7 +33,85 @@ class InType:
         return name
 
 
-class VoidInType(InType):
+class BoolType(BaseType):
+    def __init__(self):
+        super().__init__('bool')
+
+    @property
+    def py_type(self) -> str:
+        return 'bool'
+
+    @property
+    def cypes_type(self) -> str:
+        return 'ctypes.c_bool'
+
+
+class UInt16Type(BaseType):
+    def __init__(self):
+        super().__init__('unsigned short')
+
+    @property
+    def py_type(self) -> str:
+        return 'int'
+
+    @property
+    def cypes_type(self) -> str:
+        return 'ctypes.c_uint16'
+
+
+class UInt32Type(BaseType):
+    def __init__(self):
+        super().__init__('unsigned int')
+
+    @property
+    def py_type(self) -> str:
+        return 'int'
+
+    @property
+    def cypes_type(self) -> str:
+        return 'ctypes.c_uint32'
+
+
+class Int32Type(BaseType):
+    def __init__(self):
+        super().__init__('int')
+
+    @property
+    def py_type(self) -> str:
+        return 'int'
+
+    @property
+    def cypes_type(self) -> str:
+        return 'ctypes.c_int32'
+
+
+class FloatType(BaseType):
+    def __init__(self):
+        super().__init__('float')
+
+    @property
+    def py_type(self) -> str:
+        return 'float'
+
+    @property
+    def cypes_type(self) -> str:
+        return 'ctypes.c_float'
+
+
+class DoubleType(BaseType):
+    def __init__(self):
+        super().__init__('double')
+
+    @property
+    def py_type(self) -> str:
+        return 'float'
+
+    @property
+    def cypes_type(self) -> str:
+        return 'ctypes.c_double'
+
+
+class VoidInType(BaseType):
     def __init__(self):
         super().__init__('void')
 
@@ -37,7 +120,7 @@ class VoidInType(InType):
         return 'None'
 
 
-class WrapFlags(InType):
+class WrapFlags(BaseType):
     def __init__(self, c_type: str, *, fields: bool = False, methods: Union[bool, Tuple[str, ...]] = False):
         super().__init__(c_type)
         self.fields = fields
@@ -75,7 +158,7 @@ WRAP_TYPES = [
 ]
 
 
-class VoidPointerInType(InType):
+class VoidPointerInType(BaseType):
     def __init__(self):
         super().__init__('void *')
 
@@ -87,7 +170,7 @@ class VoidPointerInType(InType):
         return f'<uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
 
-class CtypesArrayInType(InType):
+class CtypesArrayInType(BaseType):
     @property
     def py_type(self) -> str:
         return 'ctypes.Array'
@@ -96,7 +179,7 @@ class CtypesArrayInType(InType):
         return f'<{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
 
-class BytesInType(InType):
+class BytesInType(BaseType):
     def __init__(self, c_type: str):
         super().__init__(c_type)
 
@@ -108,7 +191,7 @@ class BytesInType(InType):
         return f'<{self.c_type}>{name}'
 
 
-class DoublePointerResultInType(InType):
+class DoublePointerResultInType(BaseType):
     @property
     def py_type(self) -> str:
         return 'ctypes.c_void_p'
@@ -119,13 +202,15 @@ class DoublePointerResultInType(InType):
 
 VOID_POINTER = VoidPointerInType()
 
-IN_TYPE_MAP: List[InType] = [
+IN_TYPE_MAP: List[BaseType] = [
     VoidInType(),
-    InType('bool'),
-    InType('unsigned short'),
-    InType('int'),
-    InType('unsigned int'),
-    InType('float'),
+    BoolType(),
+    UInt16Type(),
+    Int32Type(),
+    UInt32Type(),
+    BaseType('unsigned long long'),
+    FloatType(),
+    DoubleType(),
     VOID_POINTER,
     CtypesArrayInType('bool *'),
     CtypesArrayInType('int *'),
@@ -149,7 +234,9 @@ def get_deref(src: str) -> Optional[str]:
         return m.group(1)
 
 
-def get_type(spelling: str) -> InType:
+def get_type(spelling: str) -> BaseType:
+    spelling = spelling.replace('[]', '*')
+
     array_type = get_array_element_type(spelling)
     if array_type:
         spelling = array_type.group(1) + ' *'
@@ -177,7 +264,7 @@ def get_type(spelling: str) -> InType:
         if t.match(spelling):
             return t
 
-    if spelling.endswith('*'):
+    if spelling.endswith('*') or spelling.endswith('&'):
         # unknown pointer
         return VOID_POINTER
     if '(*)' in spelling:
@@ -187,27 +274,9 @@ def get_type(spelling: str) -> InType:
     raise RuntimeError()
 
 
-def _prim_to_ctypes(src: str) -> str:
-    match src:
-        case 'bool':
-            return 'ctypes.c_bool'
-        case 'int':
-            return 'ctypes.c_int32'
-        case 'unsigned short':
-            return 'ctypes.c_uint16'
-        case 'unsigned int':
-            return 'ctypes.c_uint32'
-        case 'float':
-            return 'ctypes.c_float'
-        case 'double':
-            return 'ctypes.c_double'
-        case _:
-            return src
-
-
 def get_field_type(spelling: str) -> str:
     array_type = get_array_element_type(spelling)
-    t = _prim_to_ctypes(get_type(spelling).py_type)
+    t = get_type(spelling).cypes_type
     if array_type:
         return t + ' ' + array_type.group(2)
     else:
