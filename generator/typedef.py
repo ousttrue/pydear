@@ -2,7 +2,7 @@ from typing import NamedTuple, Tuple
 import io
 from clang import cindex
 from . import utils
-from .wrap_flags import WrapFlags
+from .typeconv import WrapFlags
 
 
 class TypedefDecl(NamedTuple):

@@ -2,7 +2,7 @@ from typing import Iterable, List
 import io
 from clang import cindex
 from .typewrap import TypeWrap
-from . import wrap_flags
+from . import typeconv
 
 
 def cj(src: Iterable[str]) -> str:
@@ -61,7 +61,7 @@ PYX
 def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> List[str]:
     param_names = []
     for i, param in enumerate(params):
-        t = wrap_flags.get_type(param.underlying_spelling)
+        t = typeconv.get_type(param.underlying_spelling)
         pyx.write(f'{indent}{t.cdef} p{i} = {t.to_c(param.name)}\n')
         if param.type.kind == cindex.TypeKind.LVALUEREFERENCE:
             # deref
@@ -73,14 +73,14 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
 
 def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, overload=1):
     result = TypeWrap.from_function_result(function)
-    result_t = wrap_flags.get_type(result.underlying_spelling)
+    result_t = typeconv.get_type(result.underlying_spelling)
     params = TypeWrap.get_function_params(function)
 
     overload = '' if overload == 1 else f'_{overload}'
 
     # signature
     def name_type_default_value(param: TypeWrap) -> str:
-        return f'{param.name}: {wrap_flags.get_type(param.underlying_spelling).py_type}{param.default_value}'
+        return f'{param.name}: {typeconv.get_type(param.underlying_spelling).py_type}{param.default_value}'
     pyx.write(
         f"def {function.spelling}{overload}{cj(name_type_default_value(param) for param in params)}")
     # return type
@@ -118,11 +118,11 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
 def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Cursor, *, pyi=False):
     params = TypeWrap.get_function_params(method)
     result = TypeWrap.from_function_result(method)
-    result_t = wrap_flags.get_type(result.underlying_spelling)
+    result_t = typeconv.get_type(result.underlying_spelling)
 
     # signature
     def name_type_default_value(param: TypeWrap) -> str:
-        return f'{param.name}: {wrap_flags.get_type(param.underlying_spelling).py_type}{param.default_value}'
+        return f'{param.name}: {typeconv.get_type(param.underlying_spelling).py_type}{param.default_value}'
     pyx.write(
         f'    def {method.spelling}{self_cj(name_type_default_value(param) for param in params)}')
     if result.is_void:

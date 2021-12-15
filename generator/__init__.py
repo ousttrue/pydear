@@ -4,7 +4,7 @@ use from setup.py
 from os import write
 import pathlib
 from . import function
-from . import wrap_flags
+from . import typeconv
 
 EXCLUDE_TYPES = (
     'va_list',
@@ -91,7 +91,7 @@ from libc.stdint cimport uintptr_t
 ''')
         pyx.write(IMVECTOR)
 
-        for v in wrap_flags.WRAP_TYPES:
+        for v in typeconv.WRAP_TYPES:
             for cursors in parser.typedef_struct_list:
                 if cursors.cursor.spelling == v.c_type:
                     cursors.write_pyx_ctypes(pyx, flags=v)
@@ -114,7 +114,7 @@ from libc.stdint cimport uintptr_t
 
         pyi.write(IMVECTOR)
 
-        for v in wrap_flags.WRAP_TYPES:
+        for v in typeconv.WRAP_TYPES:
             for cursors in parser.typedef_struct_list:
                 if cursors.cursor.spelling == v.c_type:
                     cursors.write_pyx_ctypes(pyi, flags=v, pyi=True)

@@ -3,9 +3,9 @@ import io
 from clang import cindex
 from . import utils
 from .typewrap import TypeWrap
-from .wrap_flags import WrapFlags
+from .typeconv import WrapFlags
 from . import function
-from generator import wrap_flags
+from generator import typeconv
 
 
 def is_forward_declaration(cursor: cindex.Cursor) -> bool:
@@ -81,7 +81,7 @@ class StructDecl(NamedTuple):
             pyx.write('    _fields_=[\n')
             for field in fields:
                 pyx.write(
-                    f'        ("{field.name}", {wrap_flags.get_field_type(field.underlying_spelling)}),\n')
+                    f'        ("{field.name}", {typeconv.get_field_type(field.underlying_spelling)}),\n')
             pyx.write('    ]\n\n')
 
         methods = TypeWrap.get_struct_methods(cursor, includes=flags.methods)
