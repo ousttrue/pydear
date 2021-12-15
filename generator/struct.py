@@ -66,7 +66,7 @@ class StructDecl(NamedTuple):
 
         pxd.write('\n')
 
-    def write_pyx_ctypes(self, pyx: io.IOBase, *, flags: WrapFlags = WrapFlags(), pyi=False):
+    def write_pyx_ctypes(self, pyx: io.IOBase, *, flags: WrapFlags = WrapFlags(''), pyi=False):
         cursor = self.cursors[-1]
 
         definition = cursor.get_definition()

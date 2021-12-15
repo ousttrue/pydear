@@ -91,9 +91,9 @@ from libc.stdint cimport uintptr_t
 ''')
         pyx.write(IMVECTOR)
 
-        for k, v in wrap_flags.WRAP_TYPES.items():
+        for v in wrap_flags.WRAP_TYPES:
             for cursors in parser.typedef_struct_list:
-                if cursors.cursor.spelling == k:
+                if cursors.cursor.spelling == v.c_type:
                     cursors.write_pyx_ctypes(pyx, flags=v)
 
         overload = {}
@@ -114,9 +114,9 @@ from libc.stdint cimport uintptr_t
 
         pyi.write(IMVECTOR)
 
-        for k, v in wrap_flags.WRAP_TYPES.items():
+        for v in wrap_flags.WRAP_TYPES:
             for cursors in parser.typedef_struct_list:
-                if cursors.cursor.spelling == k:
+                if cursors.cursor.spelling == v.c_type:
                     cursors.write_pyx_ctypes(pyi, flags=v, pyi=True)
 
         overload = {}

@@ -1,34 +1,16 @@
-from typing import NamedTuple, Tuple, Union, Callable, Dict, Optional
+from typing import Tuple, Union, Optional, List
 import logging
 import re
 
 logger = logging.getLogger(__name__)
 
 
-class WrapFlags(NamedTuple):
-    fields: bool = False
-    methods: Union[bool, Tuple[str, ...]] = False
-
-
-WRAP_TYPES = {
-    'ImVec2': WrapFlags(fields=True),
-    'ImVec4': WrapFlags(fields=True),
-    'ImFont': WrapFlags(),
-    'ImFontAtlas': WrapFlags(fields=True, methods=('GetTexDataAsRGBA32', 'ClearTexData',)),
-    'ImGuiIO': WrapFlags(fields=True),
-    'ImGuiContext': WrapFlags(),
-    'ImDrawCmd': WrapFlags(fields=True),
-    'ImDrawData': WrapFlags(fields=True),
-    'ImDrawCmdHeader': WrapFlags(),
-    'ImDrawListSplitter': WrapFlags(),
-    'ImDrawList': WrapFlags(fields=True),
-    'ImGuiStyle': WrapFlags(),
-}
-
-
 class InType:
     def __init__(self, c_type: str):
         self.c_type = c_type
+
+    def match(self, spelling: str) -> bool:
+        return spelling == self.c_type
 
     @property
     def py_type(self) -> str:
@@ -36,6 +18,42 @@ class InType:
 
     def to_c(self, name: str) -> str:
         return name
+
+# def const_ref(src: str) -> str:
+#     if 'const' in src:
+#         src = src.replace('const ', '')
+#         return 'const cpp_imgui.' + prepare(src).replace('&', '*')
+#     else:
+#         return 'cpp_imgui.' + prepare(src).replace('&', '*')
+
+
+class WrapFlags(InType):
+    def __init__(self, c_type: str, *, fields: bool = False, methods: Union[bool, Tuple[str, ...]] = False):
+        super().__init__(c_type)
+        self.fields = fields
+        self.methods = methods
+
+    def to_c(self, name: str) -> str:
+        # deref = get_deref(spelling)
+        # if deref and deref in WRAP_TYPES:
+        return f'<cpp_imgui.{self.c_type} *><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+
+
+WRAP_TYPES = [
+    WrapFlags('ImVec2', fields=True),
+    WrapFlags('ImVec4', fields=True),
+    WrapFlags('ImFont'),
+    WrapFlags('ImFontAtlas', fields=True, methods=(
+        'GetTexDataAsRGBA32', 'ClearTexData',)),
+    WrapFlags('ImGuiIO', fields=True),
+    WrapFlags('ImGuiContext'),
+    WrapFlags('ImDrawCmd', fields=True),
+    WrapFlags('ImDrawData', fields=True),
+    WrapFlags('ImDrawCmdHeader'),
+    WrapFlags('ImDrawListSplitter'),
+    WrapFlags('ImDrawList', fields=True),
+    WrapFlags('ImGuiStyle'),
+]
 
 
 class CtypesArrayInType(InType):
@@ -65,23 +83,15 @@ class DoublePointerResultInType(InType):
         return f'<{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
 
-IN_TYPE_MAP: Dict[str, InType] = {
-    'int': InType('int'),
-    'float': InType('float'),
-    'bool *': CtypesArrayInType('bool *'),
-    'int *': CtypesArrayInType('int *'),
-    'float *': CtypesArrayInType('float *'),
-    'const char *': ZeroTerminatedBytesInType('const char *'),
-    'unsigned char **': DoublePointerResultInType('unsigned char **'),
-}
-
-
-def get_deref(src: str) -> Optional[str]:
-    if src.endswith(' *'):
-        return src[:-2]
-    m = re.match(r'const (\w+) &', src)
-    if m:
-        return m.group(1)
+IN_TYPE_MAP: List[InType] = [
+    InType('int'),
+    InType('float'),
+    CtypesArrayInType('bool *'),
+    CtypesArrayInType('int *'),
+    CtypesArrayInType('float *'),
+    ZeroTerminatedBytesInType('const char *'),
+    DoublePointerResultInType('unsigned char **'),
+]
 
 
 def prepare(src: str) -> str:
@@ -92,43 +102,46 @@ def prepare(src: str) -> str:
     return src
 
 
-def in_type(spelling: str):
+def get_deref(src: str) -> Optional[str]:
+    if src.endswith(' *'):
+        return src[:-2]
+    m = re.match(r'const (\w+) &', src)
+    if m:
+        return m.group(1)
+
+
+def get_type(spelling: str) -> Optional[InType]:
     spelling = prepare(spelling)
 
-    value = IN_TYPE_MAP.get(spelling)
-    if value:
-        return value.py_type
-
     deref = get_deref(spelling)
-    if deref and deref in WRAP_TYPES:
-        return deref
+    if deref:
+        for t in WRAP_TYPES:
+            if t.match(deref):
+                return t
 
     m = re.match(r'const (\w+) &', spelling)
     if m:
         deref = m.group(1)
-        if deref in WRAP_TYPES:
-            return deref
+        for t in WRAP_TYPES:
+            if t.match(deref):
+                return t
+
+    for t in IN_TYPE_MAP:
+        if t.match(spelling):
+            return t
+
+
+def in_type(spelling: str):
+    value = get_type(spelling)
+    if value:
+        return value.py_type
 
     raise NotImplementedError(spelling)
 
 
-def const_ref(src: str) -> str:
-    if 'const' in src:
-        src = src.replace('const ', '')
-        return 'const cpp_imgui.' + prepare(src).replace('&', '*')
-    else:
-        return 'cpp_imgui.' + prepare(src).replace('&', '*')
-
-
 def to_c(spelling: str, name: str) -> str:
-    spelling = prepare(spelling)
-
-    value = IN_TYPE_MAP.get(spelling)
+    value = get_type(spelling)
     if value:
         return value.to_c(name)
-
-    deref = get_deref(spelling)
-    if deref and deref in WRAP_TYPES:
-        return f'<{const_ref(spelling)}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
     raise NotImplementedError(spelling)
