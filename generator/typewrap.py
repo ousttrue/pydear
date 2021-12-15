@@ -149,6 +149,5 @@ class TypeWrap(NamedTuple):
             value = 'None'
         elif value.startswith('"'):
             value = 'b' + value
-        elif value.endswith('f'):
-            value = value[:-1]
+        value = re.sub(r'([0-9\.])f', r'\1', value)
         return '= ' + value

@@ -36,6 +36,15 @@ INCLUDE_FUNCS = (
     'SameLine',
 )
 
+EXCLUDE_FUNCS = (
+    # function pointer
+    'GetAllocatorFunctions',
+    'SetAllocatorFunctions',
+    # return ImVec2 by value
+    # 'GetMouseDragDelta',
+    # 'GetMousePosOnOpeningCurrentPopup',
+)
+
 
 IMVECTOR = '''
 class ImVector(ctypes.Structure):
@@ -99,6 +108,12 @@ from libc.stdint cimport uintptr_t
         overload = {}
         for cursors in parser.functions:
             name = cursors[-1].spelling
+            # if cursors[-1].result_type.spelling in EXCLUDE_TYPES:
+            #     continue
+            # if cursors[-1].result_type.spelling in ("ImVec2", "ImVec4"):
+            #     # TODO: return by value
+            #     continue
+            # if name not in EXCLUDE_FUNCS:
             if name in INCLUDE_FUNCS:
                 count = overload.get(name, 0) + 1
                 function.write_pyx_function(pyx, cursors[-1], overload=count)
@@ -121,6 +136,12 @@ from libc.stdint cimport uintptr_t
 
         overload = {}
         for cursors in parser.functions:
+            # if cursors[-1].result_type.spelling in EXCLUDE_TYPES:
+            #     continue
+            # if cursors[-1].result_type.spelling in ("ImVec2", "ImVec4"):
+            #     # TODO: return by value
+            #     continue
+            # if name not in EXCLUDE_FUNCS:
             name = cursors[-1].spelling
             if name in INCLUDE_FUNCS:
                 count = overload.get(name, 0) + 1

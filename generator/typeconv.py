@@ -72,6 +72,19 @@ class UInt32Type(BaseType):
         return 'ctypes.c_uint32'
 
 
+class UInt64Type(BaseType):
+    def __init__(self):
+        super().__init__('unsigned long long')
+
+    @property
+    def py_type(self) -> str:
+        return 'int'
+
+    @property
+    def cypes_type(self) -> str:
+        return 'ctypes.c_uint64'
+
+
 class Int32Type(BaseType):
     def __init__(self):
         super().__init__('int')
@@ -155,6 +168,7 @@ WRAP_TYPES = [
     WrapFlags('ImDrawListSplitter'),
     WrapFlags('ImDrawList', fields=True),
     WrapFlags('ImGuiStyle'),
+    WrapFlags('ImGuiViewport'),
 ]
 
 
@@ -167,10 +181,20 @@ class VoidPointerInType(BaseType):
         return 'ctypes.c_void_p'
 
     def to_c(self, name: str) -> str:
-        return f'<uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+        return f'<void *><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+
+    def to_py(self, name: str) -> str:
+        return f'ctypes.c_void_p(<long long>{name})'
 
 
 class CtypesArrayInType(BaseType):
+    def match(self, spelling: str) -> bool:
+        if spelling == self.c_type:
+            return True
+        if spelling.replace('&', '*') == self.c_type:
+            return True
+        return False
+
     @property
     def py_type(self) -> str:
         return 'ctypes.Array'
@@ -208,7 +232,7 @@ IN_TYPE_MAP: List[BaseType] = [
     UInt16Type(),
     Int32Type(),
     UInt32Type(),
-    BaseType('unsigned long long'),
+    UInt64Type(),
     FloatType(),
     DoubleType(),
     VOID_POINTER,
@@ -216,9 +240,11 @@ IN_TYPE_MAP: List[BaseType] = [
     CtypesArrayInType('int *'),
     CtypesArrayInType('unsigned int *'),
     CtypesArrayInType('float *'),
+    CtypesArrayInType('size_t *'),
     BytesInType('const char *'),
     BytesInType('unsigned char *'),
     DoublePointerResultInType('unsigned char **'),
+    DoublePointerResultInType('void **'),
 ]
 
 
@@ -253,7 +279,7 @@ def get_type(spelling: str) -> BaseType:
             if t.match(deref):
                 return t
 
-    m = re.match(r'(?:const )?(\w+) &', spelling)
+    m = re.match(r'(?:const )?(\w+) [&*]', spelling)
     if m:
         deref = m.group(1)
         for t in WRAP_TYPES:
