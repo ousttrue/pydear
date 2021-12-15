@@ -112,7 +112,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
 
         pyx.write(
             f'{indent}{result_t.cdef} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
-        pyx.write(f"{indent}return {result.pointer_to_ctypes('value')}\n\n")
+        pyx.write(f"{indent}return {result_t.to_py('value')}\n\n")
 
 
 def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Cursor, *, pyi=False):
@@ -156,4 +156,4 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
 
         pyx.write(
             f'{indent}{result_t.cdef} value = {ref}ptr.{method.spelling}{cj(param_names)}\n\n')
-        pyx.write(f"{indent}return {result.pointer_to_ctypes('value')}\n\n")
+        pyx.write(f"{indent}return {result_t.to_py('value')}\n\n")

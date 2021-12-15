@@ -23,6 +23,9 @@ class InType:
     def cdef(self) -> str:
         return f'cdef {self.c_type}'
 
+    def to_py(self, name: str) -> str:
+        return name
+
 
 class VoidType(InType):
     def __init__(self):
@@ -47,6 +50,9 @@ class WrapFlags(InType):
     @property
     def cdef(self) -> str:
         return f'cdef cpp_imgui.{self.c_type} *'
+
+    def to_py(self, name: str) -> str:
+        return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self.py_type}))[0]'
 
 
 WRAP_TYPES = [

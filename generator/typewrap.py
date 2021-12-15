@@ -185,11 +185,6 @@ class TypeWrap(NamedTuple):
             case _:
                 raise NotImplementedError()
 
-    def pointer_to_ctypes(self, name: str) -> str:
-        if self._is_user_type_pointer:
-            return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self.get_ctypes_type(user_type_pointer=True)}))[0]'
-        return name
-
     @property
     def _typedef_underlying_type(self) -> Optional['TypeWrap']:
         match self.type.kind:
