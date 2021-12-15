@@ -16,7 +16,7 @@ try:
     from clang import cindex
 except:
     # get clang
-    import _external.pycindex.setup 
+    import _external.pycindex.setup
 import generator  # noqa
 generator.generate(IMGUI_DIR, EXT_DIR, PYI_PATH, ENUM_PATH)
 
@@ -36,6 +36,7 @@ extensions = [Extension('cydeer.imgui',
                         ],
                         include_dirs=[str(IMGUI_DIR)],
                         language='c++',
+                        extra_compile_args=['/wd4244'],
                         )]
 
 setup(

@@ -84,6 +84,7 @@ class DoublePointerResultInType(InType):
 
 
 IN_TYPE_MAP: List[InType] = [
+    InType('bool'),
     InType('int'),
     InType('float'),
     CtypesArrayInType('bool *'),
@@ -119,7 +120,7 @@ def get_type(spelling: str) -> InType:
             if t.match(deref):
                 return t
 
-    m = re.match(r'const (\w+) &', spelling)
+    m = re.match(r'(?:const )?(\w+) &', spelling)
     if m:
         deref = m.group(1)
         for t in WRAP_TYPES:

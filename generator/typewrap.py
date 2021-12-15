@@ -185,26 +185,6 @@ class TypeWrap(NamedTuple):
             case _:
                 raise NotImplementedError()
 
-    @property
-    def pyx_cimport_type(self) -> PyxType:
-        '''
-        cdef
-        '''
-        is_const = self.type.is_const_qualified()
-        match self.type.kind:
-            case cindex.TypeKind.POINTER | cindex.TypeKind.LVALUEREFERENCE:
-                is_const = is_const or self.type.get_pointee().is_const_qualified()
-        if self._is_user_type_pointer:
-            pointee = self.type.get_pointee()
-            if self.type.kind == cindex.TypeKind.LVALUEREFERENCE:
-                # reference to pointer
-                return PyxType(pointee.spelling, cpp_imgui=True, is_reference=True, is_const=is_const)
-            else:
-                return PyxType(self.c_type, cpp_imgui=True, is_const=is_const)
-        if self.type.spelling.startswith("Im"):
-            return PyxType(self.c_type, cpp_imgui=True, is_const=is_const)
-        return PyxType(self.c_type, is_const=is_const)
-
     def pointer_to_ctypes(self, name: str) -> str:
         if self._is_user_type_pointer:
             return f'ctypes.cast(ctypes.c_void_p(<long long>{name}), ctypes.POINTER({self.get_ctypes_type(user_type_pointer=True)}))[0]'
@@ -239,6 +219,8 @@ class TypeWrap(NamedTuple):
                         token.spelling for token in self.cursor.get_tokens()]
                     if '=' not in tokens:
                         tokens = []
+                case cindex.CursorKind.TYPE_REF:
+                    pass
                 case _:
                     logger.debug(f'{self.cursor.spelling}: {child.kind}')
 
