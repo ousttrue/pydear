@@ -2,7 +2,7 @@ from typing import NamedTuple, Tuple
 import io
 from clang import cindex
 from .typewrap import TypeWrap
-from .wraptypes import WrapFlags
+from .types.wrap_types import WrapFlags
 from . import function
 from generator import typeconv
 

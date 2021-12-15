@@ -96,6 +96,16 @@ class TypeWrap(NamedTuple):
         return self.type.kind == cindex.TypeKind.VOID
 
     @property
+    def is_const(self) -> bool:
+        if self.type.is_const_qualified():
+            return True
+        match self.type.kind:
+            case cindex.TypeKind.POINTER | cindex.TypeKind.LVALUEREFERENCE:
+                if self.type.get_pointee().is_const_qualified():
+                    return True
+        return False
+
+    @property
     def c_type(self) -> str:
         '''
         pxd

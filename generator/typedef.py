@@ -2,7 +2,7 @@ from typing import NamedTuple, Tuple
 import io
 import re
 from clang import cindex
-from .wraptypes import WrapFlags
+from .types.wrap_types import WrapFlags
 
 FP_PATTERN = re.compile(r'(.*)\(\*\)(.*)')
 

@@ -60,7 +60,7 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
     param_names = []
     for i, param in enumerate(params):
         t = typeconv.get_type(param.underlying_spelling)
-        is_const = param.type.is_const_qualified()
+        is_const = param.is_const
         pyx.write(
             f'{indent}{t.to_cdef(is_const)} p{i} = {t.to_c(param.name, is_const)}\n')
         if param.type.kind == cindex.TypeKind.LVALUEREFERENCE:
@@ -73,7 +73,7 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
 
 def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, overload=1):
     result = TypeWrap.from_function_result(function)
-    result_is_const = result.type.is_const_qualified()
+    result_is_const = result.is_const
     result_t = typeconv.get_type(result.underlying_spelling)
     params = TypeWrap.get_function_params(function)
 
@@ -109,7 +109,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
         ref = ''
         if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
             # reference to pointer
-            ref = f'<{result_t.to_cdef(result_is_const)[4:]}>&'
+            ref = '&'
 
         pyx.write(
             f'{indent}{result_t.to_cdef(result_is_const)} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
@@ -119,7 +119,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
 def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Cursor, *, pyi=False):
     params = TypeWrap.get_function_params(method)
     result = TypeWrap.from_function_result(method)
-    result_is_const = result.type.is_const_qualified()
+    result_is_const = result.is_const
     result_t = typeconv.get_type(result.underlying_spelling)
 
     # signature

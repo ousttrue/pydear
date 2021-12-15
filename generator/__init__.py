@@ -6,7 +6,7 @@ import pathlib
 from clang import cindex
 from . import function
 from . import typeconv
-from . import wraptypes
+from .types import wrap_types
 
 EXCLUDE_TYPES = (
     'va_list',
@@ -122,7 +122,7 @@ from libc.stdint cimport uintptr_t
 ''')
         pyx.write(IMVECTOR)
 
-        for v in wraptypes.WRAP_TYPES:
+        for v in wrap_types.WRAP_TYPES:
             for cursors in parser.typedef_struct_list:
                 if cursors.cursor.spelling == v.name:
                     cursors.write_pyx_ctypes(pyx, flags=v)
@@ -150,7 +150,7 @@ from . imgui_enum import *
 
         pyi.write(IMVECTOR)
 
-        for v in wraptypes.WRAP_TYPES:
+        for v in wrap_types.WRAP_TYPES:
             for cursors in parser.typedef_struct_list:
                 if cursors.cursor.spelling == v.name:
                     cursors.write_pyi(pyi, flags=v)
