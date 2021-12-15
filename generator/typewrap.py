@@ -1,11 +1,8 @@
-from typing import NamedTuple, Type, Tuple, Optional, List
+from typing import NamedTuple, Optional
 import logging
-import io
 import re
-import ctypes
 from clang import cindex
 from . import utils
-from . import wrap_flags
 
 logger = logging.getLogger(__name__)
 
@@ -22,27 +19,6 @@ def template_filter(src: str) -> str:
     dst = TEMPLATE_PATTERN.sub(rep_typearg, src)
 
     return dst
-
-
-class PyxType(NamedTuple):
-    spelling: str
-    cpp_imgui: bool = False
-    is_reference: bool = False
-    is_const: bool = False
-
-    @property
-    def cdef(self) -> str:
-        spelling = wrap_flags.prepare(self.spelling)
-        sio = io.StringIO()
-        sio.write('cdef ')
-        if self.is_const:
-            sio.write('const ')
-        if self.cpp_imgui:
-            sio.write('cpp_imgui.')
-        sio.write(spelling.replace('const ', ''))
-        if self.is_reference:
-            sio.write(' *')
-        return sio.getvalue()
 
 
 class TypeWrap(NamedTuple):
@@ -129,61 +105,6 @@ class TypeWrap(NamedTuple):
             return f"{splitted[0]}(*{name}){splitted[1]}"
         else:
             return f"{c_type} {name}"
-
-    @property
-    def _is_user_type_pointer(self) -> bool:
-        '''
-        is type pointer to ImXXX struct
-        '''
-        match self.type.kind:
-            case cindex.TypeKind.POINTER | cindex.TypeKind.LVALUEREFERENCE:
-                pointee = self.type.get_pointee()
-                match pointee.kind:
-                    case cindex.TypeKind.RECORD:
-                        return True
-
-        return False
-
-    def get_ctypes_type(self, *, user_type_pointer=False) -> str:
-
-        if '(*)' in self.type.spelling:
-            # function pointer
-            return 'ctypes.c_void_p'
-
-        if self.type.spelling.startswith('ImVector<'):
-            return 'ImVector'
-
-        if user_type_pointer and self._is_user_type_pointer:
-            return self.type.get_pointee().spelling
-
-        match self.type.kind:
-            case cindex.TypeKind.POINTER | cindex.TypeKind.LVALUEREFERENCE:
-                return 'ctypes.c_void_p'
-            case cindex.TypeKind.BOOL:
-                return 'ctypes.c_bool'
-            case cindex.TypeKind.INT:
-                return 'ctypes.c_int32'
-            case cindex.TypeKind.USHORT:
-                return 'ctypes.c_uint16'
-            case cindex.TypeKind.UINT:
-                return 'ctypes.c_uint32'
-            case cindex.TypeKind.FLOAT:
-                return 'ctypes.c_float'
-            case cindex.TypeKind.DOUBLE:
-                return 'ctypes.c_double'
-            case cindex.TypeKind.TYPEDEF:
-                base = self._typedef_underlying_type
-                if not base:
-                    raise RuntimeError()
-                return base.get_ctypes_type()
-            case cindex.TypeKind.CONSTANTARRAY:
-                base = TypeWrap(
-                    self.type.get_array_element_type(), self.cursor)
-                return f'{base.get_ctypes_type()} * {self.type.get_array_size()}'
-            case cindex.TypeKind.RECORD:
-                return self.type.spelling
-            case _:
-                raise NotImplementedError()
 
     @property
     def _typedef_underlying_type(self) -> Optional['TypeWrap']:
