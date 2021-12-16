@@ -15,10 +15,8 @@ WRAP_TYPES = [
     WrapFlags('ImVec4', fields=True),
     WrapFlags('ImFont'),
     WrapFlags('ImFontConfig', fields=True),
-    WrapFlags('ImFontAtlas', fields=True, methods=(
-        'GetTexDataAsRGBA32', 'ClearTexData',
-        'AddFont', 'AddFontDefault', 'AddFontFromFileTTF', 'AddFontFromMemoryTTF',
-    )),
+    WrapFlags('ImFontAtlasCustomRect', fields=True),
+    WrapFlags('ImFontAtlas', fields=True, methods=True),
     WrapFlags('ImGuiIO', fields=True),
     WrapFlags('ImGuiContext'),
     WrapFlags('ImDrawCmd', fields=True),
