@@ -1,4 +1,5 @@
 import re
+from typing import Iterable
 from .basetype import BaseType
 from .const import const
 
@@ -11,7 +12,7 @@ class PointerType(BaseType):
         return False
 
     @property
-    def py_typing(self) -> str:
+    def py_typing(self) -> Iterable[str]:
         '''
         cast で pointer 化可能な型。bytes....
         '''
@@ -39,8 +40,9 @@ class BytesType(PointerType):
         super().__init__(c_type)
 
     @property
-    def py_typing(self) -> str:
-        return 'Union[bytes, str]'
+    def py_typing(self) -> Iterable[str]:
+        yield 'bytes'
+        yield 'str'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -56,8 +58,8 @@ class BytesType(PointerType):
 
 class CtypesPointerType(PointerType):
     @property
-    def py_typing(self) -> str:
-        return 'ctypes.c_void_p'
+    def py_typing(self) -> Iterable[str]:
+        yield 'ctypes.c_void_p'
 
     def get_pointer(self, name: str) -> str:
         return f'<uintptr_t>(ctypes.addressof({name}) if isinstance({name}, ctypes.Array) else {name}.value) if {name} else NULL'
@@ -87,8 +89,8 @@ class CtypesArrayType(CtypesPointerType):
         return False
 
     @property
-    def py_typing(self) -> str:
-        return 'ctypes.Array'
+    def py_typing(self) -> Iterable[str]:
+        yield 'ctypes.Array'
 
     @property
     def field_ctypes_type(self) -> str:

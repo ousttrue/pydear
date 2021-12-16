@@ -1,3 +1,6 @@
+from typing import Iterable
+
+
 class BaseType:
     def __init__(self, c_type: str):
         '''
@@ -18,18 +21,27 @@ class BaseType:
         return spelling == self.c_type
 
     @property
-    def py_typing(self) -> str:
+    def py_typing(self) -> Iterable[str]:
         '''
         python param type annotation and result annotation
         '''
-        return self.c_type
+        yield self.c_type
+
+    @property
+    def param_typing(self) -> str:
+        types = [t for t in self.py_typing]
+        match types:
+            case [t]:
+                return t
+            case _:
+                return 'Union[' + ','.join(types) + ']'
 
     @property
     def field_ctypes_type(self) -> str:
         '''
         ctypes.Structure _fields_ type
         '''
-        return self.py_typing
+        return next(iter(self.py_typing))
 
     def to_c(self, name: str, is_const: bool) -> str:
         '''

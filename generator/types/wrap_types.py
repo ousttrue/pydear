@@ -1,4 +1,4 @@
-from typing import Optional, Callable, NamedTuple, Union, Tuple, Dict
+from typing import Optional, Callable, NamedTuple, Union, Tuple, Dict, Iterable
 import re
 from .basetype import BaseType
 from .const import const
@@ -64,8 +64,8 @@ class WrapPointerType(BaseType):
         return False
 
     @property
-    def py_typing(self) -> str:
-        return self._name
+    def py_typing(self) -> Iterable[str]:
+        yield self._name
 
     @property
     def field_ctypes_type(self) -> str:
@@ -97,8 +97,8 @@ class WrapReferenceType(BaseType):
         return False
 
     @property
-    def py_typing(self) -> str:
-        return self._name
+    def py_typing(self) -> Iterable[str]:
+        yield self._name
 
     @property
     def field_ctypes_type(self) -> str:
@@ -119,8 +119,9 @@ class ImVec2WrapReferenceType(WrapReferenceType):
         super().__init__('ImVec2')
 
     @property
-    def py_typing(self) -> str:
-        return 'Union[ImVec2, Tuple[float, float]]'
+    def py_typing(self) -> Iterable[str]:
+        yield 'ImVec2'
+        yield 'Tuple[float, float]'
 
     def param(self, indent: str, i: int, name: str, is_const: bool) -> str:
         '''
@@ -163,8 +164,9 @@ class ImVec2WrapType(WrapType):
         super().__init__('ImVec2')
 
     @property
-    def py_typing(self) -> str:
-        return 'Union[ImVec2, Tuple[float, float]]'
+    def py_typing(self) -> Iterable[str]:
+        yield 'ImVec2'
+        yield 'Tuple[float, float]'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -185,8 +187,9 @@ class ImVec4WrapType(WrapType):
         super().__init__('ImVec4')
 
     @property
-    def py_typing(self) -> str:
-        return 'Union[ImVec4, Tuple[float, float, float, float]]'
+    def py_typing(self) -> Iterable[str]:
+        yield 'ImVec4'
+        yield 'Tuple[float, float, float, float]'
 
     @property
     def field_ctypes_type(self) -> str:

@@ -1,3 +1,4 @@
+from typing import Iterable
 from .basetype import BaseType
 
 
@@ -6,8 +7,8 @@ class VoidType(BaseType):
         super().__init__('void')
 
     @property
-    def py_typing(self) -> str:
-        return 'None'
+    def py_typing(self) -> Iterable[str]:
+        yield 'None'
 
 
 class BoolType(BaseType):
@@ -15,8 +16,8 @@ class BoolType(BaseType):
         super().__init__('bool')
 
     @property
-    def py_typing(self) -> str:
-        return 'bool'
+    def py_typing(self) -> Iterable[str]:
+        yield 'bool'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -28,8 +29,8 @@ class UInt16Type(BaseType):
         super().__init__('unsigned short')
 
     @property
-    def py_typing(self) -> str:
-        return 'int'
+    def py_typing(self) -> Iterable[str]:
+        yield 'int'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -41,8 +42,8 @@ class UInt32Type(BaseType):
         super().__init__('unsigned int')
 
     @property
-    def py_typing(self) -> str:
-        return 'int'
+    def py_typing(self) -> Iterable[str]:
+        yield 'int'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -63,8 +64,8 @@ class UInt64Type(BaseType):
         return spelling == self.c_type
 
     @property
-    def py_typing(self) -> str:
-        return 'int'
+    def py_typing(self) -> Iterable[str]:
+        yield 'int'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -76,8 +77,8 @@ class Int8Type(BaseType):
         super().__init__('char')
 
     @property
-    def py_typing(self) -> str:
-        return 'int'
+    def py_typing(self) -> Iterable[str]:
+        yield 'int'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -89,8 +90,8 @@ class Int32Type(BaseType):
         super().__init__('int')
 
     @property
-    def py_typing(self) -> str:
-        return 'int'
+    def py_typing(self) -> Iterable[str]:
+        yield 'int'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -102,8 +103,8 @@ class FloatType(BaseType):
         super().__init__('float')
 
     @property
-    def py_typing(self) -> str:
-        return 'float'
+    def py_typing(self) -> Iterable[str]:
+        yield 'float'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -115,8 +116,8 @@ class DoubleType(BaseType):
         super().__init__('double')
 
     @property
-    def py_typing(self) -> str:
-        return 'float'
+    def py_typing(self) -> Iterable[str]:
+        yield 'float'
 
     @property
     def field_ctypes_type(self) -> str:

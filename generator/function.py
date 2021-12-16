@@ -79,11 +79,11 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
 
     # signature
     def name_type_default_value(param: TypeWrap) -> str:
-        return f'{param.name}: {typeconv.get_type(param.underlying_spelling).py_typing}{param.default_value}'
+        return f'{param.name}: {typeconv.get_type(param.underlying_spelling).param_typing}{param.default_value}'
     pyx.write(
         f"def {function.spelling}{overload}{cj(name_type_default_value(param) for param in params)}")
     # return type
-    pyx.write(f'->{result_t.py_typing}:')
+    pyx.write(f'->{result_t.field_ctypes_type}:')
 
     if pyi:
         pyx.write(' ...\n')
@@ -119,10 +119,10 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
 
     # signature
     def name_type_default_value(param: TypeWrap) -> str:
-        return f'{param.name}: {typeconv.get_type(param.underlying_spelling).py_typing}{param.default_value}'
+        return f'{param.name}: {typeconv.get_type(param.underlying_spelling).param_typing}{param.default_value}'
     pyx.write(
         f'    def {method.spelling}{self_cj(name_type_default_value(param) for param in params)}')
-    pyx.write(f'->{result_t.py_typing}:')
+    pyx.write(f'->{result_t.field_ctypes_type}:')
 
     if pyi:
         pyx.write(' ...\n')
