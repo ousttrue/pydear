@@ -32,15 +32,8 @@ IN_TYPE_MAP: List[BaseType] = [
     CtypesPointerType('unsigned char **'),
     CtypesPointerType('void **'),
     # out
-    WrapType('ImVec2',
-               lambda name, is_const: f'cpp_imgui.ImVec2({name}.x, {name}.y)',
-               lambda name: f'({name}.x, {name}.y)'
-               ),
-    WrapType(
-        'ImVec4',
-        lambda name, is_const: f'cpp_imgui.ImVec4({name}.x, {name}.y, {name}.z, {name}.w)',
-        lambda name: f'({name}.x, {name}.y, {name}.z, {name}.w)'
-    ),
+    ImVec2WrapType(),
+    ImVec4WrapType(),
     # field
     WrapType('ImDrawCmdHeader'),
     WrapType('ImDrawListSplitter'),

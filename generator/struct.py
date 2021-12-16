@@ -88,7 +88,12 @@ class StructDecl(NamedTuple):
             for method in methods:
                 function.write_pyx_method(pyx, cursor, method)
 
-        if not fields and not methods:
+        for code in flags.custom_methods:
+            for l in code.splitlines():
+                pyx.write(f'    {l}\n')
+            pyx.write('\n')
+
+        if not fields and not methods and not flags.custom_methods:
             pyx.write('    pass\n\n')
 
     def write_pyi(self, pyi: io.IOBase, *, flags: WrapFlags = WrapFlags('')):
@@ -99,7 +104,7 @@ class StructDecl(NamedTuple):
             # skip forward decl
             return
 
-        pyi.write(f'class {cursor.spelling}:\n')
+        pyi.write(f'class {cursor.spelling}(ctypes.Structure):\n')
         fields = TypeWrap.get_struct_fields(cursor) if flags.fields else []
         if fields:
             for field in fields:
@@ -111,6 +116,10 @@ class StructDecl(NamedTuple):
         if methods:
             for method in methods:
                 function.write_pyx_method(pyi, cursor, method, pyi=True)
+
+        for custom in flags.custom_methods:
+            l = next(iter(custom.splitlines()))
+            pyi.write(f'    {l} ...\n')
 
         if not fields and not methods:
             pyi.write('    pass\n\n')
