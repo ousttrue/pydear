@@ -1,4 +1,3 @@
-import ctypes
 import re
 from .basetype import BaseType
 from .const import const
@@ -12,7 +11,7 @@ class PointerType(BaseType):
         return False
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         '''
         cast で pointer 化可能な型。bytes....
         '''
@@ -40,8 +39,8 @@ class BytesType(PointerType):
         super().__init__(c_type)
 
     @property
-    def py_type(self) -> str:
-        return 'any'
+    def py_typing(self) -> str:
+        return 'Any'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -57,7 +56,7 @@ class BytesType(PointerType):
 
 class CtypesPointerType(PointerType):
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'ctypes.c_void_p'
 
     def get_pointer(self, name: str) -> str:
@@ -88,7 +87,7 @@ class CtypesArrayType(CtypesPointerType):
         return False
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'ctypes.Array'
 
     @property

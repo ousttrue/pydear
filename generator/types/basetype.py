@@ -18,9 +18,9 @@ class BaseType:
         return spelling == self.c_type
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         '''
-        python param type
+        python param type annotation and result annotation
         '''
         return self.c_type
 
@@ -29,7 +29,7 @@ class BaseType:
         '''
         ctypes.Structure _fields_ type
         '''
-        return self.py_type
+        return self.py_typing
 
     def to_c(self, name: str, is_const: bool) -> str:
         '''

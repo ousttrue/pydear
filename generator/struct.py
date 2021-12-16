@@ -109,7 +109,7 @@ class StructDecl(NamedTuple):
         if fields:
             for field in fields:
                 pyi.write(
-                    f'    {field.name}: {typeconv.get_type(field.underlying_spelling).py_type}\n')
+                    f'    {field.name}: {typeconv.get_type(field.underlying_spelling).py_typing}\n')
             pyi.write('\n')
 
         methods = TypeWrap.get_struct_methods(cursor, includes=flags.methods)

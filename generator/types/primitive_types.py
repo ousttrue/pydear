@@ -6,7 +6,7 @@ class VoidType(BaseType):
         super().__init__('void')
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'None'
 
 
@@ -15,7 +15,7 @@ class BoolType(BaseType):
         super().__init__('bool')
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'bool'
 
     @property
@@ -28,7 +28,7 @@ class UInt16Type(BaseType):
         super().__init__('unsigned short')
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'int'
 
     @property
@@ -41,7 +41,7 @@ class UInt32Type(BaseType):
         super().__init__('unsigned int')
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'int'
 
     @property
@@ -63,7 +63,7 @@ class UInt64Type(BaseType):
         return spelling == self.c_type
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'int'
 
     @property
@@ -76,7 +76,7 @@ class Int8Type(BaseType):
         super().__init__('char')
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'int'
 
     @property
@@ -89,7 +89,7 @@ class Int32Type(BaseType):
         super().__init__('int')
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'int'
 
     @property
@@ -102,7 +102,7 @@ class FloatType(BaseType):
         super().__init__('float')
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'float'
 
     @property
@@ -115,7 +115,7 @@ class DoubleType(BaseType):
         super().__init__('double')
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'float'
 
     @property

@@ -59,7 +59,7 @@ class WrapPointerType(BaseType):
         return False
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return self._name
 
     @property
@@ -92,7 +92,7 @@ class WrapReferenceType(BaseType):
         return False
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return self._name
 
     @property
@@ -142,7 +142,7 @@ class ImVec2WrapType(WrapType):
         super().__init__('ImVec2')
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'Any'
 
     @property
@@ -164,7 +164,7 @@ class ImVec4WrapType(WrapType):
         super().__init__('ImVec4')
 
     @property
-    def py_type(self) -> str:
+    def py_typing(self) -> str:
         return 'Any'
 
     @property
