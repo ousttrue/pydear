@@ -62,7 +62,7 @@ class CtypesPointerType(PointerType):
         yield 'ctypes.c_void_p'
 
     def get_pointer(self, name: str) -> str:
-        return f'<uintptr_t>(ctypes.addressof({name}) if isinstance({name}, ctypes.Array) else {name}.value) if {name} else NULL'
+        return f'(<uintptr_t>({name}.value if isinstance({name}, ctypes.c_void_p) else <uintptr_t>ctypes.addressof({name})) if {name} else <uintptr_t>NULL)'
 
     def to_py(self, name: str) -> str:
         return f'ctypes.c_void_p(<uintptr_t>{name})'

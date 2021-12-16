@@ -24,6 +24,19 @@ class BoolType(BaseType):
         return 'ctypes.c_bool'
 
 
+class UInt8Type(BaseType):
+    def __init__(self):
+        super().__init__('unsigned char')
+
+    @property
+    def py_typing(self) -> Iterable[str]:
+        yield 'int'
+
+    @property
+    def field_ctypes_type(self) -> str:
+        return 'ctypes.c_uint8'
+
+
 class UInt16Type(BaseType):
     def __init__(self):
         super().__init__('unsigned short')
@@ -83,6 +96,19 @@ class Int8Type(BaseType):
     @property
     def field_ctypes_type(self) -> str:
         return 'ctypes.c_int8'
+
+
+class Int16Type(BaseType):
+    def __init__(self):
+        super().__init__('short')
+
+    @property
+    def py_typing(self) -> Iterable[str]:
+        yield 'int'
+
+    @property
+    def field_ctypes_type(self) -> str:
+        return 'ctypes.c_int16'
 
 
 class Int32Type(BaseType):

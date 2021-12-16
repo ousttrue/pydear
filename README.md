@@ -12,6 +12,11 @@ Cydeer for short.
 -   pointer handling idea from luajit ffi
 -   generate type information(.pyi stub) by clang.cindex automatically
 
+
+## ToDo
+
+cpp type constructor
+
 ## Another python bindings
 
 <https://github.com/HankiDesign/awesome-dear-imgui#languages>
