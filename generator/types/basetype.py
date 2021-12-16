@@ -37,6 +37,10 @@ class BaseType:
                 return 'Union[' + ','.join(types) + ']'
 
     @property
+    def result_typing(self) -> str:
+        return next(iter(self.py_typing))
+
+    @property
     def field_ctypes_type(self) -> str:
         '''
         ctypes.Structure _fields_ type
