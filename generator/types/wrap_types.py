@@ -1,4 +1,4 @@
-from typing import Optional, Callable, NamedTuple, Union, Tuple
+from typing import Optional, Callable, NamedTuple, Union, Tuple, Dict
 import re
 from .basetype import BaseType
 from .const import const
@@ -7,6 +7,7 @@ from .const import const
 class WrapFlags(NamedTuple):
     name: str
     fields: bool = False
+    custom_fields: Dict[str, str] = {}
     methods: Union[bool, Tuple[str, ...]] = False
     custom_methods: Tuple[str, ...] = ()
 
@@ -30,7 +31,11 @@ WRAP_TYPES = [
     WrapFlags('ImFontConfig', fields=True),
     WrapFlags('ImFontAtlasCustomRect', fields=True),
     WrapFlags('ImFontAtlas', fields=True, methods=True),
-    WrapFlags('ImGuiIO', fields=True),
+    WrapFlags('ImGuiIO', fields=True, custom_fields={
+        'Fonts': '''def Fonts(self)->'ImFontAtlas':
+    return ctypes.cast(self._Fonts, ctypes.POINTER(ImFontAtlas))[0]
+'''
+    }),
     WrapFlags('ImGuiContext'),
     WrapFlags('ImDrawCmd', fields=True),
     WrapFlags('ImDrawData', fields=True),

@@ -254,9 +254,7 @@ class Renderer:
         del self._shader
         del self._texture
         io = imgui.GetIO()
-        fonts = ctypes.cast(
-            io.Fonts, ctypes.POINTER(imgui.ImFontAtlas))[0]
-        fonts.TexID = 0
+        io.fonts.TexID = 0
 
     def refresh_font_texture(self):
         if self._texture:
@@ -266,8 +264,7 @@ class Renderer:
         with save_texture():
 
             io = imgui.GetIO()
-            fonts = ctypes.cast(
-                io.Fonts, ctypes.POINTER(imgui.ImFontAtlas))[0]
+            fonts = io.Fonts
             p = (ctypes.c_void_p * 1)()
             width = (ctypes.c_int * 1)()
             height = (ctypes.c_int * 1)()

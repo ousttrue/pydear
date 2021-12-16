@@ -79,9 +79,18 @@ class StructDecl(NamedTuple):
         if fields:
             pyx.write('    _fields_=[\n')
             for field in fields:
+                name = field.name
+                if flags.custom_fields.get(name):
+                    name = '_' + name
                 pyx.write(
-                    f'        ("{field.name}", {typeconv.get_field_type(field.underlying_spelling)}),\n')
+                    f'        ("{name}", {typeconv.get_field_type(field.underlying_spelling)}),\n')
             pyx.write('    ]\n\n')
+
+        for k, v in flags.custom_fields.items():
+            pyx.write('    @property\n')
+            for l in v.splitlines():
+                pyx.write(f'    {l}\n')
+            pyx.write('\n')
 
         methods = TypeWrap.get_struct_methods(cursor, includes=flags.methods)
         if methods:
@@ -108,9 +117,17 @@ class StructDecl(NamedTuple):
         fields = TypeWrap.get_struct_fields(cursor) if flags.fields else []
         if fields:
             for field in fields:
+                name = field.name
+                if flags.custom_fields.get(name):
+                    name = '_' + name
                 pyi.write(
-                    f'    {field.name}: {typeconv.get_type(field.underlying_spelling).py_typing}\n')
+                    f'    {name}: {typeconv.get_type(field.underlying_spelling).py_typing}\n')
             pyi.write('\n')
+
+        for k, v in flags.custom_fields.items():
+            pyi.write('    @property\n')
+            l = next(iter(v.splitlines()))
+            pyi.write(f'    {l} ...\n')
 
         methods = TypeWrap.get_struct_methods(cursor, includes=flags.methods)
         if methods:
