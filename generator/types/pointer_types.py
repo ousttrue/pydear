@@ -82,7 +82,7 @@ class CtypesArrayType(CtypesPointerType):
         self._name = name
 
     def match(self, spelling: str) -> bool:
-        m = re.match(r'^(?:const )?(\w+)(?: [\*&])?$', spelling)
+        m = re.match(r'^(?:const )?([\w _]+)(?: [\*&])$', spelling)
         if m and m.group(1) == self._name:
             return True
         return False

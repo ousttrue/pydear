@@ -127,6 +127,8 @@ class TypeWrap(NamedTuple):
 
     @property
     def _typedef_underlying_type(self) -> Optional['TypeWrap']:
+        if self.type.spelling == 'size_t':
+            return None
         match self.type.kind:
             case cindex.TypeKind.TYPEDEF:
                 ref: cindex.Cursor = next(iter(
@@ -141,11 +143,20 @@ class TypeWrap(NamedTuple):
         if self.type.kind == cindex.TypeKind.CONSTANTARRAY:
             tw = TypeWrap(self.type.get_array_element_type(), self.cursor)
             return f'{tw.underlying_spelling} [{self.type.get_array_size()}]'
+        elif self.type.kind == cindex.TypeKind.POINTER:
+            tw = TypeWrap(self.type.get_pointee(), self.cursor)
+            if tw.underlying_spelling.endswith('*'):
+                return f'{tw.underlying_spelling}*'
+            else:
+                return f'{tw.underlying_spelling} *'
         else:
-            base = self._typedef_underlying_type
-            if base:
-                return base.type.spelling
-            return self.type.spelling
+            current = self
+            while True:
+                base = current._typedef_underlying_type
+                if not base:
+                    break
+                current = base
+            return current.type.spelling
 
     @property
     def default_value(self) -> str:

@@ -53,6 +53,15 @@ class UInt64Type(BaseType):
     def __init__(self):
         super().__init__('unsigned long long')
 
+    def match(self, spelling: str) -> bool:
+        '''
+        process if True
+        '''
+        if spelling == 'size_t':
+            # cython cannot: size_t * = unsigned long long *
+            return True
+        return spelling == self.c_type
+
     @property
     def py_type(self) -> str:
         return 'int'
@@ -60,6 +69,19 @@ class UInt64Type(BaseType):
     @property
     def field_ctypes_type(self) -> str:
         return 'ctypes.c_uint64'
+
+
+class Int8Type(BaseType):
+    def __init__(self):
+        super().__init__('char')
+
+    @property
+    def py_type(self) -> str:
+        return 'int'
+
+    @property
+    def field_ctypes_type(self) -> str:
+        return 'ctypes.c_int8'
 
 
 class Int32Type(BaseType):
