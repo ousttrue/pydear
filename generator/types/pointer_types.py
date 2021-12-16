@@ -51,7 +51,7 @@ class BytesType(PointerType):
 
     def param(self, indent: str, i: int, name: str, is_const: bool) -> str:
         return f'''{indent}pp{i} = {name}.encode("utf-8") if isinstance({name}, str) else {name}
-{indent}{self.to_cdef(is_const)} p{i} = {self.to_c(f"pp{i}", is_const)}'''
+{indent}{self.to_cdef(is_const)} p{i} = {self.to_c(f"pp{i}", is_const)} if pp{i} else NULL'''
 
 
 class CtypesPointerType(PointerType):

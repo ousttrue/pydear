@@ -105,7 +105,7 @@ def main():
             ImGui.Begin(b"Hello, world!")
             # Create a window called "Hello, world!" and append into it.
 
-            ImGui.Text(b"This is some useful text.")
+            ImGui.TextUnformatted(b"This is some useful text.")
             # Display some text(you can use a format strings too)
             # Edit bools storing our window open/close state
             ImGui.Checkbox(b"Demo Window", show_demo_window)
