@@ -60,9 +60,7 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
     param_names = []
     for i, param in enumerate(params):
         t = typeconv.get_type(param.underlying_spelling)
-        is_const = param.is_const
-        pyx.write(
-            f'{indent}{t.to_cdef(is_const)} p{i} = {t.to_c(param.name, is_const)}\n')
+        pyx.write(f'{t.param(indent, i, param.name, param.is_const)}\n')
         if param.type.kind == cindex.TypeKind.LVALUEREFERENCE:
             # deref
             param_names.append(f'p{i}[0]')

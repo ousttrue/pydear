@@ -70,7 +70,7 @@ class WrapPointerType(BaseType):
 
     @property
     def field_ctypes_type(self) -> str:
-        return f'ctypes.POINTER({self._name})'
+        return f'ctypes.c_void_p'
 
     def to_c(self, name: str, is_const: bool) -> str:
         return f'<{const(is_const)}cpp_imgui.{self._name}*><uintptr_t>ctypes.addressof({name}) if {name} else NULL'

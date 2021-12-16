@@ -10,8 +10,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/setup.py",
             "args": [
-                // "build_ext"
-                "install",
+                "build_ext",
+                "-i"
             ],
             "console": "integratedTerminal",
             "justMyCode": false

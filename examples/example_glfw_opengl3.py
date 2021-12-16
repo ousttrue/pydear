@@ -130,9 +130,9 @@ def main():
         # 3. Show another simple window.
         if show_another_window[0]:
 
-            ImGui.Begin(b"Another Window", show_another_window)
+            ImGui.Begin("Another Window", show_another_window)
             # Pass a pointer to our bool variable(the window will have a closing button that will clear the bool when clicked)
-            ImGui.Text(b"Hello from another window!")
+            ImGui.Text("Hello from another window!")
             # if (ImGui.Button("Close Me"))
             # show_another_window = false
             ImGui.End()

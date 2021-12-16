@@ -41,7 +41,7 @@ class BytesType(PointerType):
 
     @property
     def py_type(self) -> str:
-        return 'bytes'
+        return 'any'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -49,6 +49,10 @@ class BytesType(PointerType):
 
     def get_pointer(self, name: str) -> str:
         return name
+
+    def param(self, indent: str, i: int, name: str, is_const: bool) -> str:
+        return f'''{indent}pp{i} = {name}.encode("utf-8") if isinstance({name}, str) else {name}
+{indent}{self.to_cdef(is_const)} p{i} = {self.to_c(f"pp{i}", is_const)}'''
 
 
 class CtypesPointerType(PointerType):
