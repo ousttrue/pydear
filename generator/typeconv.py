@@ -40,7 +40,11 @@ IN_TYPE_MAP: List[BaseType] = [
 ]
 for w in WRAP_TYPES:
     IN_TYPE_MAP.append(WrapPointerType(w.name))
-    IN_TYPE_MAP.append(WrapReferenceType(w.name))
+    match w.name:
+        case 'ImVec2':
+            IN_TYPE_MAP.append(ImVec2WrapReferenceType())
+        case _:
+            IN_TYPE_MAP.append(WrapReferenceType(w.name))
 
 
 def get_array_element_type(src: str) -> Optional[re.Match]:

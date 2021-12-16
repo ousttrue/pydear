@@ -109,6 +109,22 @@ class WrapReferenceType(BaseType):
         return f'ctypes.cast(ctypes.c_void_p(<uintptr_t>{name}), ctypes.POINTER({self._name}))[0]'
 
 
+class ImVec2WrapReferenceType(WrapReferenceType):
+    def __init__(self):
+        super().__init__('ImVec2')
+
+    @property
+    def py_typing(self) -> str:
+        return 'Any'
+
+    def param(self, indent: str, i: int, name: str, is_const: bool) -> str:
+        '''
+        tuple support
+        '''
+        return f'''{indent}pp{i} = ImVec2({name}[0], {name}[1]) if isinstance({name}, tuple) else {name}
+{indent}{self.to_cdef(is_const)} p{i} = {self.to_c(f"pp{i}", is_const)}'''
+
+
 class WrapType(BaseType):
     '''
     by value
