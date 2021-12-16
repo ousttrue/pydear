@@ -113,7 +113,7 @@ cdef extern from "imgui.h" namespace "ImGui":
     # pyx
     #
     with (ext_dir / 'imgui.pyx').open('w') as pyx:
-        pyx.write('''from typing import Tuple
+        pyx.write('''from typing import Tuple, Any
 import ctypes
 from libcpp cimport bool
 cimport cpp_imgui
@@ -145,7 +145,7 @@ from libc.stdint cimport uintptr_t
     with pyi_path.open('w') as pyi:
         pyi.write('''import ctypes
 from . imgui_enum import *
-
+from typing import Any
 ''')
 
         pyi.write(IMVECTOR)

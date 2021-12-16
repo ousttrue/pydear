@@ -143,7 +143,11 @@ class ImVec2WrapType(WrapType):
 
     @property
     def py_type(self) -> str:
-        return 'any'
+        return 'Any'
+
+    @property
+    def field_ctypes_type(self) -> str:
+        return f'{self.c_type}'
 
     def to_c(self, name: str, is_const: bool) -> str:
         return f'cpp_imgui.ImVec2({name}[0], {name}[1]) if isinstance({name}, tuple) else cpp_imgui.ImVec2({name}.x, {name}.y)'
@@ -161,7 +165,11 @@ class ImVec4WrapType(WrapType):
 
     @property
     def py_type(self) -> str:
-        return 'any'
+        return 'Any'
+
+    @property
+    def field_ctypes_type(self) -> str:
+        return f'{self.c_type}'
 
     def to_c(self, name: str, is_const: bool) -> str:
         return f'cpp_imgui.ImVec4({name}[0], {name}[1], {name}[2], {name}[3]) if isinstance({name}, tuple) else cpp_imgui.ImVec4({name}.x, {name}.y, {name}.z, {name}.w)'
