@@ -27,8 +27,8 @@ IN_TYPE_MAP: List[BaseType] = [
     CtypesArrayType('size_t'),
     BytesType('char *'),
     BytesType('unsigned char *'),
-    DoublePointerResultType('unsigned char **'),
-    DoublePointerResultType('void **'),
+    CtypesPointerType('unsigned char **'),
+    CtypesPointerType('void **'),
     # out
     WrapType('ImVec2',
                lambda name, is_const: f'cpp_imgui.ImVec2({name}.x, {name}.y)',

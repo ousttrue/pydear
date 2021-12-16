@@ -1,32 +1,78 @@
+import ctypes
 import re
 from .basetype import BaseType
 from .const import const
 
-class VoidPointerType(BaseType):
-    def __init__(self):
-        super().__init__('void *')
 
+class PointerType(BaseType):
     def match(self, spelling: str) -> bool:
-        m = re.match(r'^(?:const )?void \*$', spelling)
-        if m:
+        m = re.match(r'^(?:const )?(.*)$', spelling)
+        if m and m.group(1) == self.c_type:
             return True
         return False
 
     @property
     def py_type(self) -> str:
-        return 'ctypes.c_void_p'
+        '''
+        cast で pointer 化可能な型。bytes....
+        '''
+        raise NotImplementedError()
+
+    def get_pointer(self, name: str) -> str:
+        raise NotImplementedError()
+
+    def const_c_type(self, is_const: bool) -> str:
+        return f'{const(is_const)}{self.c_type}'
 
     def to_c(self, name: str, is_const: bool) -> str:
-        return f'<{const(is_const)}void *><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+        return f'<{self.const_c_type(is_const)}>{self.get_pointer(name)}'
 
     def to_cdef(self, is_const: bool) -> str:
-        return f'cdef {const(is_const)}{self.c_type}'
+        return f'cdef {self.const_c_type(is_const)}'
+
+
+class BytesType(PointerType):
+    '''
+    conat char * など
+    '''
+
+    def __init__(self, c_type: str):
+        super().__init__(c_type)
+
+    @property
+    def py_type(self) -> str:
+        return 'bytes'
+
+    @property
+    def field_ctypes_type(self) -> str:
+        return 'ctypes.c_void_p'
+
+    def get_pointer(self, name: str) -> str:
+        return name
+
+
+class CtypesPointerType(PointerType):
+    @property
+    def py_type(self) -> str:
+        return 'ctypes.c_void_p'
+
+    def get_pointer(self, name: str) -> str:
+        return f'<uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
     def to_py(self, name: str) -> str:
         return f'ctypes.c_void_p(<uintptr_t>{name})'
 
 
-class CtypesArrayType(BaseType):
+class VoidPointerType(CtypesPointerType):
+    def __init__(self):
+        super().__init__('void *')
+
+
+class CtypesArrayType(CtypesPointerType):
+    '''
+    bool *, float * など
+    '''
+
     def __init__(self, name: str):
         super().__init__(name + ' *')
         self._name = name
@@ -44,40 +90,3 @@ class CtypesArrayType(BaseType):
     @property
     def field_ctypes_type(self) -> str:
         return 'ctypes.c_void_p'
-
-    def to_c(self, name: str, is_const: bool) -> str:
-        return f'<{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
-
-
-class BytesType(BaseType):
-    def __init__(self, c_type: str):
-        super().__init__(c_type)
-
-    def match(self, spelling: str) -> bool:
-        m = re.match(r'^(?:const )?(.*)$', spelling)
-        if m and m.group(1) == self.c_type:
-            return True
-        return False
-
-    @property
-    def py_type(self) -> str:
-        return 'bytes'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_void_p'
-
-    def to_c(self, name: str, is_const: bool) -> str:
-        return f'<{const(is_const)}{self.c_type}>{name}'
-
-    def to_cdef(self, is_const: bool) -> str:
-        return f'cdef {const(is_const)}{self.c_type}'
-
-
-class DoublePointerResultType(BaseType):
-    @property
-    def py_type(self) -> str:
-        return 'ctypes.c_void_p'
-
-    def to_c(self, name: str, is_const: bool) -> str:
-        return f'<{self.c_type}><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
