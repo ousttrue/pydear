@@ -115,7 +115,7 @@ class ImVec2WrapReferenceType(WrapReferenceType):
 
     @property
     def py_typing(self) -> str:
-        return 'Any'
+        return 'Union[ImVec2, Tuple[float, float]]'
 
     def param(self, indent: str, i: int, name: str, is_const: bool) -> str:
         '''
@@ -159,7 +159,7 @@ class ImVec2WrapType(WrapType):
 
     @property
     def py_typing(self) -> str:
-        return 'Any'
+        return 'Union[ImVec2, Tuple[float, float]]'
 
     @property
     def field_ctypes_type(self) -> str:
@@ -181,7 +181,7 @@ class ImVec4WrapType(WrapType):
 
     @property
     def py_typing(self) -> str:
-        return 'Any'
+        return 'Union[ImVec4, Tuple[float, float, float, float]]'
 
     @property
     def field_ctypes_type(self) -> str:

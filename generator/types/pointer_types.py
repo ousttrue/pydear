@@ -40,7 +40,7 @@ class BytesType(PointerType):
 
     @property
     def py_typing(self) -> str:
-        return 'Any'
+        return 'Union[bytes, str]'
 
     @property
     def field_ctypes_type(self) -> str:
