@@ -177,18 +177,28 @@ class TypeWrap(NamedTuple):
         if not tokens:
             return ''
 
-        equal = tokens.index('=')
-        value = ' '.join(tokens[equal+1:])
-        if value == 'NULL':
-            value = 'None'
-        elif value.startswith('"'):
-            value = 'b' + value
-        elif value == 'true':
-            value = 'True'
-        elif value == 'false':
-            value = 'False'
+        def token_filter(src: str) -> str:
 
-        value = value.replace('FLT_MAX', '3.402823466e+38')
-        value = value.replace('FLT_MIN', '1.175494351e-38')
-        value = re.sub(r'([0-9\.])f', r'\1', value)
+            match src:
+                case 'NULL':
+                    return 'None'
+                case 'true':
+                    return 'True'
+                case 'false':
+                    return 'False'
+                case 'FLT_MAX':
+                    return '3.402823466e+38'
+                case 'FLT_MIN':
+                    return '1.175494351e-38'
+                case _:
+                    if src.startswith('"'):
+                        # string literal
+                        return 'b' + src
+                    if re.search(r'[\d.]f$', src):
+                        return src[:-1]
+
+                    return src
+
+        equal = tokens.index('=')
+        value = ' '.join(token_filter(t) for t in tokens[equal+1:])
         return '= ' + value
