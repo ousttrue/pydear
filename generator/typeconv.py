@@ -24,7 +24,7 @@ IN_TYPE_MAP: List[BaseType] = [
     VOID_POINTER,
     CtypesArrayType('bool'),
     CtypesArrayType('int'),
-    # CtypesArrayType('unsigned short'),
+    CtypesArrayType('unsigned short'),
     CtypesArrayType('unsigned int'),
     CtypesArrayType('float'),
     CtypesArrayType('double'),
@@ -33,7 +33,7 @@ IN_TYPE_MAP: List[BaseType] = [
     BytesType('unsigned char *'),
     CtypesPointerType('unsigned char **'),
     CtypesPointerType('void **'),
-    CtypesPointerType('unsigned short *'),
+    # CtypesPointerType('unsigned short *'),
     # out
     ImVec2WrapType(),
     ImVec4WrapType(),
