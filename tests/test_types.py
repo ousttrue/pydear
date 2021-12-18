@@ -1,11 +1,11 @@
 import unittest
-import cydeer as imgui
+import cydeer as ImGui
 
 
 class TestTypes(unittest.TestCase):
 
     def test_vec2(self):
-        v2 = imgui.ImVec2(1, 2)
+        v2 = ImGui.ImVec2(1, 2)
         x, y = v2
         self.assertEqual((1, 2), (x, y))
 

@@ -1,5 +1,5 @@
 import glfw
-import cydeer as imgui
+import cydeer as ImGui
 
 
 def compute_fb_scale(window_size, frame_buffer_size):
@@ -15,12 +15,12 @@ def compute_fb_scale(window_size, frame_buffer_size):
 
 class GlfwRenderer:
     def __init__(self, window, attach_callbacks=True):
-        if not imgui.GetCurrentContext():
+        if not ImGui.GetCurrentContext():
             raise RuntimeError(
                 "No valid ImGui context. Use imgui.create_context() first and/or "
                 "imgui.set_current_context()."
             )
-        self.io = imgui.GetIO()
+        self.io = ImGui.GetIO()
         self.io.DeltaTime = 1.0 / 60.0
 
         self.window = window

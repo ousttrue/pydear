@@ -2,7 +2,7 @@ import ctypes
 import logging
 import contextlib
 from OpenGL import GL
-import cydeer as imgui
+import cydeer as ImGui
 
 logger = logging.getLogger(__name__)
 
@@ -253,8 +253,8 @@ class Renderer:
         del self._vertices
         del self._shader
         del self._texture
-        io = imgui.GetIO()
-        io.fonts.TexID = 0
+        io = ImGui.GetIO()
+        io.Fonts.TexID = ctypes.c_void_p()
 
     def refresh_font_texture(self):
         if self._texture:
@@ -263,7 +263,7 @@ class Renderer:
         # save texture state
         with save_texture():
 
-            io = imgui.GetIO()
+            io = ImGui.GetIO()
             fonts = io.Fonts
             p = (ctypes.c_void_p * 1)()
             width = (ctypes.c_int * 1)()
@@ -280,7 +280,7 @@ class Renderer:
 
     def render(self, draw_data):
         # perf: local for faster access
-        io = imgui.GetIO()
+        io = ImGui.GetIO()
 
         display_width = io.DisplaySize.x
         display_height = io.DisplaySize.y
@@ -311,7 +311,7 @@ class Renderer:
 
             if draw_data.CmdLists:
                 cmd_lists = ctypes.cast(draw_data.CmdLists, ctypes.POINTER(
-                    ctypes.POINTER(imgui.ImDrawList)))
+                    ctypes.POINTER(ImGui.ImDrawList)))
                 # for commands in cmd_lists:
                 for i in range(draw_data.CmdListsCount):
                     commands = cmd_lists[i][0]
@@ -325,7 +325,7 @@ class Renderer:
 
                     # todo: allow to iterate over _CmdList
                     cmd_data = ctypes.cast(
-                        commands.CmdBuffer.Data, ctypes.POINTER(imgui.ImDrawCmd))
+                        commands.CmdBuffer.Data, ctypes.POINTER(ImGui.ImDrawCmd))
                     for j in range(commands.CmdBuffer.Size):
                         command = cmd_data[j]
 

@@ -30,7 +30,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/examples/example_glfw_opengl3.py",
             "args": [],
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }
