@@ -50,6 +50,7 @@ setup(
     packages=[
         'cydeer',
         'cydeer.imgui',  # from imgui.h
+        'cydeer.backends',
     ],
     package_data={
         'cydeer': ['py.typed', '*.pyi']

@@ -46,12 +46,22 @@ EXCLUDE_FUNCS = (
 
 
 IMVECTOR = '''
+
+def iterate(data: ctypes.c_void_p, t: Type[ctypes.Structure], count: int)->Iterable[ctypes.Structure]:
+    p = ctypes.cast(data, ctypes.POINTER(t))
+    for i in range(count):
+        yield p[i]
+
+
 class ImVector(ctypes.Structure):
     _fields_ = (
         ('Size', ctypes.c_int),
         ('Capacity', ctypes.c_int),
         ('Data', ctypes.c_void_p),
     )
+
+    def each(self, t: Type[ctypes.Structure])->Iterable[ctypes.Structure]:
+        return iterate(self.Data, t, self.Size)
 
 '''
 
@@ -113,7 +123,7 @@ cdef extern from "imgui.h" namespace "ImGui":
     # pyx
     #
     with (ext_dir / 'imgui.pyx').open('w') as pyx:
-        pyx.write('''from typing import Tuple, Any, Union
+        pyx.write('''from typing import Tuple, Any, Union, Iterable, Type
 import ctypes
 from libcpp cimport bool
 cimport cpp_imgui

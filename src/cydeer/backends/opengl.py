@@ -65,6 +65,7 @@ def save_state():
 
 @contextlib.contextmanager
 def save_render_state():
+    # backup GL state
     last_program = GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM)
     last_texture = GL.glGetIntegerv(GL.GL_TEXTURE_BINDING_2D)
     last_active_texture = GL.glGetIntegerv(GL.GL_ACTIVE_TEXTURE)
@@ -292,7 +293,7 @@ class Renderer:
 
         fonts.ClearTexData()
 
-    def render(self, draw_data):
+    def render(self, draw_data: ImGui.ImDrawData):
         io = ImGui.GetIO()
 
         display_width = io.DisplaySize.x
@@ -305,7 +306,6 @@ class Renderer:
         # ToDo:
         # draw_data.scale_clip_rects(io.FramebufferScale.x, io.FramebufferScale.y)
 
-        # backup GL state
         with save_render_state():
             GL.glEnable(GL.GL_BLEND)
             GL.glBlendEquation(GL.GL_FUNC_ADD)
@@ -320,31 +320,23 @@ class Renderer:
             self._shader.use(display_width, display_height)
             self._vertices.bind()
 
-            if draw_data.CmdLists:
-                cmd_lists = ctypes.cast(draw_data.CmdLists, ctypes.POINTER(
-                    ctypes.POINTER(ImGui.ImDrawList)))
-                for i in range(draw_data.CmdListsCount):
-                    commands = cmd_lists[i][0]
-                    idx_buffer_offset = 0
+            for p_command_list in ImGui.iterate(draw_data.CmdLists, ctypes.POINTER(ImGui.ImDrawList), draw_data.CmdListsCount):
+                command_list = p_command_list[0]
+                self._vertices.data(
+                    ctypes.c_void_p(
+                        command_list.VtxBuffer.Data), command_list.VtxBuffer.Size * 20,
+                    ctypes.c_void_p(
+                        command_list.IdxBuffer.Data), command_list.IdxBuffer.Size * 2)
 
-                    self._vertices.data(
-                        ctypes.c_void_p(
-                            commands.VtxBuffer.Data), commands.VtxBuffer.Size * 20,
-                        ctypes.c_void_p(
-                            commands.IdxBuffer.Data), commands.IdxBuffer.Size * 2)
+                idx_buffer_offset = 0
+                for command in command_list.CmdBuffer.each(ImGui.ImDrawCmd):
+                    GL.glBindTexture(GL.GL_TEXTURE_2D, command.TextureId)
 
-                    cmd_data = ctypes.cast(
-                        commands.CmdBuffer.Data, ctypes.POINTER(ImGui.ImDrawCmd))
-                    for j in range(commands.CmdBuffer.Size):
-                        command = cmd_data[j]
+                    rect = command.ClipRect
+                    GL.glScissor(
+                        int(rect.x), int(fb_height - rect.w),
+                        int(rect.z - rect.x), int(rect.w - rect.y))
 
-                        GL.glBindTexture(GL.GL_TEXTURE_2D, command.TextureId)
-
-                        rect = command.ClipRect
-                        GL.glScissor(
-                            int(rect.x), int(fb_height - rect.w),
-                            int(rect.z - rect.x), int(rect.w - rect.y))
-
-                        self._vertices.draw(
-                            idx_buffer_offset, command.ElemCount)
-                        idx_buffer_offset += command.ElemCount * 2
+                    self._vertices.draw(
+                        idx_buffer_offset, command.ElemCount)
+                    idx_buffer_offset += command.ElemCount * 2
