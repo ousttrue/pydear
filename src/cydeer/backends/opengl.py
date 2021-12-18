@@ -118,10 +118,12 @@ def save_render_state():
         else:
             GL.glDisable(GL.GL_SCISSOR_TEST)
 
-        GL.glViewport(last_viewport[0], last_viewport[1],
-                      last_viewport[2], last_viewport[3])
-        GL.glScissor(last_scissor_box[0], last_scissor_box[1],
-                     last_scissor_box[2], last_scissor_box[3])
+        GL.glViewport(
+            last_viewport[0], last_viewport[1],
+            last_viewport[2], last_viewport[3])
+        GL.glScissor(
+            last_scissor_box[0], last_scissor_box[1],
+            last_scissor_box[2], last_scissor_box[3])
 
 
 class Shader:
@@ -157,21 +159,26 @@ class Shader:
             self._shader_handle, "Color")
 
     def __del__(self):
-        GL.glDeleteProgram(self._shader_handle)
+        if self._shader_handle:
+            logger.debug(f'delete shader: {self._shader_handle}')
+            GL.glDeleteProgram(self._shader_handle)
         self._shader_handle = 0
 
     def enable_attributes(self):
         GL.glEnableVertexAttribArray(self._attrib_location_position)
         GL.glEnableVertexAttribArray(self._attrib_location_uv)
         GL.glEnableVertexAttribArray(self._attrib_location_color)
-        GL.glVertexAttribPointer(self._attrib_location_position, 2, GL.GL_FLOAT, GL.GL_FALSE,
-                                 20, ctypes.c_void_p(0))
-        GL.glVertexAttribPointer(self._attrib_location_uv, 2, GL.GL_FLOAT, GL.GL_FALSE,
-                                 20, ctypes.c_void_p(8))
-        GL.glVertexAttribPointer(self._attrib_location_color, 4, GL.GL_UNSIGNED_BYTE, GL.GL_TRUE,
-                                 20, ctypes.c_void_p(16))
+        GL.glVertexAttribPointer(
+            self._attrib_location_position, 2, GL.GL_FLOAT, GL.GL_FALSE,
+            20, ctypes.c_void_p(0))
+        GL.glVertexAttribPointer(
+            self._attrib_location_uv, 2, GL.GL_FLOAT, GL.GL_FALSE,
+            20, ctypes.c_void_p(8))
+        GL.glVertexAttribPointer(
+            self._attrib_location_color, 4, GL.GL_UNSIGNED_BYTE, GL.GL_TRUE,
+            20, ctypes.c_void_p(16))
 
-    def use(self, w: int, h: int):
+    def use(self, w: float, h: float):
         ortho_projection = (ctypes.c_float * 16)(
             2.0/w, 0.0,                   0.0, 0.0,
             0.0,               2.0/-h,   0.0, 0.0,
@@ -180,8 +187,9 @@ class Shader:
         )
         GL.glUseProgram(self._shader_handle)
         GL.glUniform1i(self._attrib_location_tex, 0)
-        GL.glUniformMatrix4fv(self._attrib_proj_mtx, 1,
-                              GL.GL_FALSE, ortho_projection)
+        GL.glUniformMatrix4fv(
+            self._attrib_proj_mtx, 1,
+            GL.GL_FALSE, ortho_projection)
 
 
 class Texture:
@@ -196,7 +204,8 @@ class Texture:
                         height, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, pixels)
 
     def __del__(self):
-        if self._font_texture > -1:
+        if self._font_texture:
+            logger.debug(f'delete texture: {self._font_texture}')
             GL.glDeleteTextures([self._font_texture])
         self._font_texture = 0
 
@@ -208,19 +217,22 @@ class Texture:
 class VertexBuffer:
     def __init__(self) -> None:
         self._vbo_handle = GL.glGenBuffers(1)
-        self._elements_handle = GL.glGenBuffers(1)
+        self._vio_handle = GL.glGenBuffers(1)
         self._vao_handle = GL.glGenVertexArrays(1)
         GL.glBindVertexArray(self._vao_handle)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._vbo_handle)
 
     def __del__(self):
-        if self._vao_handle > -1:
+        if self._vao_handle:
+            logger.debug(f'delete vao: {self._vao_handle}')
             GL.glDeleteVertexArrays(1, [self._vao_handle])
         if self._vbo_handle > -1:
+            logger.debug(f'delete vbo: {self._vbo_handle}')
             GL.glDeleteBuffers(1, [self._vbo_handle])
-        if self._elements_handle > -1:
-            GL.glDeleteBuffers(1, [self._elements_handle])
-        self._vao_handle = self._vbo_handle = self._elements_handle = 0
+        if self._vio_handle > -1:
+            logger.debug(f'delete vio: {self._vio_handle}')
+            GL.glDeleteBuffers(1, [self._vio_handle])
+        self._vao_handle = self._vbo_handle = self._vio_handle = 0
 
     def bind(self):
         GL.glBindVertexArray(self._vao_handle)
@@ -229,13 +241,14 @@ class VertexBuffer:
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._vbo_handle)
         GL.glBufferData(GL.GL_ARRAY_BUFFER, vertices_size,
                         vertices, GL.GL_STREAM_DRAW)
-        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self._elements_handle)
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self._vio_handle)
         GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, indices_size,
                         indices, GL.GL_STREAM_DRAW)
 
     def draw(self, offset: int, count: int):
-        GL.glDrawElements(GL.GL_TRIANGLES, count,
-                          GL.GL_UNSIGNED_SHORT, ctypes.c_void_p(offset))
+        GL.glDrawElements(
+            GL.GL_TRIANGLES, count,
+            GL.GL_UNSIGNED_SHORT, ctypes.c_void_p(offset))
 
 
 class Renderer:
@@ -274,19 +287,18 @@ class Renderer:
                       (width[0] * height[0] * channels[0])).from_address(p[0])
 
             self._texture = Texture(pixels, width[0], height[0])
+            logger.debug(f'create font texture: {self._texture._font_texture}')
             fonts.TexID = self._texture.pointer
 
         fonts.ClearTexData()
 
     def render(self, draw_data):
-        # perf: local for faster access
         io = ImGui.GetIO()
 
         display_width = io.DisplaySize.x
         display_height = io.DisplaySize.y
         fb_width = int(display_width * io.DisplayFramebufferScale.x)
         fb_height = int(display_height * io.DisplayFramebufferScale.y)
-
         if fb_width == 0 or fb_height == 0:
             return
 
@@ -294,7 +306,6 @@ class Renderer:
         # draw_data.scale_clip_rects(io.FramebufferScale.x, io.FramebufferScale.y)
 
         # backup GL state
-        # todo: provide cleaner version of this backup-restore code
         with save_render_state():
             GL.glEnable(GL.GL_BLEND)
             GL.glBlendEquation(GL.GL_FUNC_ADD)
@@ -312,7 +323,6 @@ class Renderer:
             if draw_data.CmdLists:
                 cmd_lists = ctypes.cast(draw_data.CmdLists, ctypes.POINTER(
                     ctypes.POINTER(ImGui.ImDrawList)))
-                # for commands in cmd_lists:
                 for i in range(draw_data.CmdListsCount):
                     commands = cmd_lists[i][0]
                     idx_buffer_offset = 0
@@ -323,7 +333,6 @@ class Renderer:
                         ctypes.c_void_p(
                             commands.IdxBuffer.Data), commands.IdxBuffer.Size * 2)
 
-                    # todo: allow to iterate over _CmdList
                     cmd_data = ctypes.cast(
                         commands.CmdBuffer.Data, ctypes.POINTER(ImGui.ImDrawCmd))
                     for j in range(commands.CmdBuffer.Size):
@@ -331,10 +340,10 @@ class Renderer:
 
                         GL.glBindTexture(GL.GL_TEXTURE_2D, command.TextureId)
 
-                        # todo: use named tuple
                         rect = command.ClipRect
-                        GL.glScissor(int(rect.x), int(fb_height - rect.w),
-                                     int(rect.z - rect.x), int(rect.w - rect.y))
+                        GL.glScissor(
+                            int(rect.x), int(fb_height - rect.w),
+                            int(rect.z - rect.x), int(rect.w - rect.y))
 
                         self._vertices.draw(
                             idx_buffer_offset, command.ElemCount)

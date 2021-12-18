@@ -27,7 +27,7 @@ def main():
         return
 
     # GL 3.0 + GLSL 130
-    glsl_version = "#version 130"
+    # glsl_version = "#version 130"
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
     glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 2)
     glfw.window_hint(glfw.OPENGL_PROFILE,
@@ -61,9 +61,9 @@ def main():
     # Setup Platform/Renderer backends
     # ImGui_ImplGlfw_InitForOpenGL(window, True)
     # ImGui_ImplOpenGL3_Init(glsl_version)
-    from pyimgui_backend.glfw import GlfwRenderer
+    from cydeer.backends.glfw import GlfwRenderer
     impl_glfw = GlfwRenderer(window)
-    from pyimgui_backend.opengl import Renderer
+    from cydeer.backends.opengl import Renderer
     impl_opengl = Renderer()
 
     # Our state
