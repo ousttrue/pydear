@@ -13,9 +13,11 @@ Cydeer for short.
 -   generate type information(.pyi stub) by clang.cindex automatically
 
 
-## ToDo
+## build check command
 
-cpp type constructor
+```
+py -m pip wheel .
+```
 
 ## Another python bindings
 

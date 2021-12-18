@@ -55,7 +55,7 @@ def _dockspace(name: str):
     # TODO:
     # Save off menu bar height for later.
     # menubar_height = imgui.internal.get_current_window().menu_bar_height()
-    menubar_height = 30
+    menubar_height = 26
 
     # DockSpace
     dockspace_id = ImGui.GetID(name)
