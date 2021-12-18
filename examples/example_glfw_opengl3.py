@@ -46,22 +46,18 @@ def load_font(size: float):
     # The ranges array is not copied by the AddFont* functions and is used lazily
     # so ensure it is available at the time of building or calling GetTexDataAsRGBA32().
     # Will not be copied by AddFont* so keep in scope.
-    config = ImGui.ImFontConfig()
-    config.MergeMode = True
-    config.FontDataOwnedByAtlas = True
-    config.RasterizerMultiply = 1.0
-    config.OversampleH = 3
-    config.OversampleV = 1
-    config.GlyphMaxAdvanceX = 99999
 
     # fonts->AddFontFromFileTTF("DroidSans.ttf", 18.0f, &config, io.Fonts->GetGlyphRangesJapanese()); // Merge into first font
+    fonts.ClearFonts()
 
-    font = fonts.AddFontFromFileTTF(
+    fonts.AddFontFromFileTTF(
         "C:/Windows/Fonts/MSGothic.ttc", size, None, range
     )
 
-    icons_ranges = (ctypes.c_ushort * 3)(0xf000, 0xf3ff, 0)
     import fontawesome47
+    icons_ranges = (ctypes.c_ushort * 3)(0xf000, 0xf3ff, 0)
+    config = ImGui.ImFontConfig()
+    config.MergeMode = True
     config.GlyphMinAdvanceX = size
     fonts.AddFontFromFileTTF(
         str(fontawesome47.get_path()), size,

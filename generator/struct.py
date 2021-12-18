@@ -6,6 +6,8 @@ from .types.wrap_types import WrapFlags
 from . import function
 from generator import typeconv
 
+from generator import typewrap
+
 
 def is_forward_declaration(cursor: cindex.Cursor) -> bool:
     '''
@@ -86,7 +88,18 @@ class StructDecl(NamedTuple):
                     f'        ("{name}", {typeconv.get_field_type(field.underlying_spelling)}),\n')
             pyx.write('    ]\n\n')
 
-        for k, v in flags.custom_fields.items():
+        if flags.default_constructor:
+            constructor = TypeWrap.get_default_constructor(cursor)
+            if constructor:
+                pyx.write(f'''    def __init__(self, **kwargs):
+        p = new cpp_imgui.{cursor.spelling}()
+        memcpy(<void *><uintptr_t>ctypes.addressof(self), p, sizeof(cpp_imgui.{cursor.spelling}))
+        del p
+        super().__init__(**kwargs)
+''')
+
+
+        for _, v in flags.custom_fields.items():
             pyx.write('    @property\n')
             for l in v.splitlines():
                 pyx.write(f'    {l}\n')

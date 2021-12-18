@@ -10,6 +10,7 @@ class WrapFlags(NamedTuple):
     custom_fields: Dict[str, str] = {}
     methods: Union[bool, Tuple[str, ...]] = False
     custom_methods: Tuple[str, ...] = ()
+    default_constructor: bool = False
 
 
 WRAP_TYPES = [
@@ -28,7 +29,7 @@ WRAP_TYPES = [
 ''',
     )),
     WrapFlags('ImFont'),
-    WrapFlags('ImFontConfig', fields=True),
+    WrapFlags('ImFontConfig', fields=True, default_constructor=True),
     WrapFlags('ImFontAtlasCustomRect', fields=True),
     WrapFlags('ImFontAtlas', fields=True, methods=True),
     WrapFlags('ImGuiIO', fields=True, custom_fields={

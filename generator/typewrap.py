@@ -1,4 +1,4 @@
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, List
 import logging
 import re
 from clang import cindex
@@ -86,6 +86,17 @@ class TypeWrap(NamedTuple):
                 return False
             return True
         return [child for child in cursor.get_children() if method_filter(child)]
+
+    @staticmethod
+    def get_constructors(cursor: cindex.Cursor) -> List[cindex.Cursor]:
+        return [child for child in cursor.get_children() if child.kind == cindex.CursorKind.CONSTRUCTOR]
+
+    @staticmethod
+    def get_default_constructor(cursor: cindex.Cursor) -> Optional[cindex.Cursor]:
+        for constructor in TypeWrap.get_constructors(cursor):
+            params = TypeWrap.get_function_params(constructor)
+            if len(params) == 0:
+                return constructor
 
     @property
     def name(self) -> str:

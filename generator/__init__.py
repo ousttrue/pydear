@@ -118,6 +118,7 @@ import ctypes
 from libcpp cimport bool
 cimport cpp_imgui
 from libc.stdint cimport uintptr_t
+from libc.string cimport memcpy 
 
 ''')
         pyx.write(IMVECTOR)
