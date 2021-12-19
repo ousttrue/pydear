@@ -6,10 +6,8 @@ import cydeer as ImGui
 https://gist.github.com/rmitton/f80cbb028fca4495ab1859a155db4cd8
 '''
 
-TOOLBAR_SIZE = 50
 
-
-def _dockspace(name: str):
+def _dockspace(name: str, toolbar_size=0):
     io = ImGui.GetIO()
     io.ConfigFlags |= ImGui.ImGuiConfigFlags_.DockingEnable
 
@@ -26,9 +24,10 @@ def _dockspace(name: str):
 
     viewport = ImGui.GetMainViewport()
     x, y = viewport.Pos
-    y += TOOLBAR_SIZE
     w, h = viewport.Size
-    h -= TOOLBAR_SIZE
+    if toolbar_size:
+        y += toolbar_size
+        h -= toolbar_size
 
     ImGui.SetNextWindowPos((x, y))
     ImGui.SetNextWindowSize((w, h))
@@ -77,34 +76,39 @@ class DockView:
         self.drawable(self.p_open)
 
 
-def dockspace(*,
+TOOLBAR_SIZE = 50
+
+
+def dockspace(*views: DockView,
               menu: Callable[[], None] = None,
               toolbar: Callable[[], None] = None,
-              views: List[DockView] = None):
-    menubar_height = _dockspace('__DOCKING_SPACE__')
+              ):
+    menubar_height = _dockspace(
+        '__DOCKING_SPACE__', TOOLBAR_SIZE if toolbar else 0)
 
     # toolbar
-    viewport: ImGui.ImGuiViewport = ImGui.GetMainViewport()
-    ImGui.SetNextWindowPos((viewport.Pos.x, viewport.Pos.y + menubar_height))
-    ImGui.SetNextWindowSize((viewport.Size.x, TOOLBAR_SIZE))
-    # imgui.SetNextWindowViewport(viewport -> ID);
-
-    window_flags = (0
-                    | ImGui.ImGuiWindowFlags_.NoDocking
-                    | ImGui.ImGuiWindowFlags_.NoTitleBar
-                    | ImGui.ImGuiWindowFlags_.NoResize
-                    | ImGui.ImGuiWindowFlags_.NoMove
-                    | ImGui.ImGuiWindowFlags_.NoScrollbar
-                    | ImGui.ImGuiWindowFlags_.NoSavedSettings
-                    )
-    ImGui.PushStyleVar(ImGui.ImGuiStyleVar_.WindowBorderSize, 0)
-    ImGui.Begin("TOOLBAR", None, window_flags)
-    ImGui.PopStyleVar()
-
     if toolbar:
+        viewport: ImGui.ImGuiViewport = ImGui.GetMainViewport()
+        ImGui.SetNextWindowPos(
+            (viewport.Pos.x, viewport.Pos.y + menubar_height))
+        ImGui.SetNextWindowSize((viewport.Size.x, TOOLBAR_SIZE))
+        # imgui.SetNextWindowViewport(viewport -> ID);
+
+        window_flags = (0
+                        | ImGui.ImGuiWindowFlags_.NoDocking
+                        | ImGui.ImGuiWindowFlags_.NoTitleBar
+                        | ImGui.ImGuiWindowFlags_.NoResize
+                        | ImGui.ImGuiWindowFlags_.NoMove
+                        | ImGui.ImGuiWindowFlags_.NoScrollbar
+                        | ImGui.ImGuiWindowFlags_.NoSavedSettings
+                        )
+        ImGui.PushStyleVar(ImGui.ImGuiStyleVar_.WindowBorderSize, 0)
+        ImGui.Begin("TOOLBAR", None, window_flags)
+        ImGui.PopStyleVar()
+
         toolbar()
 
-    ImGui.End()
+        ImGui.End()
 
     if ImGui.BeginMainMenuBar():
         if menu:

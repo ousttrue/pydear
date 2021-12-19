@@ -175,7 +175,7 @@ def main():
 
         # update ImGui
         ImGui.NewFrame()
-        dockspace(menu=menu, toolbar=toolbar, views=views)
+        dockspace(*views, menu=menu, toolbar=toolbar)
         ImGui.Render()
 
         # clear OpenGL
