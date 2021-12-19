@@ -29,9 +29,10 @@ IN_TYPE_MAP: List[BaseType] = [
     CtypesArrayType('float'),
     CtypesArrayType('double'),
     CtypesArrayType('size_t'),
+    CtypesArrayType('unsigned char *'),
     BytesType('char *'),
     BytesType('unsigned char *'),
-    CtypesPointerType('unsigned char **'),
+    # CtypesPointerType('unsigned char **'),
     CtypesPointerType('void **'),
     # CtypesPointerType('unsigned short *'),
     # out

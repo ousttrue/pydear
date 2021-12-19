@@ -79,13 +79,15 @@ class CtypesArrayType(CtypesPointerType):
     '''
 
     def __init__(self, name: str):
-        super().__init__(name + ' *')
+        super().__init__((name + '*') if name.endswith('*') else (name + ' *'))
         self._name = name
 
     def match(self, spelling: str) -> bool:
-        m = re.match(r'^(?:const )?([\w _]+)(?: [\*&])$', spelling)
-        if m and m.group(1) == self._name:
-            return True
+        if spelling.startswith('const '):
+            spelling = spelling[len('const '):]
+        if spelling[-1] in ('*', '&'):
+            if spelling[:-1].rstrip() == self._name:
+                return True
         return False
 
     @property
