@@ -1,3 +1,4 @@
+from typing import Optional
 import ctypes
 import logging
 import contextlib
@@ -252,28 +253,12 @@ class VertexBuffer:
             GL.GL_UNSIGNED_SHORT, ctypes.c_void_p(offset))
 
 
-class Renderer:
-    """Basic OpenGL integration base class."""
-
-    def __init__(self):
+class Resource:
+    def __init__(self) -> None:
         with save_state():
             self._shader = Shader()
             self._vertices = VertexBuffer()
             self._shader.enable_attributes()
-        self._texture = None
-        self.refresh_font_texture()
-
-    def __del__(self):
-        del self._vertices
-        del self._shader
-        del self._texture
-        io = ImGui.GetIO()
-        io.Fonts.TexID = ctypes.c_void_p()
-
-    def refresh_font_texture(self):
-        if self._texture:
-            del self._texture
-
         # save texture state
         with save_texture():
 
@@ -293,7 +278,38 @@ class Renderer:
 
         fonts.ClearTexData()
 
+    def __del__(self):
+        del self._vertices
+        del self._shader
+        del self._texture
+
+    def bind(self, width: float, height: float):
+        self._shader.use(width, height)
+        self._vertices.bind()
+
+    def update_vertex_buffer(self, vertice: ctypes.c_void_p, vertices_byte_size: int, indices: ctypes.c_void_p, indices_byte_size: int):
+        self._vertices.data(vertice, vertices_byte_size,
+                            indices, indices_byte_size)
+
+    def draw(self, offset: int, draw_count: int):
+        self._vertices.draw(offset, draw_count)
+
+
+class Renderer:
+    """Basic OpenGL integration base class."""
+
+    def __init__(self):
+        self.resource: Optional[Resource] = None
+
+    def __del__(self):
+        del self.resource
+        io = ImGui.GetIO()
+        io.Fonts.TexID = ctypes.c_void_p()
+
     def render(self, draw_data: ImGui.ImDrawData):
+        if not self.resource:
+            self.resource = Resource()
+
         io = ImGui.GetIO()
 
         display_width = io.DisplaySize.x
@@ -317,26 +333,26 @@ class Renderer:
 
             GL.glViewport(0, 0, int(fb_width), int(fb_height))
 
-            self._shader.use(display_width, display_height)
-            self._vertices.bind()
-
+            self.resource.bind(fb_width, fb_height)
             for p_command_list in ImGui.iterate(draw_data.CmdLists, ctypes.POINTER(ImGui.ImDrawList), draw_data.CmdListsCount):
                 command_list = p_command_list[0]
-                self._vertices.data(
+
+                self.resource.update_vertex_buffer(
                     ctypes.c_void_p(
                         command_list.VtxBuffer.Data), command_list.VtxBuffer.Size * 20,
                     ctypes.c_void_p(
-                        command_list.IdxBuffer.Data), command_list.IdxBuffer.Size * 2)
+                        command_list.IdxBuffer.Data), command_list.IdxBuffer.Size * 2
+                )
 
                 idx_buffer_offset = 0
                 for command in command_list.CmdBuffer.each(ImGui.ImDrawCmd):
-                    GL.glBindTexture(GL.GL_TEXTURE_2D, command.TextureId)
+                    if command.TextureId:
+                        GL.glBindTexture(GL.GL_TEXTURE_2D, command.TextureId)
 
                     rect = command.ClipRect
                     GL.glScissor(
                         int(rect.x), int(fb_height - rect.w),
                         int(rect.z - rect.x), int(rect.w - rect.y))
 
-                    self._vertices.draw(
-                        idx_buffer_offset, command.ElemCount)
+                    self.resource.draw(idx_buffer_offset, command.ElemCount)
                     idx_buffer_offset += command.ElemCount * 2

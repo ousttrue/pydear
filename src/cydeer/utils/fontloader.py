@@ -1,8 +1,9 @@
 import ctypes
+import pathlib
 import cydeer as ImGui
 
 
-def load_font(size: float):
+def load(font: pathlib.Path, size: float, range: ctypes.Array, *, merge=False, monospace=False):
     '''
     https://github.com/ocornut/imgui/blob/master/docs/FONTS.md#font-loading-instructions
     '''
@@ -22,30 +23,14 @@ def load_font(size: float):
     #IM_ASSERT(font != NULL);
 
     io = ImGui.GetIO()
-    # Load a first font
     fonts = io.Fonts
-    # fonts.AddFontDefault()
-    range = fonts.GetGlyphRangesJapanese()
-    # Add character ranges and merge into the previous font
-    # The ranges array is not copied by the AddFont* functions and is used lazily
-    # so ensure it is available at the time of building or calling GetTexDataAsRGBA32().
-    # Will not be copied by AddFont* so keep in scope.
 
-    # fonts->AddFontFromFileTTF("DroidSans.ttf", 18.0f, &config, io.Fonts->GetGlyphRangesJapanese()); // Merge into first font
-    fonts.ClearFonts()
-
-    fonts.AddFontFromFileTTF(
-        "C:/Windows/Fonts/MSGothic.ttc", size, None, range
-    )
-
-    import fontawesome47
-    icons_ranges = (ctypes.c_ushort * 3)(0xf000, 0xf3ff, 0)
     config = ImGui.ImFontConfig()
-    config.MergeMode = True
-    config.GlyphMinAdvanceX = size
+    if merge:
+        config.MergeMode = True
+    if monospace:
+        config.GlyphMinAdvanceX = size
+
     fonts.AddFontFromFileTTF(
-        str(fontawesome47.get_path()), size,
-        config,
-        icons_ranges)
-    # Merge into first font
-    fonts.Build()
+        str(font), size, config, range
+    )

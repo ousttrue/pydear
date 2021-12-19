@@ -1,5 +1,5 @@
-
 import logging
+import pathlib
 import ctypes
 import glfw
 from OpenGL import GL
@@ -47,6 +47,7 @@ def main():
     # IMGUI_CHECKVERSION()
     ImGui.CreateContext()
     io = ImGui.GetIO()
+    # create texture before: ImGui.NewFrame()
     # io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     # io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGui.ImGuiConfigFlags_.DockingEnable  # before load ini
@@ -55,8 +56,18 @@ def main():
     # ImGui.StyleColorsDark()
     # ImGui.StyleColorsClassic();
 
-    from load_font import load_font
-    load_font(20.0)
+    font_size = 20.0
+
+    from cydeer.utils import fontloader
+    fontloader.load(pathlib.Path("C:/Windows/Fonts/MSGothic.ttc"), font_size,
+                    io.Fonts.GetGlyphRangesJapanese())
+
+    import fontawesome47
+    icons_ranges = (ctypes.c_ushort * 3)(0xf000, 0xf3ff, 0)
+    fontloader.load(fontawesome47.get_path(), font_size, icons_ranges,
+                    merge=True, monospace=True)
+
+    io.Fonts.Build()
 
     # Setup Platform/Renderer backends
     # ImGui_ImplGlfw_InitForOpenGL(window, True)
@@ -73,7 +84,7 @@ def main():
     counter = [0]
     f = (ctypes.c_float * 1)(0.0)
 
-    from dockspace import dockspace, DockView
+    from cydeer.utils.dockspace import dockspace, DockView
 
     # 1. Show the big demo window (Most of the sample code is in ImGui.ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
     demo = DockView('demo', (ctypes.c_bool * 1)(True), ImGui.ShowDemoWindow)
