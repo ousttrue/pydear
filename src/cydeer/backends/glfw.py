@@ -73,28 +73,28 @@ class GlfwRenderer:
         io = self.io
 
         if action == glfw.PRESS:
-            io.KeyDown[key] = True
+            io.KeysDown[key] = True
         elif action == glfw.RELEASE:
-            io.KeyDown[key] = False
+            io.KeysDown[key] = False
 
         io.KeyCtrl = (
-            io.KeyDown[glfw.KEY_LEFT_CONTROL] or
-            io.KeyDown[glfw.KEY_RIGHT_CONTROL]
+            io.KeysDown[glfw.KEY_LEFT_CONTROL] or
+            io.KeysDown[glfw.KEY_RIGHT_CONTROL]
         )
 
         io.KeyAlt = (
-            io.KeyDown[glfw.KEY_LEFT_ALT] or
-            io.KeyDown[glfw.KEY_RIGHT_ALT]
+            io.KeysDown[glfw.KEY_LEFT_ALT] or
+            io.KeysDown[glfw.KEY_RIGHT_ALT]
         )
 
         io.KeyShift = (
-            io.KeyDown[glfw.KEY_LEFT_SHIFT] or
-            io.KeyDown[glfw.KEY_RIGHT_SHIFT]
+            io.KeysDown[glfw.KEY_LEFT_SHIFT] or
+            io.KeysDown[glfw.KEY_RIGHT_SHIFT]
         )
 
         io.KeySuper = (
-            io.KeyDown[glfw.KEY_LEFT_SUPER] or
-            io.KeyDown[glfw.KEY_RIGHT_SUPER]
+            io.KeysDown[glfw.KEY_LEFT_SUPER] or
+            io.KeysDown[glfw.KEY_RIGHT_SUPER]
         )
 
     def char_callback(self, window, char):
