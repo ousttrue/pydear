@@ -11,7 +11,7 @@
 
 ```python
 def GetIO()->ImGuiIO:
-    cdef cpp_imgui.ImGuiIO * value = &cpp_imgui.GetIO()
+    cdef impl.ImGuiIO * value = &impl.GetIO()
     # pointer を ctypes.Structure にキャストする
     return ctypes.cast(ctypes.c_void_p(<long long>value), ctypes.POINTER(ImGuiIO))[0]
 ```
@@ -22,7 +22,7 @@ def GetIO()->ImGuiIO:
 class ImFontAtlas(ctypes.Structure):
     def ClearTexData(self, ):
         # self を pointer にキャスト  
-        cdef cpp_imgui.ImFontAtlas *ptr = <cpp_imgui.ImFontAtlas*><uintptr_t>ctypes.addressof(self)
+        cdef impl.ImFontAtlas *ptr = <impl.ImFontAtlas*><uintptr_t>ctypes.addressof(self)
         # ptr からメソッド呼び出し
         ptr.ClearTexData()
 ```
