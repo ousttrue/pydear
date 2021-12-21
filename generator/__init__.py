@@ -97,7 +97,7 @@ def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.P
     #
     # pxd
     #
-    with (ext_dir / 'cpp_imgui.pxd').open('w') as pxd:
+    with (ext_dir / 'impl.pxd').open('w') as pxd:
         # types
         pxd.write('''from libcpp cimport bool
 cdef extern from "imgui.h":
@@ -122,11 +122,11 @@ cdef extern from "imgui.h" namespace "ImGui":
     #
     # pyx
     #
-    with (ext_dir / 'imgui.pyx').open('w') as pyx:
+    with (ext_dir / 'impl.pyx').open('w') as pyx:
         pyx.write('''from typing import Tuple, Any, Union, Iterable, Type
 import ctypes
 from libcpp cimport bool
-cimport cpp_imgui
+cimport impl
 from libc.stdint cimport uintptr_t
 from libc.string cimport memcpy 
 

@@ -99,7 +99,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
     # body
     if result.is_void:
         pyx.write(
-            f'{indent}cpp_imgui.{function.spelling}{cj(param_names)}\n\n')
+            f'{indent}impl.{function.spelling}{cj(param_names)}\n\n')
     else:
         ref = ''
         if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
@@ -107,7 +107,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
             ref = '&'
 
         pyx.write(
-            f'{indent}{result_t.to_cdef(result_is_const)} value = {ref}cpp_imgui.{function.spelling}{cj(param_names)}\n')
+            f'{indent}{result_t.to_cdef(result_is_const)} value = {ref}impl.{function.spelling}{cj(param_names)}\n')
         pyx.write(f"{indent}return {result_t.to_py('value')}\n\n")
 
 
@@ -133,7 +133,7 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     indent = '        '
 
     # self to ptr
-    pyx.write(f'{indent}cdef cpp_imgui.{cursor.spelling} *ptr = <cpp_imgui.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)\n')
+    pyx.write(f'{indent}cdef impl.{cursor.spelling} *ptr = <impl.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)\n')
 
     # cdef parameters
     param_names = extract_parameters(pyx, params, indent)

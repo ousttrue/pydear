@@ -6,7 +6,7 @@ import pathlib
 HERE = pathlib.Path(__file__).parent
 sys.path.append(str(HERE / '_external/pycindex/src'))
 PYI_PATH = HERE / 'src/cydeer/__init__.pyi'
-EXT_DIR = HERE / 'src/cydeer/imgui'
+EXT_DIR = HERE / 'src/cydeer/impl'
 IMGUI_DIR = HERE / '_external/imgui'
 ENUM_PATH = HERE / 'src/cydeer/imgui_enum.py'
 logging.basicConfig(level=logging.DEBUG)
@@ -25,9 +25,9 @@ def rel_path(src: pathlib.Path) -> str:
     return str(src.relative_to(HERE)).replace('\\', '/')
 
 
-extensions = [Extension('cydeer.imgui',
+extensions = [Extension('cydeer.impl',
                         sources=[
-                            rel_path(EXT_DIR / 'imgui.pyx'),  # generated
+                            rel_path(EXT_DIR / 'impl.pyx'),  # generated
                             rel_path(IMGUI_DIR / 'imgui.cpp'),
                             rel_path(IMGUI_DIR / 'imgui_widgets.cpp'),
                             rel_path(IMGUI_DIR / 'imgui_draw.cpp'),

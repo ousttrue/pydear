@@ -4,6 +4,7 @@ import ctypes
 import glfw
 from OpenGL import GL
 import cydeer as ImGui
+from cydeer.utils import filedialog
 
 
 logger = logging.getLogger(__name__)
@@ -153,7 +154,8 @@ def main():
     # 5.
     from cydeer.utils.loghandler import ImGuiLogHandler
     log_handler = ImGuiLogHandler()
-    log_handler.setFormatter(logging.Formatter('%(name)s:%(lineno)s[%(levelname)s]%(message)s'))
+    log_handler.setFormatter(logging.Formatter(
+        '%(name)s:%(lineno)s[%(levelname)s]%(message)s'))
     log_handler.register_root()
     log = DockView('log', (ctypes.c_bool * 1)(True), log_handler.draw)
 
@@ -161,10 +163,14 @@ def main():
         demo, another_window, window2, metrics, log
     ]
 
+    open_dialog = [False]
     def menu():
+        open_dialog[0]=False
         if ImGui.BeginMenu(b"File", True):
+            if ImGui.MenuItem(b"Open", None, False, True):
+                open_dialog[0]=True
 
-            if ImGui.MenuItem(b"Quit", b'Cmd+Q', False, True):
+            if ImGui.MenuItem(b"Quit", None, False, True):
                 glfw.set_window_should_close(window, True)
             ImGui.EndMenu()
 
@@ -201,6 +207,13 @@ def main():
         # update ImGui
         ImGui.NewFrame()
         dockspace(*views, menu=menu, toolbar=toolbar)
+
+        if open_dialog[0]:
+            ImGui.OpenPopup(filedialog.NAME)
+        file = filedialog.fileopendialog()
+        if file:
+            logger.info(f'open {file}')
+
         ImGui.Render()
 
         # clear OpenGL

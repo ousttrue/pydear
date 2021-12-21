@@ -3,6 +3,9 @@
 *.pyi
 *.egg-info
 *.whl
+*.cpp
+*.pyx
+*.pxd
 /src/cydeer/_version.py
 /src/cydeer/imgui
 /src/cydeer/imgui_enum.py

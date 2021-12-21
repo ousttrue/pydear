@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable, List, Iterable
 import ctypes
 import dataclasses
 import cydeer as ImGui
@@ -79,7 +79,7 @@ class DockView:
 TOOLBAR_SIZE = 50
 
 
-def dockspace(*views: DockView,
+def dockspace(views: Iterable[DockView],
               menu: Callable[[], None] = None,
               toolbar: Callable[[], None] = None,
               ):

@@ -92,8 +92,8 @@ class StructDecl(NamedTuple):
             constructor = TypeWrap.get_default_constructor(cursor)
             if constructor:
                 pyx.write(f'''    def __init__(self, **kwargs):
-        p = new cpp_imgui.{cursor.spelling}()
-        memcpy(<void *><uintptr_t>ctypes.addressof(self), p, sizeof(cpp_imgui.{cursor.spelling}))
+        p = new impl.{cursor.spelling}()
+        memcpy(<void *><uintptr_t>ctypes.addressof(self), p, sizeof(impl.{cursor.spelling}))
         del p
         super().__init__(**kwargs)
 ''')

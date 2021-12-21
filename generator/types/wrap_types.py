@@ -44,7 +44,7 @@ WRAP_TYPES = [
     WrapFlags('ImDrawCmdHeader', fields=True),
     WrapFlags('ImDrawList', fields=True),
     WrapFlags('ImGuiStyle'),
-    WrapFlags('ImGuiViewport', fields=True),
+    WrapFlags('ImGuiViewport', fields=True, methods=True),
     WrapFlags('ImGuiWindowClass'),
 ]
 
@@ -73,10 +73,10 @@ class WrapPointerType(BaseType):
         return f'ctypes.c_void_p'
 
     def to_c(self, name: str, is_const: bool) -> str:
-        return f'<{const(is_const)}cpp_imgui.{self._name}*><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+        return f'<{const(is_const)}impl.{self._name}*><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
     def to_cdef(self, is_const: bool) -> str:
-        return f'cdef {const(is_const)}cpp_imgui.{self._name} *'
+        return f'cdef {const(is_const)}impl.{self._name} *'
 
     def to_py(self, name: str) -> str:
         return f'ctypes.cast(ctypes.c_void_p(<uintptr_t>{name}), ctypes.POINTER({self._name}))[0]'
@@ -106,10 +106,10 @@ class WrapReferenceType(BaseType):
         return self._name
 
     def to_c(self, name: str, is_const: bool) -> str:
-        return f'<{const(is_const)}cpp_imgui.{self._name}*><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
+        return f'<{const(is_const)}impl.{self._name}*><uintptr_t>ctypes.addressof({name}) if {name} else NULL'
 
     def to_cdef(self, is_const: bool) -> str:
-        return f'cdef {const(is_const)}cpp_imgui.{self._name} *'
+        return f'cdef {const(is_const)}impl.{self._name} *'
 
     def to_py(self, name: str) -> str:
         return f'ctypes.cast(ctypes.c_void_p(<uintptr_t>{name}), ctypes.POINTER({self._name}))[0]'
@@ -151,7 +151,7 @@ class WrapType(BaseType):
             return name
 
     def to_cdef(self, is_const: bool) -> str:
-        return f'cdef cpp_imgui.{self.c_type}'
+        return f'cdef impl.{self.c_type}'
 
     def to_py(self, name: str) -> str:
         if self._to_py:
@@ -174,7 +174,7 @@ class ImVec2WrapType(WrapType):
         return f'{self.c_type}'
 
     def to_c(self, name: str, is_const: bool) -> str:
-        return f'cpp_imgui.ImVec2({name}[0], {name}[1]) if isinstance({name}, tuple) else cpp_imgui.ImVec2({name}.x, {name}.y)'
+        return f'impl.ImVec2({name}[0], {name}[1]) if isinstance({name}, tuple) else impl.ImVec2({name}.x, {name}.y)'
 
     def to_py(self, name: str) -> str:
         '''
@@ -197,7 +197,7 @@ class ImVec4WrapType(WrapType):
         return f'{self.c_type}'
 
     def to_c(self, name: str, is_const: bool) -> str:
-        return f'cpp_imgui.ImVec4({name}[0], {name}[1], {name}[2], {name}[3]) if isinstance({name}, tuple) else cpp_imgui.ImVec4({name}.x, {name}.y, {name}.z, {name}.w)'
+        return f'impl.ImVec4({name}[0], {name}[1], {name}[2], {name}[3]) if isinstance({name}, tuple) else impl.ImVec4({name}.x, {name}.y, {name}.z, {name}.w)'
 
     def to_py(self, name: str) -> str:
         '''
