@@ -124,6 +124,19 @@ class Int32Type(BaseType):
         return 'ctypes.c_int32'
 
 
+class Int64Type(BaseType):
+    def __init__(self):
+        super().__init__('long long')
+
+    @property
+    def py_typing(self) -> Iterable[str]:
+        yield 'int'
+
+    @property
+    def field_ctypes_type(self) -> str:
+        return 'ctypes.c_int64'
+
+
 class FloatType(BaseType):
     def __init__(self):
         super().__init__('float')
