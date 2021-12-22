@@ -1,4 +1,5 @@
 from typing import NamedTuple, Tuple, List, Union
+import io
 import pathlib
 import logging
 from clang import cindex
@@ -9,10 +10,15 @@ logger = logging.getLogger(__name__)
 
 
 class Parser:
-    def __init__(self, entrypoint: pathlib.Path) -> None:
+    def __init__(self, dir: pathlib.Path, headers: List[str]) -> None:
+        sio = io.StringIO()
+        for header in headers:
+            sio.write(f'#include "{header}"\n')
         import pycindex
-        self.entrypoint = str(entrypoint)
-        self.tu = pycindex.get_tu(self.entrypoint)
+        self.entrypoint = dir / headers[0]
+        unsaved = pycindex.Unsaved('tmp.h', sio.getvalue())
+        self.tu = pycindex.get_tu(
+            'tmp.h', includes=[str(dir)], unsaved=[unsaved])
         self.functions: List[Tuple[cindex.Cursor, ...]] = []
         self.enums: List[EnumDecl] = []
         self.typedef_struct_list: List[Union[TypedefDecl, StructDecl]] = []
@@ -25,7 +31,7 @@ class Parser:
         if not location.file:
             return False
 
-        if location.file.name == self.entrypoint:
+        if self.entrypoint == pathlib.Path(location.file.name):
             match cursor.kind:
                 case cindex.CursorKind.NAMESPACE:
                     # enter namespace

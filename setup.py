@@ -8,7 +8,7 @@ HERE = pathlib.Path(__file__).parent
 sys.path.append(str(HERE / '_external/pycindex/src'))
 PYI_PATH = HERE / 'src/cydeer/__init__.pyi'
 EXT_DIR = HERE / 'src/cydeer/impl'
-IMGUI_DIR = HERE / '_external/imgui'
+EXTERNAL_DIR = HERE / '_external'
 ENUM_PATH = HERE / 'src/cydeer/imgui_enum.py'
 CMAKE_BUILD = HERE / 'build'
 logging.basicConfig(level=logging.DEBUG)
@@ -20,7 +20,7 @@ except:
     # get clang
     import _external.pycindex.setup
 import generator  # noqa
-generator.generate(IMGUI_DIR, EXT_DIR, PYI_PATH, ENUM_PATH)
+include_dirs = generator.generate(EXTERNAL_DIR, EXT_DIR, PYI_PATH, ENUM_PATH)
 
 
 def rel_path(src: pathlib.Path) -> str:
@@ -36,7 +36,7 @@ extensions = [Extension('cydeer.impl',
                         sources=[
                             rel_path(EXT_DIR / 'impl.pyx'),  # generated
                         ],
-                        include_dirs=[str(IMGUI_DIR)],
+                        include_dirs=include_dirs,
                         language='c++',
                         extra_compile_args=['/wd4244'],
                         # cmake built

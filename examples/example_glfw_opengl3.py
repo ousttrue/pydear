@@ -206,7 +206,7 @@ def main():
 
         # update ImGui
         ImGui.NewFrame()
-        dockspace(*views, menu=menu, toolbar=toolbar)
+        dockspace(views, menu=menu, toolbar=toolbar)
 
         if open_dialog[0]:
             ImGui.OpenPopup(filedialog.NAME)
@@ -231,6 +231,7 @@ def main():
         glfw.swap_buffers(window)
 
     # Cleanup
+
     del impl_opengl
     del impl_glfw
     ImGui.DestroyContext()

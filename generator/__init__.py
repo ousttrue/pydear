@@ -1,3 +1,4 @@
+from typing import List
 '''
 use from setup.py
 '''
@@ -5,7 +6,6 @@ from os import write
 import pathlib
 from clang import cindex
 from . import function
-from . import typeconv
 from .types import wrap_types
 
 EXCLUDE_TYPES = (
@@ -88,9 +88,20 @@ def is_exclude_function(cursors: tuple) -> bool:
     return False
 
 
-def generate(imgui_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path, enum_py_path: pathlib.Path):
+def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path, enum_py_path: pathlib.Path) -> List[str]:
+
+    headers = [
+        'imgui/imgui.h',
+        'ImFileDialog/ImFileDialog.h',
+    ]
+    include_dirs = [
+        external_dir,
+        external_dir / 'imgui',
+        external_dir / 'ImFileDialog',
+    ]
+
     from .parser import Parser
-    parser = Parser(imgui_dir / 'imgui.h')
+    parser = Parser(external_dir, headers)
     parser.traverse()
     ext_dir.mkdir(parents=True, exist_ok=True)
 
@@ -188,3 +199,5 @@ from typing import Any, Union, Tuple
 ''')
         for e in parser.enums:
             e.write_to(enum_py)
+
+    return [str(dir) for dir in include_dirs]

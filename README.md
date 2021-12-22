@@ -12,6 +12,11 @@ Cydeer for short.
 -   pointer handling idea from luajit ffi
 -   generate type information(.pyi stub) by clang.cindex automatically
 
+## imgui addons
+
+* https://github.com/dfranx/ImFileDialog
+* https://github.com/Nelarius/imnodes
+* https://github.com/CedricGuillemet/ImGuizmo 
 
 ## build check command
 
