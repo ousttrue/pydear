@@ -154,7 +154,7 @@ def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathli
 
     files = [
         'imgui/imgui.h',
-        'ImFileDialog/ImFileDialog.h',
+        'ImFileDialogWrap.h',
     ]
     namespaces = [
         'ImGui',
@@ -163,7 +163,6 @@ def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathli
     include_dirs = [
         external_dir,
         external_dir / 'imgui',
-        external_dir / 'ImFileDialog',
     ]
 
     parser = Parser(external_dir, files)
@@ -178,11 +177,12 @@ def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathli
     #
     with (ext_dir / 'impl.pxd').open('w') as pxd:
         pxd.write(f'''from libcpp cimport bool
+from libcpp.string cimport string
+
 ''')
 
         for header in headers:
             header.write_pxd(pxd, parser)
-            break
 
     #
     # pyx
@@ -191,6 +191,7 @@ def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathli
         pyx.write('''from typing import Tuple, Any, Union, Iterable, Type
 import ctypes
 from libcpp cimport bool
+from libcpp.string cimport string
 cimport impl
 from libc.stdint cimport uintptr_t
 from libc.string cimport memcpy 
@@ -199,7 +200,6 @@ from libc.string cimport memcpy
 
         for header in headers:
             header.write_pyx(pyx, parser)
-            break
 
     #
     # pyi

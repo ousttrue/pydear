@@ -7,9 +7,42 @@ from .types.primitive_types import *
 
 logger = logging.getLogger(__name__)
 
+
+class StringType(BaseType):
+    def __init__(self):
+        super().__init__('std::string')
+
+    @property
+    def py_typing(self) -> Iterable[str]:
+        yield 'string'
+
+    def to_c(self, name: str, is_const: bool) -> str:
+        return 'string'
+
+    def to_cdef(self, is_const: bool) -> str:
+        return f'cdef string'
+
+
+class FunctionPointer(BaseType):
+    def __init__(self, name: str):
+        super().__init__(name)
+
+    @property
+    def py_typing(self) -> Iterable[str]:
+        yield 'ctypes.c_void_p'
+
+    @property
+    def param_typing(self) -> str:
+        return f'impl.{self.c_type}'
+
+    def param(self, indent: str, i: int, name: str, is_const: bool) -> str:
+        return f'{indent}cdef impl.{self.c_type} p{i}= {name}'
+
+
 IMVECTOR_TYPE = WrapType('ImVector')
 VOID_POINTER = VoidPointerType()
 IN_TYPE_MAP: List[BaseType] = [
+    # FunctionPointer(),
     VoidType(),
     BoolType(),
     Int8Type(),
@@ -41,6 +74,7 @@ IN_TYPE_MAP: List[BaseType] = [
     # field
     WrapType('ImDrawCmdHeader'),
     WrapType('ImDrawListSplitter'),
+    StringType(),
 ]
 for w in WRAP_TYPES:
     IN_TYPE_MAP.append(WrapPointerType(w.name))
@@ -73,11 +107,16 @@ def get_type(spelling: str) -> BaseType:
         # unknown pointer
         logger.debug(f'unknown: void*: {spelling}')
         return VOID_POINTER
-    if '(*)' in spelling:
-        # function pointer
-        return VOID_POINTER
+    # if '(*)' in spelling:
+    #     # function pointer
+    #     return VOID_POINTER
 
-    raise RuntimeError()
+    # # may function pointer
+    # return VOID_POINTER
+
+    # raise RuntimeError()
+    logger.debug(f'function pointer?: {spelling}')
+    return FunctionPointer(spelling)
 
 
 def get_field_type(spelling: str) -> str:

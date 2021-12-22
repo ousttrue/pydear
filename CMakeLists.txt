@@ -24,6 +24,7 @@ add_library(
   _external/imgui/imgui_tables.cpp
   _external/imgui/imgui_demo.cpp
   _external/ImFileDialog/ImFileDialog.cpp
+  _external/ImFileDialogWrap.cpp
   _external/imnodes/imnodes.cpp
   _external/ImGuizmo/ImGuizmo.cpp
   _external/ImGuizmo/GraphEditor.cpp
@@ -32,3 +33,4 @@ add_library(
   _external/ImGuizmo/ImSequencer.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE _external _external/imgui
                                                    _external/stb)
+target_link_libraries(${PROJECT_NAME} PUBLIC Advapi32.lib)

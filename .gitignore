@@ -3,7 +3,7 @@
 *.pyi
 *.egg-info
 *.whl
-*.cpp
+/src/**/*.cpp
 *.pyx
 *.pxd
 /src/cydeer/_version.py

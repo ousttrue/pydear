@@ -163,12 +163,35 @@ def main():
         demo, another_window, window2, metrics, log
     ]
 
+    # FileDialog
+    def create_texture(data: bytes, w: int, h: int, fmt: int):
+        tex = GL.glGenTextures(1)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, tex)
+        GL.glTexParameteri(
+            GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
+        GL.glTexParameteri(
+            GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
+        GL.glTexParameteri(
+            GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
+        GL.glTexParameteri(
+            GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, w, h, 0, GL.GL_BGRA if(
+            fmt == 0) else GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, data)
+        GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        return tex
+
+    def delete_texture(tex):
+        GL.glDeleteTextures(tex)
+
+    ImGui.ImFileDialog_SetTextureCallback(create_texture, delete_texture)
     open_dialog = [False]
+
     def menu():
-        open_dialog[0]=False
+        open_dialog[0] = False
         if ImGui.BeginMenu(b"File", True):
             if ImGui.MenuItem(b"Open", None, False, True):
-                open_dialog[0]=True
+                open_dialog[0] = True
 
             if ImGui.MenuItem(b"Quit", None, False, True):
                 glfw.set_window_should_close(window, True)

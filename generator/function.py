@@ -70,6 +70,8 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
 
 
 def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, overload=1):
+    if function.spelling == 'ImFileDialog_SetTextureCallback':
+        pass
     result = TypeWrap.from_function_result(function)
     result_is_const = result.is_const
     result_t = typeconv.get_type(result.underlying_spelling)
@@ -79,7 +81,11 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
 
     # signature
     def name_type_default_value(param: TypeWrap) -> str:
-        return f'{param.name}: {typeconv.get_type(param.underlying_spelling).param_typing}{param.default_value}'
+        pt = typeconv.get_type(param.underlying_spelling).param_typing
+        if pt.startswith('impl.'):
+            return f'{pt} {param.name}{param.default_value}'
+        else:
+            return f'{param.name}: {pt}{param.default_value}'
     pyx.write(
         f"def {function.spelling}{overload}{cj(name_type_default_value(param) for param in params)}")
     # return type

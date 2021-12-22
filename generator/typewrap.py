@@ -121,6 +121,9 @@ class TypeWrap(NamedTuple):
         '''
         pxd
         '''
+        match self.type.spelling:
+            case 'std::string':
+                return 'string'
         return template_filter(self.type.spelling).replace('[]', '*')
 
     @property
@@ -167,7 +170,11 @@ class TypeWrap(NamedTuple):
                 if not base:
                     break
                 current = base
-            return current.type.spelling
+            value = current.type.spelling
+            if '(*)' in value:
+                # fp
+                return self.cursor.type.spelling
+            return value
 
     @property
     def default_value(self) -> str:
