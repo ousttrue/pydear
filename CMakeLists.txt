@@ -24,6 +24,11 @@ add_library(
   _external/imgui/imgui_tables.cpp
   _external/imgui/imgui_demo.cpp
   _external/ImFileDialog/ImFileDialog.cpp
-  _external/imnodes/imnodes.cpp)
+  _external/imnodes/imnodes.cpp
+  _external/ImGuizmo/ImGuizmo.cpp
+  _external/ImGuizmo/GraphEditor.cpp
+  _external/ImGuizmo/ImCurveEdit.cpp
+  _external/ImGuizmo/ImGradient.cpp
+  _external/ImGuizmo/ImSequencer.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE _external _external/imgui
                                                    _external/stb)
