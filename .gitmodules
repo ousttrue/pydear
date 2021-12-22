@@ -4,3 +4,9 @@
 [submodule "_external/pycindex"]
 	path = _external/pycindex
 	url = https://github.com/ousttrue/pycindex.git
+[submodule "_external/ImFileDialog"]
+	path = _external/ImFileDialog
+	url = https://github.com/dfranx/ImFileDialog.git
+[submodule "_external/stb"]
+	path = _external/stb
+	url = https://github.com/nothings/stb.git
