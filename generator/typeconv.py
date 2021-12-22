@@ -1,9 +1,9 @@
 from typing import Optional, List
 import logging
 import re
-from .types.wrap_types import *
-from .types.pointer_types import *
-from .types.primitive_types import *
+from .interpreted_types.wrap_types import *
+from .interpreted_types.pointer_types import *
+from .interpreted_types.primitive_types import *
 
 logger = logging.getLogger(__name__)
 
