@@ -31,12 +31,8 @@ class FunctionPointer(BaseType):
     def py_typing(self) -> Iterable[str]:
         yield 'ctypes.c_void_p'
 
-    @property
-    def param_typing(self) -> str:
-        return f'impl.{self.c_type}'
-
     def param(self, indent: str, i: int, name: str, is_const: bool) -> str:
-        return f'{indent}cdef impl.{self.c_type} p{i}= {name}'
+        return f'{indent}cdef impl.{self.c_type} p{i}= <impl.{self.c_type}><void*><uintptr_t>{name}'
 
 
 IMVECTOR_TYPE = WrapType('ImVector')

@@ -6,6 +6,7 @@ from OpenGL import GL
 import cydeer as ImGui
 from cydeer.utils import filedialog
 
+FILE_DIALOG = b'open file'
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +165,7 @@ def main():
     ]
 
     # FileDialog
-    def create_texture(data: bytes, w: int, h: int, fmt: int):
+    def create_texture(data: ctypes.c_void_p, w: int, h: int, fmt: int):
         tex = GL.glGenTextures(1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, tex)
         GL.glTexParameteri(
@@ -176,22 +177,30 @@ def main():
         GL.glTexParameteri(
             GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
         GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, w, h, 0, GL.GL_BGRA if(
-            fmt == 0) else GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, data)
+            fmt == 0) else GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, ctypes.c_void_p(data))
         GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
-        return tex
+        logger.debug(f'filedialog: create texture: {tex}')
+        return int(tex)
+
+    delete_queue = []
 
     def delete_texture(tex):
-        GL.glDeleteTextures(tex)
+        logger.debug(f'filedialog: delete texture: {tex}')
+        delete_queue.append(tex)
 
-    ImGui.ImFileDialog_SetTextureCallback(create_texture, delete_texture)
-    open_dialog = [False]
+    p_create_texture = ctypes.CFUNCTYPE(
+        ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_char)(create_texture)
+    p_delete_texture = ctypes.CFUNCTYPE(None, ctypes.c_void_p)(delete_texture)
+
+    ImGui.ImFileDialog_SetTextureCallback(
+        ctypes.cast(p_create_texture, ctypes.c_void_p).value,
+        ctypes.cast(p_delete_texture, ctypes.c_void_p).value)
 
     def menu():
-        open_dialog[0] = False
         if ImGui.BeginMenu(b"File", True):
             if ImGui.MenuItem(b"Open", None, False, True):
-                open_dialog[0] = True
+                ImGui.ImFileDialog_Open(FILE_DIALOG, b'open file', b'*.txt')
 
             if ImGui.MenuItem(b"Quit", None, False, True):
                 glfw.set_window_should_close(window, True)
@@ -231,11 +240,13 @@ def main():
         ImGui.NewFrame()
         dockspace(views, menu=menu, toolbar=toolbar)
 
-        if open_dialog[0]:
-            ImGui.OpenPopup(filedialog.NAME)
-        file = filedialog.fileopendialog()
-        if file:
-            logger.info(f'open {file}')
+        # file = filedialog.fileopendialog()
+        # if file:
+        #     logger.info(f'open {file}')
+        # file dialogs
+        result = ImGui.ImFileDialog_GetResult(FILE_DIALOG)
+        if result:
+            logger.info(f'file open: {result}')
 
         ImGui.Render()
 
@@ -252,6 +263,11 @@ def main():
         # render ImGui
         impl_opengl.render(ImGui.GetDrawData())
         glfw.swap_buffers(window)
+
+        if delete_queue:
+            logger.debug(f'file dialog delete: {delete_queue}')
+            GL.glDeleteTextures(delete_queue)
+            delete_queue.clear()
 
     # Cleanup
 
