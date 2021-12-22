@@ -3,12 +3,14 @@ import logging
 from setuptools import Extension, setup
 from Cython.Build import cythonize
 import pathlib
+import subprocess
 HERE = pathlib.Path(__file__).parent
 sys.path.append(str(HERE / '_external/pycindex/src'))
 PYI_PATH = HERE / 'src/cydeer/__init__.pyi'
 EXT_DIR = HERE / 'src/cydeer/impl'
 IMGUI_DIR = HERE / '_external/imgui'
 ENUM_PATH = HERE / 'src/cydeer/imgui_enum.py'
+CMAKE_BUILD = HERE / 'build'
 logging.basicConfig(level=logging.DEBUG)
 
 # generate pyd, pyx, pyi from imgui.h
@@ -25,18 +27,21 @@ def rel_path(src: pathlib.Path) -> str:
     return str(src.relative_to(HERE)).replace('\\', '/')
 
 
+# build imgui to build/Release/lib/imgui.lib
+subprocess.run('cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release')
+subprocess.run('cmake --build build --config Release')
+
+
 extensions = [Extension('cydeer.impl',
                         sources=[
                             rel_path(EXT_DIR / 'impl.pyx'),  # generated
-                            rel_path(IMGUI_DIR / 'imgui.cpp'),
-                            rel_path(IMGUI_DIR / 'imgui_widgets.cpp'),
-                            rel_path(IMGUI_DIR / 'imgui_draw.cpp'),
-                            rel_path(IMGUI_DIR / 'imgui_tables.cpp'),
-                            rel_path(IMGUI_DIR / 'imgui_demo.cpp'),
                         ],
                         include_dirs=[str(IMGUI_DIR)],
                         language='c++',
                         extra_compile_args=['/wd4244'],
+                        # cmake built
+                        libraries=["imgui"],
+                        library_dirs=[str(CMAKE_BUILD / 'Release/lib')],
                         )]
 
 setup(
