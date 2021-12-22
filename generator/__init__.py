@@ -1,4 +1,5 @@
 from typing import List
+import io
 '''
 use from setup.py
 '''
@@ -7,6 +8,8 @@ import pathlib
 from clang import cindex
 from . import function
 from .types import wrap_types
+from .parser import Parser
+
 
 EXCLUDE_TYPES = (
     'va_list',
@@ -42,6 +45,7 @@ EXCLUDE_FUNCS = (
     'CheckboxFlags',
     'Combo',
     'ListBox',
+    'PlotLines',
 )
 
 
@@ -88,11 +92,73 @@ def is_exclude_function(cursors: tuple) -> bool:
     return False
 
 
+class Header:
+    def __init__(self, dir: pathlib.Path, file: str, namespace: str) -> None:
+        self.header = dir / file
+        self.namespace = namespace
+
+    def write_pxd(self, pxd: io.IOBase, parser: Parser):
+        types = [x for x in parser.typedef_struct_list if pathlib.Path(
+            x.cursor.location.file.name) == self.header]
+        if types:
+            pxd.write(f'''cdef extern from "{self.header.name}":
+''')
+            for cursors in types:
+                if cursors.cursor.spelling in EXCLUDE_TYPES:
+                    # TODO: nested type
+                    continue
+
+                cursors.write_pxd(pxd, excludes=EXCLUDE_TYPES)
+
+        # namespace
+        funcs = [x for x in parser.functions if pathlib.Path(
+            x[-1].location.file.name) == self.header]
+        if funcs:
+            pxd.write(f'''
+cdef extern from "{self.header.name}" namespace "{self.namespace}":
+''')
+            for cursors in funcs:
+                if is_exclude_function(cursors):
+                    continue
+                function.write_pxd_function(pxd, cursors[-1])
+
+    def write_pyx(self, pyx: io.IOBase, parser: Parser):
+        pyx.write(IMVECTOR)
+
+        types = [x for x in parser.typedef_struct_list if pathlib.Path(
+            x.cursor.location.file.name) == self.header]
+        if types:
+            for v in wrap_types.WRAP_TYPES:
+                for cursors in types:
+                    if cursors.cursor.spelling == v.name:
+                        cursors.write_pyx_ctypes(pyx, flags=v)
+
+        funcs = [x for x in parser.functions if pathlib.Path(
+            x[-1].location.file.name) == self.header]
+        if funcs:
+            overload = {}
+            for cursors in funcs:
+                if is_exclude_function(cursors):
+                    continue
+
+                name = cursors[-1].spelling
+                if True:
+                    # if name in INCLUDE_FUNCS:
+                    count = overload.get(name, 0) + 1
+                    function.write_pyx_function(
+                        pyx, cursors[-1], overload=count)
+                    overload[name] = count
+
+
 def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path, enum_py_path: pathlib.Path) -> List[str]:
 
-    headers = [
+    files = [
         'imgui/imgui.h',
         'ImFileDialog/ImFileDialog.h',
+    ]
+    namespaces = [
+        'ImGui',
+        'ifd',
     ]
     include_dirs = [
         external_dir,
@@ -100,35 +166,23 @@ def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathli
         external_dir / 'ImFileDialog',
     ]
 
-    from .parser import Parser
-    parser = Parser(external_dir, headers)
+    parser = Parser(external_dir, files)
     parser.traverse()
     ext_dir.mkdir(parents=True, exist_ok=True)
+
+    headers = [Header(external_dir, file, namespace)
+               for file, namespace in zip(files, namespaces)]
 
     #
     # pxd
     #
     with (ext_dir / 'impl.pxd').open('w') as pxd:
-        # types
-        pxd.write('''from libcpp cimport bool
-cdef extern from "imgui.h":
-
+        pxd.write(f'''from libcpp cimport bool
 ''')
-        for cursors in parser.typedef_struct_list:
-            if cursors.cursor.spelling in EXCLUDE_TYPES:
-                # TODO: nested type
-                continue
 
-            cursors.write_pxd(pxd, excludes=EXCLUDE_TYPES)
-
-        # namespace ImGui
-        pxd.write('''
-cdef extern from "imgui.h" namespace "ImGui":
-''')
-        for cursors in parser.functions:
-            if is_exclude_function(cursors):
-                continue
-            function.write_pxd_function(pxd, cursors[-1])
+        for header in headers:
+            header.write_pxd(pxd, parser)
+            break
 
     #
     # pyx
@@ -142,24 +196,10 @@ from libc.stdint cimport uintptr_t
 from libc.string cimport memcpy 
 
 ''')
-        pyx.write(IMVECTOR)
 
-        for v in wrap_types.WRAP_TYPES:
-            for cursors in parser.typedef_struct_list:
-                if cursors.cursor.spelling == v.name:
-                    cursors.write_pyx_ctypes(pyx, flags=v)
-
-        overload = {}
-        for cursors in parser.functions:
-            if is_exclude_function(cursors):
-                continue
-
-            name = cursors[-1].spelling
-            if True:
-                # if name in INCLUDE_FUNCS:
-                count = overload.get(name, 0) + 1
-                function.write_pyx_function(pyx, cursors[-1], overload=count)
-                overload[name] = count
+        for header in headers:
+            header.write_pyx(pyx, parser)
+            break
 
     #
     # pyi

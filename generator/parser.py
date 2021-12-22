@@ -15,13 +15,20 @@ class Parser:
         for header in headers:
             sio.write(f'#include "{header}"\n')
         import pycindex
-        self.entrypoint = dir / headers[0]
+
+        self.headers = [dir / header for header in headers]
+
+        include_dirs = [str(dir)] + [str((dir / header).parent)
+                                     for header in headers]
         unsaved = pycindex.Unsaved('tmp.h', sio.getvalue())
         self.tu = pycindex.get_tu(
-            'tmp.h', includes=[str(dir)], unsaved=[unsaved])
+            'tmp.h', include_dirs=include_dirs, unsaved=[unsaved])
         self.functions: List[Tuple[cindex.Cursor, ...]] = []
         self.enums: List[EnumDecl] = []
         self.typedef_struct_list: List[Union[TypedefDecl, StructDecl]] = []
+
+        self.used = []
+        self.skip = []
 
     def callback(self, *cursor_path: cindex.Cursor) -> bool:
         cursor = cursor_path[-1]
@@ -31,11 +38,14 @@ class Parser:
         if not location.file:
             return False
 
-        if self.entrypoint == pathlib.Path(location.file.name):
+        if pathlib.Path(location.file.name) in self.headers:
+            if location.file.name not in self.used:
+                logger.debug(f'header: {location.file.name}')
+                self.used.append(location.file.name)
             match cursor.kind:
                 case cindex.CursorKind.NAMESPACE:
                     # enter namespace
-                    # logger.info(f'namespace: {cursor.spelling}')
+                    logger.info(f'namespace: {cursor.spelling}')
                     return True
                 case (
                     cindex.CursorKind.MACRO_DEFINITION
@@ -44,6 +54,7 @@ class Parser:
                     | cindex.CursorKind.FUNCTION_TEMPLATE
                 ):
                     pass
+
                 case cindex.CursorKind.FUNCTION_DECL:
                     if(cursor.spelling.startswith('operator ')):
                         pass
@@ -57,10 +68,15 @@ class Parser:
                     self.typedef_struct_list.append(StructDecl(cursor_path))
                 case cindex.CursorKind.CLASS_TEMPLATE:
                     self.typedef_struct_list.append(StructDecl(cursor_path))
+                case cindex.CursorKind.CLASS_DECL:
+                    self.typedef_struct_list.append(StructDecl(cursor_path))
                 case _:
                     logger.debug(cursor.kind)
         else:
-            pass
+            if not location.file.name.startswith('C:'):
+                if location.file.name not in self.skip:
+                    logger.debug(f'unknown header: {location.file.name}')
+                    self.skip.append(location.file.name)
 
         return False
 

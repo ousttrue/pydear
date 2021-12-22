@@ -175,7 +175,7 @@ class TypeWrap(NamedTuple):
         for child in self.cursor.get_children():
             # logger.debug(child.spelling)
             match child.kind:
-                case cindex.CursorKind.UNEXPOSED_EXPR | cindex.CursorKind.INTEGER_LITERAL | cindex.CursorKind.FLOATING_LITERAL | cindex.CursorKind.CXX_BOOL_LITERAL_EXPR | cindex.CursorKind.UNARY_OPERATOR:
+                case cindex.CursorKind.UNEXPOSED_EXPR | cindex.CursorKind.INTEGER_LITERAL | cindex.CursorKind.FLOATING_LITERAL | cindex.CursorKind.CXX_BOOL_LITERAL_EXPR | cindex.CursorKind.UNARY_OPERATOR | cindex.CursorKind.CALL_EXPR:
                     tokens = [
                         token.spelling for token in self.cursor.get_tokens()]
                     if '=' not in tokens:
