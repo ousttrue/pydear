@@ -28,6 +28,7 @@ def rel_path(src: pathlib.Path) -> str:
 
 
 # build imgui to build/Release/lib/imgui.lib
+import vcenv
 subprocess.run('cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release')
 subprocess.run('cmake --build build --config Release')
 
