@@ -33,7 +33,7 @@ class TestTypes(unittest.TestCase):
 
     def test_primitive(self):
         void = parse_get_type('void func();')
-        self.assertEqual(void, interpreted_types.VOID_TYPE)
+        self.assertEqual(void, interpreted_types.VOID)
 
         int8 = parse_get_type('char func();')
         self.assertEqual(int8, interpreted_types.INT8)

@@ -3,7 +3,7 @@ from .basetype import BaseType
 from . import primitive_types
 
 
-VOID_TYPE = primitive_types.VoidType()
+VOID = primitive_types.VoidType()
 INT8 = primitive_types.Int8Type()
 INT16 = primitive_types.Int16Type()
 INT32 = primitive_types.Int32Type()
@@ -19,7 +19,7 @@ FLOAT64 = primitive_types.DoubleType()
 def from_cursor(cursor_type: cindex.Type, cursor: cindex.Cursor) -> BaseType:
     match cursor_type.kind:
         case cindex.TypeKind.VOID:
-            return VOID_TYPE
+            return VOID
 
         case cindex.TypeKind.CHAR_S:
             return INT8
