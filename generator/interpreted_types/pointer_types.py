@@ -36,7 +36,11 @@ class PointerType(BaseType):
         if base_name.startswith("Im"):
             base_name = 'impl.' + base_name
         return f'''{indent}# {self}
-{indent}cdef {base_name} *p{i} = <{base_name} *><void*><uintptr_t>(ctypes.addressof({name}))
+{indent}cdef {base_name} *p{i} = NULL;
+{indent}if isinstance({name}, ctypes.c_void_p):
+{indent}    p{i} = <{base_name} *><uintptr_t>({name}.value)
+{indent}if isinstance({name}, ctypes.Array):
+{indent}    p{i} = <{base_name} *><uintptr_t>ctypes.addressof({name})
 '''
 
     def cdef_result(self, indent: str, call: str) -> str:
@@ -128,13 +132,16 @@ class PointerToStructType(BaseType):
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         return f'''{indent}# {self}
-{indent}cdef impl.{self.ctypes_type} *p{i} = <impl.{self.ctypes_type} *>(<void*><uintptr_t>ctypes.addressof({name}) if {name} else <void*>None)
+{indent}cdef impl.{self.ctypes_type} *p{i} = NULL
+{indent}if {name}:
+{indent}    p{i} = <impl.{self.ctypes_type}*><uintptr_t>ctypes.addressof({name})
 '''
 
     def cdef_result(self, indent: str, call: str) -> str:
         return f'''{indent}# {self}
 {indent}cdef impl.{self.ctypes_type} *value = {call}
-{indent}return ctypes.cast(<uintptr_t>value, ctypes.POINTER({self.ctypes_type}))[0]
+{indent}if value:
+{indent}    return ctypes.cast(<uintptr_t>value, ctypes.POINTER({self.ctypes_type}))[0]
 '''
 
     @property
@@ -160,13 +167,15 @@ class ReferenceToStructType(BaseType):
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         return f'''{indent}# {self}
-{indent}cdef {self.const_prefix}impl.{self.ctypes_type} *p{i} = <{self.const_prefix}impl.{self.ctypes_type} *>(<void*><uintptr_t>ctypes.addressof({name}) if {name} else <void*>None)
+{indent}cdef {self.const_prefix}impl.{self.ctypes_type} *p{i} = NULL
+{indent}if isinstance({name}, ctypes.Structure):
+{indent}    p{i} = <{self.const_prefix}impl.{self.ctypes_type} *><uintptr_t>ctypes.addressof({name})
 '''
 
     def cdef_result(self, indent: str, call: str) -> str:
         return f'''{indent}# {self}
 {indent}cdef {self.const_prefix}impl.{self.ctypes_type} *value = &{call}
-{indent}return ctypes.cast(<uintptr_t>value, ctypes.POINTER({self.ctypes_type}))[0]
+{indent}return ctypes.cast(ctypes.c_void_p(<uintptr_t>value), ctypes.POINTER({self.ctypes_type}))[0]
 '''
 
     @property

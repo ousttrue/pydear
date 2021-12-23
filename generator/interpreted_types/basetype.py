@@ -9,7 +9,7 @@ class BaseType:
     is_const: bool = False
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__}'
+        return f'{self.__class__.__name__}: {self.name}'
 
     @property
     def const_prefix(self) -> str:

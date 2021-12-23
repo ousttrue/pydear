@@ -85,11 +85,35 @@ class StringType(BaseType):
         return f'''{indent}# {self}
 {indent}return {call}
 '''
-    # def to_c(self, name: str, is_const: bool) -> str:
-    #     return 'string'
 
-    # def to_cdef(self, is_const: bool) -> str:
-    #     return f'cdef string'
+class CStringType(BaseType):
+    def __init__(self):
+        super().__init__('const char *')
+
+    @property
+    def ctypes_type(self) -> str:
+        return 'ctypes.c_void_p'
+
+    def param(self, name: str, default_value: str) -> str:
+        return f'{name}: Union[bytes, str]{default_value}'
+
+    def cdef_param(self, indent: str, i: int, name: str) -> str:
+        return f'''{indent}# {self}
+{indent}cdef const char *p{i} = NULL;
+{indent}if isinstance({name}, bytes):
+{indent}    p{i} = <const char *>{name}
+{indent}if isinstance({name}, str):
+{indent}    p{i} = <const char *>{name.encode('utf-8')}
+'''
+
+    @property
+    def result_typing(self) -> str:
+        return 'bytes'
+
+    def cdef_result(self, indent: str, call: str) -> str:
+        return f'''{indent}# {self}
+{indent}return {call}
+'''
 
 
 IMVECTOR = ImVector()
@@ -160,6 +184,8 @@ def get(c: TypeWithCursor) -> BaseType:
     match c.type.spelling:
         case 'std::string':
             return StringType()
+        case 'const char *':
+            return CStringType()
         case 'size_t':
             return primitive_types.SizeType()
         case 'ImVec2':
