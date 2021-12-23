@@ -140,43 +140,6 @@ class TypeWrap(NamedTuple):
             return f"{c_type} {name}"
 
     @property
-    def _typedef_underlying_type(self) -> Optional['TypeWrap']:
-        if self.type.spelling == 'size_t':
-            return None
-        match self.type.kind:
-            case cindex.TypeKind.TYPEDEF:
-                ref: cindex.Cursor = next(iter(
-                    c for c in self.cursor.get_children() if c.kind == cindex.CursorKind.TYPE_REF))
-                return TypeWrap(ref.referenced.underlying_typedef_type, ref.referenced)
-
-            case _:
-                return None
-
-    @property
-    def underlying_spelling(self) -> str:
-        if self.type.kind == cindex.TypeKind.CONSTANTARRAY:
-            tw = TypeWrap(self.type.get_array_element_type(), self.cursor)
-            return f'{tw.underlying_spelling} [{self.type.get_array_size()}]'
-        elif self.type.kind == cindex.TypeKind.POINTER:
-            tw = TypeWrap(self.type.get_pointee(), self.cursor)
-            if tw.underlying_spelling.endswith('*'):
-                return f'{tw.underlying_spelling}*'
-            else:
-                return f'{tw.underlying_spelling} *'
-        else:
-            current = self
-            while True:
-                base = current._typedef_underlying_type
-                if not base:
-                    break
-                current = base
-            value = current.type.spelling
-            if '(*)' in value:
-                # fp
-                return self.cursor.type.spelling
-            return value
-
-    @property
     def default_value(self) -> str:
         tokens = []
         for child in self.cursor.get_children():

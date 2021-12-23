@@ -7,7 +7,7 @@ from os import write
 import pathlib
 from clang import cindex
 from . import function
-from .types import wrap_types
+from .interpreted_types import wrap_types
 from .parser import Parser
 
 
