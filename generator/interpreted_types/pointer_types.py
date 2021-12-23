@@ -78,6 +78,9 @@ class ReferenceType(BaseType):
 {indent}cdef {base_name} *p{i} = <{base_name} *><void*><uintptr_t>(ctypes.addressof({name}))
 '''
 
+    def call_param(self, i: int) -> str:
+        return f'p{i}[0]'
+
     def cdef_result(self, indent: str, call: str) -> str:
         return f'''{indent}# {self}
 {indent}cdef void* value = <void*>&{call}
@@ -171,6 +174,9 @@ class ReferenceToStructType(BaseType):
 {indent}if isinstance({name}, ctypes.Structure):
 {indent}    p{i} = <{self.const_prefix}impl.{self.ctypes_type} *><uintptr_t>ctypes.addressof({name})
 '''
+
+    def call_param(self, i: int) -> str:
+        return f'p{i}[0]'
 
     def cdef_result(self, indent: str, call: str) -> str:
         return f'''{indent}# {self}

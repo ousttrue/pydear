@@ -53,6 +53,9 @@ class BaseType:
         '''
         raise NotImplementedError()
 
+    def call_param(self, i: int) -> str:
+        return f'p{i}'
+
     def cdef_result(self, indent: str, call: str) -> str:
         '''
         extract result

@@ -103,7 +103,8 @@ class CStringType(BaseType):
 {indent}if isinstance({name}, bytes):
 {indent}    p{i} = <const char *>{name}
 {indent}if isinstance({name}, str):
-{indent}    p{i} = <const char *>{name.encode('utf-8')}
+{indent}    pp{i} = {name}.encode('utf-8')
+{indent}    p{i} = <const char *>pp{i}
 '''
 
     @property
@@ -188,7 +189,7 @@ def get(c: TypeWithCursor) -> BaseType:
             return CStringType()
         case 'size_t':
             return primitive_types.SizeType()
-        case 'ImVec2':
+        case 'ImVec2' | 'const ImVec2 &':
             return wrap_types.ImVec2WrapType()
         case 'ImVec4':
             return wrap_types.ImVec4WrapType()
