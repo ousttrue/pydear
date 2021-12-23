@@ -16,19 +16,21 @@ class PointerType(BaseType):
         super().__init__(add_asterisk(base.name), base, is_const)
 
     @property
-    def ctypes_type(self) -> str:
-        return 'ctypes.c_void_p'
-
-    @property
     def result_typing(self) -> str:
         return 'ctypes.c_void_p'
 
+    @property
+    def ctypes_type(self) -> str:
+        if not self.base:
+            raise RuntimeError()
+        return f'ctypes.Array'
+
     def param(self, name: str) -> str:
-        return f'{name}: ctypes.c_void_p'
+        return f'{name}: {self.ctypes_type}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         return f'''{indent}# {self}
-{indent}cdef {self.name} p{i} = <{self.name}>{name}
+{indent}cdef {self.base.name} *p{i} = <{self.base.name} *><void*><uintptr_t>(ctypes.addressof({name}))
 '''
 
     def cdef_result(self, indent: str, call: str) -> str:
@@ -45,19 +47,22 @@ class ReferenceType(BaseType):
         super().__init__(base.name + '&', base, is_const)
 
     @property
-    def ctypes_type(self) -> str:
-        return 'ctypes.c_void_p'
-
-    @property
     def result_typing(self) -> str:
         return 'ctypes.c_void_p'
 
+    @property
+    def ctypes_type(self) -> str:
+        return 'ctypes.Array'
+
     def param(self, name: str) -> str:
-        return f'{name}: ctypes.c_void_p'
+        return f'{name}: {self.ctypes_type}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
+        base_name = self.base.name
+        if base_name.startswith("Im"):
+            base_name = 'impl.' + base_name
         return f'''{indent}# {self}
-{indent}cdef {self.name} p{i} = <{self.name}>{name}
+{indent}cdef {base_name} *p{i} = <{base_name} *><void*><uintptr_t>(ctypes.addressof({name}))
 '''
 
     def cdef_result(self, indent: str, call: str) -> str:
@@ -71,7 +76,7 @@ class ArrayType(BaseType):
     size: int
 
     def __init__(self, base: BaseType, size: int, is_const=False):
-        super().__init__(f'base.name[{size}]', base, is_const)
+        super().__init__(f'{base.name}[{size}]', base, is_const)
         self.size = size
 
     @property
@@ -84,8 +89,11 @@ class ArrayType(BaseType):
         return f'{name}: ctypes.Array'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
+        base_name = self.base.name
+        if base_name.startswith("Im"):
+            base_name = 'impl.' + base_name
         return f'''{indent}# {self}
-{indent}cdef {self.name} p{i} = {name}
+{indent}cdef {base_name} *p{i} = <{base_name}*><void*><uintptr_t>ctypes.addressof({name})
 '''
 
 
@@ -116,6 +124,34 @@ class PointerToStructType(BaseType):
     @property
     def result_typing(self) -> str:
         return f'{self.ctypes_type}'
+
+# class PointerToPrimitiveType(BaseType):
+#     def __init__(self, base: BaseType, is_const: bool):
+#         super().__init__(base.name + '*', base, is_const)
+
+#     @property
+#     def ctypes_type(self) -> str:
+#         if not self.base:
+#             raise RuntimeError()
+#         return f'ctypes.Array'
+
+#     def param(self, name: str) -> str:
+#         return f'{name}: {self.ctypes_type}'
+
+#     def cdef_param(self, indent: str, i: int, name: str) -> str:
+#         return f'''{indent}# {self}
+# {indent}cdef {self.base.name} *p{i} = <{self.base.name} *><void*><uintptr_t>(ctypes.addressof({name}))
+# '''
+
+#     def cdef_result(self, indent: str, call: str) -> str:
+#         return f'''{indent}# {self}
+# {indent}cdef {self.base.name} *value = {call}
+# {indent}return ctypes.c_void_p(<uintptr_t>value)
+# '''
+
+#     @property
+#     def result_typing(self) -> str:
+#         return f'ctypes.c_void_p'
 
 # class BytesType(PointerType):
 #     '''

@@ -4,6 +4,7 @@ from clang import cindex
 from .basetype import BaseType
 from . import primitive_types
 from .pointer_types import PointerType, ReferenceType, ArrayType, PointerToStructType
+from . import wrap_types
 
 
 class TypedefType(BaseType):
@@ -162,13 +163,12 @@ def get(c: TypeWithCursor) -> BaseType:
         case cindex.TypeKind.POINTER:
             pointee = c.type.get_pointee()
             base = get(TypeWithCursor(pointee, c.cursor))
-            match base:
-                case StructType():
-                    return PointerToStructType(base, is_const=c.type.is_const_qualified())
-                case _:
-                    if base.name.startswith('Im'):
-                        pass
-                    return PointerType(base, is_const=c.type.is_const_qualified())
+            # if is_primitive(base):
+            #     return PointerToPrimitiveType(base, is_const=c.type.is_const_qualified())
+            if isinstance(base, StructType) and any(t for t in wrap_types.WRAP_TYPES if t.name == base.name):
+                return PointerToStructType(base, is_const=c.type.is_const_qualified())
+
+            return PointerType(base, is_const=c.type.is_const_qualified())
 
         case cindex.TypeKind.LVALUEREFERENCE:
             pointee = c.type.get_pointee()
