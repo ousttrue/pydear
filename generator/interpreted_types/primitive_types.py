@@ -1,4 +1,3 @@
-import io
 from .basetype import BaseType
 
 

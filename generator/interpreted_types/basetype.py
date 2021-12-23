@@ -1,4 +1,4 @@
-from typing import Iterable, NamedTuple, Optional
+from typing import Optional
 import dataclasses
 
 
@@ -23,13 +23,7 @@ class BaseType:
         '''
         ctypes.Structure fields
         '''
-        if not self.base:
-            raise NotImplementedError()
-
-        current = self
-        while current.base:
-            current = current.base
-        return current.ctypes_type
+        raise NotImplementedError()
 
     def ctypes_field(self, indent: str, name: str) -> str:
         return f'{indent}("{name}", {self.ctypes_type}), # {self}\n'
