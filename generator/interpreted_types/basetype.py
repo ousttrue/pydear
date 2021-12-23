@@ -12,6 +12,13 @@ class BaseType:
         return f'{self.__class__.__name__}'
 
     @property
+    def const_prefix(self) -> str:
+        is_const = self.is_const
+        if self.base and self.base.is_const:
+            is_const = True
+        return 'const ' if is_const else ''
+
+    @property
     def ctypes_type(self) -> str:
         '''
         ctypes.Structure fields

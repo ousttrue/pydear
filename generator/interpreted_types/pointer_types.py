@@ -128,12 +128,44 @@ class PointerToStructType(BaseType):
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         return f'''{indent}# {self}
-{indent}cdef impl.{self.ctypes_type} *p{i} = <impl.{self.ctypes_type} *><void*><uintptr_t>(ctypes.addressof({name}))
+{indent}cdef impl.{self.ctypes_type} *p{i} = <impl.{self.ctypes_type} *>(<void*><uintptr_t>ctypes.addressof({name}) if {name} else <void*>None)
 '''
 
     def cdef_result(self, indent: str, call: str) -> str:
         return f'''{indent}# {self}
 {indent}cdef impl.{self.ctypes_type} *value = {call}
+{indent}return ctypes.cast(<uintptr_t>value, ctypes.POINTER({self.ctypes_type}))[0]
+'''
+
+    @property
+    def result_typing(self) -> str:
+        return f'{self.ctypes_type}'
+
+
+class ReferenceToStructType(BaseType):
+    def __init__(self, base: BaseType, is_const: bool):
+        super().__init__(base.name + '&', base, is_const)
+
+    @property
+    def ctypes_type(self) -> str:
+        if not self.base:
+            raise RuntimeError()
+        return f'{self.base.name}'
+
+    def ctypes_field(self, indent: str, name: str) -> str:
+        return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
+
+    def param(self, name: str, default_value: str) -> str:
+        return f'{name}: {self.ctypes_type}{default_value}'
+
+    def cdef_param(self, indent: str, i: int, name: str) -> str:
+        return f'''{indent}# {self}
+{indent}cdef {self.const_prefix}impl.{self.ctypes_type} *p{i} = <{self.const_prefix}impl.{self.ctypes_type} *>(<void*><uintptr_t>ctypes.addressof({name}) if {name} else <void*>None)
+'''
+
+    def cdef_result(self, indent: str, call: str) -> str:
+        return f'''{indent}# {self}
+{indent}cdef {self.const_prefix}impl.{self.ctypes_type} *value = &{call}
 {indent}return ctypes.cast(<uintptr_t>value, ctypes.POINTER({self.ctypes_type}))[0]
 '''
 

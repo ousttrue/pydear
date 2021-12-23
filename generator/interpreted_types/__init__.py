@@ -3,7 +3,7 @@ from typing import Optional, NamedTuple
 from clang import cindex
 from .basetype import BaseType
 from . import primitive_types
-from .pointer_types import PointerType, ReferenceType, ArrayType, PointerToStructType
+from .pointer_types import PointerType, ReferenceType, ArrayType, PointerToStructType, ReferenceToStructType
 from . import wrap_types
 
 
@@ -34,7 +34,7 @@ class StructType(BaseType):
     cursor: cindex.Cursor
 
     def __init__(self, name: str, cursor: cindex.Cursor, is_const=False):
-        super().__init__(name, is_const)
+        super().__init__(name, is_const=is_const)
         self.cursor = cursor
 
     @property
@@ -200,8 +200,6 @@ def get(c: TypeWithCursor) -> BaseType:
         case cindex.TypeKind.POINTER:
             pointee = c.type.get_pointee()
             base = get(TypeWithCursor(pointee, c.cursor))
-            # if is_primitive(base):
-            #     return PointerToPrimitiveType(base, is_const=c.type.is_const_qualified())
             if isinstance(base, StructType) and any(t for t in wrap_types.WRAP_TYPES if t.name == base.name):
                 return PointerToStructType(base, is_const=c.type.is_const_qualified())
 
@@ -210,6 +208,9 @@ def get(c: TypeWithCursor) -> BaseType:
         case cindex.TypeKind.LVALUEREFERENCE:
             pointee = c.type.get_pointee()
             base = get(TypeWithCursor(pointee, c.cursor))
+            if isinstance(base, StructType) and any(t for t in wrap_types.WRAP_TYPES if t.name == base.name):
+                return ReferenceToStructType(base, is_const=c.type.is_const_qualified())
+
             return ReferenceType(base, is_const=c.type.is_const_qualified())
 
         case cindex.TypeKind.CONSTANTARRAY:
