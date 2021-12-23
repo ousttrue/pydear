@@ -40,45 +40,50 @@ class TestInterpretedTypes(unittest.TestCase):
 
     def test_primitive(self):
         void = parse_get_result_type('void func();')
-        self.assertEqual(void, interpreted_types.VOID)
+        self.assertEqual(void, interpreted_types.primitive_types.VoidType())
 
         int8 = parse_get_result_type('char func();')
-        self.assertEqual(int8, interpreted_types.INT8)
+        self.assertEqual(int8, interpreted_types.primitive_types.Int8Type())
 
         int16 = parse_get_result_type('short func();')
-        self.assertEqual(int16, interpreted_types.INT16)
+        self.assertEqual(int16, interpreted_types.primitive_types.Int16Type())
 
         int32 = parse_get_result_type('int func();')
-        self.assertEqual(int32, interpreted_types.INT32)
+        self.assertEqual(int32, interpreted_types.primitive_types.Int32Type())
 
         int64 = parse_get_result_type('long long func();')
-        self.assertEqual(int64, interpreted_types.INT64)
+        self.assertEqual(int64, interpreted_types.primitive_types.Int64Type())
 
         uint8 = parse_get_result_type('unsigned char func();')
-        self.assertEqual(uint8, interpreted_types.UINT8)
+        self.assertEqual(uint8, interpreted_types.primitive_types.UInt8Type())
 
         uint16 = parse_get_result_type('unsigned short func();')
-        self.assertEqual(uint16, interpreted_types.UINT16)
+        self.assertEqual(
+            uint16, interpreted_types.primitive_types.UInt16Type())
 
         uint32 = parse_get_result_type('unsigned int func();')
-        self.assertEqual(uint32, interpreted_types.UINT32)
+        self.assertEqual(
+            uint32, interpreted_types.primitive_types.UInt32Type())
 
         uint64 = parse_get_result_type('unsigned long long func();')
-        self.assertEqual(uint64, interpreted_types.UINT64)
+        self.assertEqual(
+            uint64, interpreted_types.primitive_types.UInt64Type())
 
         float32 = parse_get_result_type('float func();')
-        self.assertEqual(float32, interpreted_types.FLOAT32)
+        self.assertEqual(
+            float32, interpreted_types.primitive_types.FloatType())
 
         float64 = parse_get_result_type('double func();')
-        self.assertEqual(float64, interpreted_types.FLOAT64)
+        self.assertEqual(
+            float64, interpreted_types.primitive_types.DoubleType())
 
     def test_pointer(self):
         int32 = parse_get_param_type(0, 'void func(int p0);')
-        self.assertEqual(int32, interpreted_types.INT32)
+        self.assertEqual(int32, interpreted_types.primitive_types.Int32Type())
 
         p = parse_get_param_type(0, 'void func(float *p0);')
         self.assertEqual(p, interpreted_types.PointerType(
-            interpreted_types.FLOAT32))
+            interpreted_types.primitive_types.FloatType()))
 
         # inner const
         const_p = parse_get_param_type(0, 'void func(const float *p0);')
@@ -99,7 +104,24 @@ class TestInterpretedTypes(unittest.TestCase):
         # double pointer
         pp = parse_get_param_type(0, 'void func(float **p0);')
         self.assertEqual(pp, interpreted_types.PointerType(
-            interpreted_types.PointerType(interpreted_types.FLOAT32)))
+            interpreted_types.PointerType(interpreted_types.primitive_types.FloatType())))
+
+    def test_typedef(self):
+        typedef = parse_get_param_type(0, '''typedef int INT
+        void func(INT p0);
+        ''')
+        self.assertIsInstance(typedef, interpreted_types.TypedefType)
+
+        const_p = parse_get_param_type(0, '''
+        struct Some{
+            int value;
+        };
+        typedef Some SOME;
+        void func(const SOME *p0);
+        ''')
+        self.assertIsInstance(const_p, interpreted_types.PointerType)
+        self.assertIsInstance(const_p.base, interpreted_types.TypedefType)
+        self.assertIsInstance(const_p.base.base, interpreted_types.StructType)
 
 # typedef
 

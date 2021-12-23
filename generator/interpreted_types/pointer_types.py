@@ -11,18 +11,15 @@ def add_asterisk(src: str):
 
 
 class PointerType(BaseType):
-    base: BaseType
-
     def __init__(self, base: BaseType, is_const=False):
-        super().__init__(add_asterisk(base.name), is_const)
+        super().__init__(add_asterisk(base.name), base, is_const)
 
 
 class ReferenceType(BaseType):
     base: BaseType
 
     def __init__(self, base: BaseType, is_const=False):
-        super().__init__(base.name + '&', is_const)
-
+        super().__init__(base.name + '&', base, is_const)
 
 # class BytesType(PointerType):
 #     '''
