@@ -1,163 +1,61 @@
-from typing import Iterable
 from .basetype import BaseType
 
 
 class VoidType(BaseType):
-    def __init__(self):
-        super().__init__('void')
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'None'
+    def __init__(self, is_const=False):
+        super().__init__('void', is_const)
 
 
 class BoolType(BaseType):
-    def __init__(self):
-        super().__init__('bool')
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'bool'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_bool'
+    def __init__(self, is_const=False):
+        super().__init__('bool', is_const)
 
 
 class UInt8Type(BaseType):
-    def __init__(self):
-        super().__init__('unsigned char')
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'int'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_uint8'
+    def __init__(self, is_const=False):
+        super().__init__('unsigned char', is_const)
 
 
 class UInt16Type(BaseType):
-    def __init__(self):
-        super().__init__('unsigned short')
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'int'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_uint16'
+    def __init__(self, is_const=False):
+        super().__init__('unsigned short', is_const)
 
 
 class UInt32Type(BaseType):
-    def __init__(self):
-        super().__init__('unsigned int')
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'int'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_uint32'
+    def __init__(self, is_const=False):
+        super().__init__('unsigned int', is_const)
 
 
 class UInt64Type(BaseType):
-    def __init__(self):
-        super().__init__('unsigned long long')
-
-    def match(self, spelling: str) -> bool:
-        '''
-        process if True
-        '''
-        if spelling == 'size_t':
-            # cython cannot: size_t * = unsigned long long *
-            return True
-        return spelling == self.c_type
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'int'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_uint64'
+    def __init__(self, is_const=False):
+        super().__init__('unsigned long long', is_const)
 
 
 class Int8Type(BaseType):
-    def __init__(self):
-        super().__init__('char')
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'int'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_int8'
+    def __init__(self, is_const=False):
+        super().__init__('char', is_const)
 
 
 class Int16Type(BaseType):
-    def __init__(self):
-        super().__init__('short')
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'int'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_int16'
+    def __init__(self, is_const=False):
+        super().__init__('short', is_const)
 
 
 class Int32Type(BaseType):
-    def __init__(self):
-        super().__init__('int')
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'int'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_int32'
+    def __init__(self, is_const=False):
+        super().__init__('int', is_const)
 
 
 class Int64Type(BaseType):
-    def __init__(self):
-        super().__init__('long long')
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'int'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_int64'
+    def __init__(self, is_const=False):
+        super().__init__('long long', is_const)
 
 
 class FloatType(BaseType):
-    def __init__(self):
-        super().__init__('float')
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'float'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_float'
+    def __init__(self, is_const=False):
+        super().__init__('float', is_const)
 
 
 class DoubleType(BaseType):
-    def __init__(self):
-        super().__init__('double')
-
-    @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'float'
-
-    @property
-    def field_ctypes_type(self) -> str:
-        return 'ctypes.c_double'
+    def __init__(self, is_const=False):
+        super().__init__('double', is_const)

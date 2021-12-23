@@ -1,7 +1,7 @@
 from clang import cindex
 from .basetype import BaseType
 from . import primitive_types
-
+from .pointer_types import PointerType, ReferenceType
 
 VOID = primitive_types.VoidType()
 INT8 = primitive_types.Int8Type()
@@ -43,5 +43,15 @@ def from_cursor(cursor_type: cindex.Type, cursor: cindex.Cursor) -> BaseType:
             return FLOAT32
         case cindex.TypeKind.DOUBLE:
             return FLOAT64
+
+        case cindex.TypeKind.POINTER:
+            pointee = cursor_type.get_pointee()
+            base = from_cursor(pointee, cursor)
+            return PointerType(base, is_const=cursor_type.is_const_qualified())
+
+        case cindex.TypeKind.LVALUEREFERENCE:
+            pointee = cursor_type.get_pointee()
+            base = from_cursor(pointee, cursor)
+            return ReferenceType(base, is_const=cursor_type.is_const_qualified())
 
     raise RuntimeError(f"unknown type: {cursor_type.kind}")
