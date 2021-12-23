@@ -27,13 +27,15 @@ class PointerType(BaseType):
         return f'{name}: ctypes.c_void_p'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
-        return f'{indent}cdef {self.name} p{i} = <{self.name}>{name}'
+        return f'''{indent}# {self}
+{indent}cdef {self.name} p{i} = <{self.name}>{name}
+'''
 
     def cdef_result(self, indent: str, call: str) -> str:
-        sio = io.StringIO()
-        sio.write(f'{indent}cdef void* value = <void*>{call}\n')
-        sio.write(f"{indent}return ctypes.c_void_p(value)\n")
-        return sio.getvalue()
+        return f'''{indent}# {self}
+{indent}cdef void* value = <void*>{call}
+{indent}return ctypes.c_void_p(value)
+'''
 
 
 class ReferenceType(BaseType):
@@ -54,13 +56,15 @@ class ReferenceType(BaseType):
         return f'{name}: ctypes.c_void_p'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
-        return f'{indent}cdef {self.name} p{i} = <{self.name}>{name}'
+        return f'''{indent}# {self}
+{indent}cdef {self.name} p{i} = <{self.name}>{name}
+'''
 
     def cdef_result(self, indent: str, call: str) -> str:
-        sio = io.StringIO()
-        sio.write(f'{indent}cdef void* value = <void*>{call}\n')
-        sio.write(f"{indent}return ctypes.c_void_p(value)\n")
-        return sio.getvalue()
+        return f'''{indent}# {self}
+{indent}cdef void* value = <void*>{call}
+{indent}return ctypes.c_void_p(value)
+'''
 
 
 class ArrayType(BaseType):
@@ -80,7 +84,9 @@ class ArrayType(BaseType):
         return f'{name}: ctypes.Array'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
-        return f'{indent}cdef {self.name} p{i} = {name}'
+        return f'''{indent}# {self}
+{indent}cdef {self.name} p{i} = {name}
+'''
 
 # class BytesType(PointerType):
 #     '''

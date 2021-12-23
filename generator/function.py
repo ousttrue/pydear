@@ -2,7 +2,6 @@ from typing import Iterable, List
 import io
 from clang import cindex
 from .typewrap import TypeWrap
-from . import typeconv
 from . import interpreted_types
 
 
@@ -61,7 +60,7 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
     param_names = []
     for i, param in enumerate(params):
         t = interpreted_types.from_cursor(param.cursor.type, param.cursor)
-        pyx.write(f'{t.cdef_param(indent, i, param.name)}\n')
+        pyx.write(f'{t.cdef_param(indent, i, param.name)}')
         if param.type.kind == cindex.TypeKind.LVALUEREFERENCE:
             # deref
             param_names.append(f'p{i}[0]')
@@ -97,10 +96,10 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
     # body
     call = f'impl.{function.spelling}{cj(param_names)}'
     if result.is_void:
-        pyx.write(
-            f'{indent}{call}\n\n')
+        pyx.write(f'{indent}{call}\n')
     else:
         pyx.write(result_t.cdef_result(indent, call))
+    pyx.write('\n')
 
 
 def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Cursor, *, pyi=False):
@@ -131,7 +130,7 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     # body
     call = f'ptr.{method.spelling}{cj(param_names)}'
     if result.is_void:
-        pyx.write(
-            f'{indent}{call}\n\n')
+        pyx.write(f'{indent}{call}\n')
     else:
         pyx.write(result_t.cdef_result(indent, call))
+    pyx.write('\n')

@@ -128,11 +128,12 @@ cdef extern from "{self.header.name}" namespace "{self.namespace}":
         types = [x for x in parser.typedef_struct_list if pathlib.Path(
             x.cursor.location.file.name) == self.header]
         if types:
-            for v in wrap_types.WRAP_TYPES:
+            for v in wrap_types.WRAP_TYPES[:8]:
                 for cursors in types:
                     if cursors.cursor.spelling == v.name:
                         cursors.write_pyx_ctypes(pyx, flags=v)
 
+        return
         funcs = [x for x in parser.functions if pathlib.Path(
             x[-1].location.file.name) == self.header]
         if funcs:

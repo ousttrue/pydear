@@ -24,13 +24,15 @@ class PrimitiveType(BaseType):
         return f'{self.name} {name}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
-        return f'{indent}cdef {self.name} p{i} = {name}'
+        return f'''{indent}# {self}
+{indent}cdef {self.name} p{i} = {name}
+'''
 
     def cdef_result(self, indent: str, call: str) -> str:
-        sio = io.StringIO()
-        sio.write(f'{indent}cdef {self.name} value = {call}\n')
-        sio.write(f"{indent}return value\n")
-        return sio.getvalue()
+        return f'''{indent}# {self}
+{indent}cdef {self.name} value = {call}
+{indent}return value
+'''
 
 
 class BoolType(PrimitiveType):

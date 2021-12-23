@@ -14,10 +14,14 @@ class TypedefType(BaseType):
         return name
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
-        return f'{indent}cdef p{i} = {name}'
+        return f'''{indent}# {self}
+{indent}cdef p{i} = {name}
+'''
 
     def cdef_result(self, indent: str, call: str) -> str:
-        return f'{indent}return {call}\n'
+        return f'''{indent}# {self}
+{indent}return {call}
+'''
 
 
 class StructType(BaseType):
@@ -39,13 +43,15 @@ class StructType(BaseType):
         return name
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
-        return f'{indent}cdef p{i} = {name}'
+        return f'''{indent}# {self}
+{indent}cdef p{i} = {name}
+'''
 
     def cdef_result(self, indent: str, call: str) -> str:
-        sio = io.StringIO()
-        sio.write(f'{indent}cdef void* value = <void*>{call}\n')
-        sio.write(f"{indent}return ctypes.c_void_p(value)\n")
-        return sio.getvalue()
+        return f'''{indent}# {self}
+{indent}cdef void* value = <void*>{call}
+{indent}return ctypes.c_void_p(value)
+'''
 
 
 class ImVector(BaseType):

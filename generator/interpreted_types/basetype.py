@@ -8,6 +8,9 @@ class BaseType:
     base: Optional['BaseType'] = None
     is_const: bool = False
 
+    def __str__(self)->str:
+        return f'{self.__class__.__name__}'
+
     @property
     def ctypes_type(self) -> str:
         '''
@@ -20,6 +23,9 @@ class BaseType:
         while current.base:
             current = current.base
         return current.ctypes_type
+
+    def ctypes_field(self, indent: str, name: str) -> str:
+        return f'{indent}("{name}", {self.ctypes_type}), # {self}\n'
 
     def param(self, name: str) -> str:
         '''

@@ -7,8 +7,6 @@ from . import function
 from generator import typeconv
 from .interpreted_types import from_cursor
 
-from generator import typewrap
-
 
 def is_forward_declaration(cursor: cindex.Cursor) -> bool:
     '''
@@ -81,12 +79,13 @@ class StructDecl(NamedTuple):
         fields = TypeWrap.get_struct_fields(cursor) if flags.fields else []
         if fields:
             pyx.write('    _fields_=[\n')
+            indent = '        '
             for field in fields:
                 name = field.name
                 if flags.custom_fields.get(name):
                     name = '_' + name
-                pyx.write(
-                    f'        ("{name}", {from_cursor(field.cursor.type, field.cursor).ctypes_type}),\n')
+                pyx.write(from_cursor(field.cursor.type,
+                          field.cursor).ctypes_field(indent, name))
             pyx.write('    ]\n\n')
 
         if flags.default_constructor:
@@ -97,8 +96,8 @@ class StructDecl(NamedTuple):
         memcpy(<void *><uintptr_t>ctypes.addressof(self), p, sizeof(impl.{cursor.spelling}))
         del p
         super().__init__(**kwargs)
-''')
 
+''')
 
         for _, v in flags.custom_fields.items():
             pyx.write('    @property\n')
