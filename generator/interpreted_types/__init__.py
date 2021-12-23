@@ -15,8 +15,8 @@ class TypedefType(BaseType):
     def ctypes_field(self, indent: str, name: str) -> str:
         return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
 
-    def param(self, name: str) -> str:
-        return name
+    def param(self, name: str, default_value: str) -> str:
+        return name + default_value
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
 
@@ -45,8 +45,8 @@ class StructType(BaseType):
     def result_typing(self) -> str:
         return self.cursor.spelling
 
-    def param(self, name: str) -> str:
-        return name
+    def param(self, name: str, default_value: str) -> str:
+        return name + default_value
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         return f'''{indent}# {self}

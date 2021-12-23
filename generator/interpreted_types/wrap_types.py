@@ -168,8 +168,8 @@ class ImVec2WrapType(WrapType):
     def ctypes_type(self) -> str:
         return 'ImVec2'
 
-    def param(self, name: str) -> str:
-        return f'{name}: Union[ImVec2, Tuple[float, float]]'
+    def param(self, name: str, default_value: str) -> str:
+        return f'{name}: Union[ImVec2, Tuple[float, float]]{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         return f'''{indent}# {self}
@@ -195,8 +195,8 @@ class ImVec4WrapType(WrapType):
     def ctypes_type(self) -> str:
         return 'ImVec4'
 
-    def param(self, name: str) -> str:
-        return f'name: Union[ImVec4, Tuple[float, float, float, float]]'
+    def param(self, name: str, default_value: str) -> str:
+        return f'{name}: Union[ImVec4, Tuple[float, float, float, float]]{default_value}'
 
     @property
     def result_typing(self) -> str:

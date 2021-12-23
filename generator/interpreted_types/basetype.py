@@ -8,7 +8,7 @@ class BaseType:
     base: Optional['BaseType'] = None
     is_const: bool = False
 
-    def __str__(self)->str:
+    def __str__(self) -> str:
         return f'{self.__class__.__name__}'
 
     @property
@@ -27,7 +27,7 @@ class BaseType:
     def ctypes_field(self, indent: str, name: str) -> str:
         return f'{indent}("{name}", {self.ctypes_type}), # {self}\n'
 
-    def param(self, name: str) -> str:
+    def param(self, name: str, default_value: str) -> str:
         '''
         function param
         '''

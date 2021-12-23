@@ -20,8 +20,8 @@ class PrimitiveType(BaseType):
     def result_typing(self) -> str:
         return self.ctypes_type
 
-    def param(self, name: str) -> str:
-        return f'{self.name} {name}'
+    def param(self, name: str, default_value: str) -> str:
+        return f'{self.name} {name}{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         return f'''{indent}# {self}

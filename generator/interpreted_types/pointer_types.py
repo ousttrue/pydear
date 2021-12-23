@@ -28,8 +28,8 @@ class PointerType(BaseType):
     def ctypes_field(self, indent: str, name: str) -> str:
         return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
 
-    def param(self, name: str) -> str:
-        return f'{name}: {self.ctypes_type}'
+    def param(self, name: str, default_value: str) -> str:
+        return f'{name}: {self.ctypes_type}{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         base_name = self.base.name
@@ -63,8 +63,8 @@ class ReferenceType(BaseType):
     def ctypes_field(self, indent: str, name: str) -> str:
         return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
 
-    def param(self, name: str) -> str:
-        return f'{name}: {self.ctypes_type}'
+    def param(self, name: str, default_value: str) -> str:
+        return f'{name}: {self.ctypes_type}{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         base_name = self.base.name
@@ -94,8 +94,8 @@ class ArrayType(BaseType):
             raise RuntimeError()
         return f'{self.base.ctypes_type} * {self.size}'
 
-    def param(self, name: str) -> str:
-        return f'{name}: ctypes.Array'
+    def param(self, name: str, default_value: str) -> str:
+        return f'{name}: ctypes.Array{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         base_name = self.base.name
@@ -123,8 +123,8 @@ class PointerToStructType(BaseType):
     def ctypes_field(self, indent: str, name: str) -> str:
         return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
 
-    def param(self, name: str) -> str:
-        return f'{name}: {self.ctypes_type}'
+    def param(self, name: str, default_value: str) -> str:
+        return f'{name}: {self.ctypes_type}{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         return f'''{indent}# {self}

@@ -78,7 +78,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
 
     # signature
     pyx.write(
-        f"def {function.spelling}{overload}{cj(interpreted_types.from_cursor(param.type, param.cursor).param(param.name) for param in params)}")
+        f"def {function.spelling}{overload}{cj(interpreted_types.from_cursor(param.type, param.cursor).param(param.name, param.default_value) for param in params)}")
     # return type
     pyx.write(f'->{result_t.result_typing}:')
 
@@ -109,7 +109,7 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
 
     # signature
     pyx.write(
-        f'    def {method.spelling}{self_cj(interpreted_types.from_cursor(param.cursor.type, param.cursor).param(param.name) for param in params)}')
+        f'    def {method.spelling}{self_cj(interpreted_types.from_cursor(param.cursor.type, param.cursor).param(param.name, param.default_value) for param in params)}')
     pyx.write(f'->{result_t.result_typing}:')
 
     if pyi:
