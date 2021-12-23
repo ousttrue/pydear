@@ -16,8 +16,9 @@ class TypedefType(BaseType):
         return name
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
+
         return f'''{indent}# {self}
-{indent}cdef p{i} = {name}
+{indent}cdef impl.{self.name} p{i} = <impl.{self.name}><uintptr_t>{name}
 '''
 
     def cdef_result(self, indent: str, call: str) -> str:
@@ -63,6 +64,29 @@ class ImVector(BaseType):
     @property
     def ctypes_type(self) -> str:
         return 'ImVector'
+
+
+class StringType(BaseType):
+    def __init__(self):
+        super().__init__('std::string')
+
+    @property
+    def ctypes_type(self) -> str:
+        return 'string'
+
+    @property
+    def result_typing(self) -> str:
+        return 'string'
+
+    def cdef_result(self, indent: str, call: str) -> str:
+        return f'''{indent}# {self}
+{indent}return {call}
+'''
+    # def to_c(self, name: str, is_const: bool) -> str:
+    #     return 'string'
+
+    # def to_cdef(self, is_const: bool) -> str:
+    #     return f'cdef string'
 
 
 IMVECTOR = ImVector()
@@ -129,6 +153,16 @@ def is_void_p(base: BaseType) -> bool:
 def get(c: TypeWithCursor) -> BaseType:
     if c.spelling.startswith('ImVector<'):
         return IMVECTOR
+
+    match c.type.spelling:
+        case 'std::string':
+            return StringType()
+        case 'size_t':
+            return primitive_types.SizeType()
+        case 'ImVec2':
+            return wrap_types.ImVec2WrapType()
+        case 'ImVec4':
+            return wrap_types.ImVec4WrapType()
 
     match c.type.kind:
         case cindex.TypeKind.VOID:

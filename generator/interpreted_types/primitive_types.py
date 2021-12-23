@@ -80,6 +80,15 @@ class UInt64Type(PrimitiveType):
         return 'ctypes.c_uint64'
 
 
+class SizeType(PrimitiveType):
+    def __init__(self, is_const=False):
+        super().__init__('size_t', is_const)
+
+    @property
+    def ctypes_type(self) -> str:
+        return 'ctypes.c_uint64'
+
+
 class Int8Type(PrimitiveType):
     def __init__(self, is_const=False):
         super().__init__('char', is_const)

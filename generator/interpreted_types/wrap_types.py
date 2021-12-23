@@ -165,22 +165,26 @@ class ImVec2WrapType(WrapType):
         super().__init__('ImVec2')
 
     @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'ImVec2'
-        yield 'Tuple[float, float]'
+    def ctypes_type(self) -> str:
+        return 'ImVec2'
+
+    def param(self, name: str) -> str:
+        return f'{name}: Union[ImVec2, Tuple[float, float]]'
+
+    def cdef_param(self, indent: str, i: int, name: str) -> str:
+        return f'''{indent}# {self}
+{indent}cdef impl.ImVec2 p{i} = impl.ImVec2({name}[0], {name}[1]) if isinstance({name}, tuple) else impl.ImVec2({name}.x, {name}.y)
+'''
 
     @property
-    def field_ctypes_type(self) -> str:
-        return f'{self.c_type}'
+    def result_typing(self) -> str:
+        return 'Tuple[float, float]'
 
-    def to_c(self, name: str, is_const: bool) -> str:
-        return f'impl.ImVec2({name}[0], {name}[1]) if isinstance({name}, tuple) else impl.ImVec2({name}.x, {name}.y)'
-
-    def to_py(self, name: str) -> str:
-        '''
-        return as tuple
-        '''
-        return f'({name}.x, {name}.y)'
+    def cdef_result(self, indent: str, call: str) -> str:
+        return f'''{indent}# {self}
+{indent}cdef impl.ImVec2 value = {call}
+{indent}return (value.x, value.y)
+'''
 
 
 class ImVec4WrapType(WrapType):
@@ -188,19 +192,18 @@ class ImVec4WrapType(WrapType):
         super().__init__('ImVec4')
 
     @property
-    def py_typing(self) -> Iterable[str]:
-        yield 'ImVec4'
-        yield 'Tuple[float, float, float, float]'
+    def ctypes_type(self) -> str:
+        return 'ImVec4'
+
+    def param(self, name: str) -> str:
+        return f'name: Union[ImVec4, Tuple[float, float, float, float]]'
 
     @property
-    def field_ctypes_type(self) -> str:
-        return f'{self.c_type}'
+    def result_typing(self) -> str:
+        return 'Tuple[float, float, float, float]'
 
-    def to_c(self, name: str, is_const: bool) -> str:
-        return f'impl.ImVec4({name}[0], {name}[1], {name}[2], {name}[3]) if isinstance({name}, tuple) else impl.ImVec4({name}.x, {name}.y, {name}.z, {name}.w)'
-
-    def to_py(self, name: str) -> str:
-        '''
-        return as tuple
-        '''
-        return f'({name}.x, {name}.y, {name}.z, {name}.w)'
+    def cdef_result(self, indent: str, call: str) -> str:
+        return f'''{indent}# {self}
+{indent}cdef impl.ImVec4 value = {call}
+{indent}return (value.x, value.y, value.z, value.w)
+'''

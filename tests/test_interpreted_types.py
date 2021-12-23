@@ -77,6 +77,10 @@ class TestInterpretedTypes(unittest.TestCase):
         self.assertEqual(
             float64, interpreted_types.primitive_types.DoubleType())
 
+        size_t = parse_get_result_type('size_t func();')
+        self.assertEqual(
+            size_t, interpreted_types.primitive_types.SizeType())
+
     def test_pointer(self):
         int32 = parse_get_param_type(0, 'void func(int p0);')
         self.assertEqual(int32, interpreted_types.primitive_types.Int32Type())

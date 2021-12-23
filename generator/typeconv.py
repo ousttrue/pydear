@@ -9,19 +9,6 @@ from . import interpreted_types
 # logger = logging.getLogger(__name__)
 
 
-# class StringType(BaseType):
-#     def __init__(self):
-#         super().__init__('std::string')
-
-#     @property
-#     def py_typing(self) -> Iterable[str]:
-#         yield 'string'
-
-#     def to_c(self, name: str, is_const: bool) -> str:
-#         return 'string'
-
-#     def to_cdef(self, is_const: bool) -> str:
-#         return f'cdef string'
 
 
 # class FunctionPointer(BaseType):

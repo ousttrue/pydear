@@ -29,8 +29,11 @@ class PointerType(BaseType):
         return f'{name}: {self.ctypes_type}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
+        base_name = self.base.name
+        if base_name.startswith("Im"):
+            base_name = 'impl.' + base_name
         return f'''{indent}# {self}
-{indent}cdef {self.base.name} *p{i} = <{self.base.name} *><void*><uintptr_t>(ctypes.addressof({name}))
+{indent}cdef {base_name} *p{i} = <{base_name} *><void*><uintptr_t>(ctypes.addressof({name}))
 '''
 
     def cdef_result(self, indent: str, call: str) -> str:
@@ -67,8 +70,8 @@ class ReferenceType(BaseType):
 
     def cdef_result(self, indent: str, call: str) -> str:
         return f'''{indent}# {self}
-{indent}cdef void* value = <void*>{call}
-{indent}return ctypes.c_void_p(value)
+{indent}cdef void* value = <void*>&{call}
+{indent}return ctypes.c_void_p(<uintptr_t>value)
 '''
 
 
