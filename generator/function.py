@@ -80,7 +80,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
     pyx.write(
         f"def {function.spelling}{overload}{cj(interpreted_types.from_cursor(param.type, param.cursor).param(param.name) for param in params)}")
     # return type
-    pyx.write(f'->{result_t.typing}:')
+    pyx.write(f'->{result_t.result_typing}:')
 
     if pyi:
         pyx.write(' ...\n')
@@ -110,7 +110,7 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     # signature
     pyx.write(
         f'    def {method.spelling}{self_cj(interpreted_types.from_cursor(param.cursor.type, param.cursor).param(param.name) for param in params)}')
-    pyx.write(f'->{result_t.typing}:')
+    pyx.write(f'->{result_t.result_typing}:')
 
     if pyi:
         pyx.write(' ...\n')

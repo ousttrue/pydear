@@ -34,7 +34,7 @@ class BaseType:
         raise NotImplementedError()
 
     @property
-    def typing(self) -> str:
+    def result_typing(self) -> str:
         '''
         return
         '''

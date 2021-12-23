@@ -11,13 +11,13 @@ class VoidType(BaseType):
         return 'None'
 
     @property
-    def typing(self) -> str:
+    def result_typing(self) -> str:
         return 'None'
 
 
 class PrimitiveType(BaseType):
     @property
-    def typing(self) -> str:
+    def result_typing(self) -> str:
         return self.ctypes_type
 
     def param(self, name: str) -> str:
