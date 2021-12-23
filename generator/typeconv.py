@@ -36,7 +36,6 @@ from . import interpreted_types
 #         return f'{indent}cdef impl.{self.c_type} p{i}= <impl.{self.c_type}><void*><uintptr_t>{name}'
 
 
-# IMVECTOR_TYPE = WrapType('ImVector')
 # VOID_POINTER = VoidPointerType()
 # IN_TYPE_MAP: List[BaseType] = [
 #     # FunctionPointer(),

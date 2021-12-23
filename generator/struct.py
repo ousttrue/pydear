@@ -5,6 +5,7 @@ from .typewrap import TypeWrap
 from .interpreted_types.wrap_types import WrapFlags
 from . import function
 from generator import typeconv
+from .interpreted_types import from_cursor
 
 from generator import typewrap
 
@@ -85,7 +86,7 @@ class StructDecl(NamedTuple):
                 if flags.custom_fields.get(name):
                     name = '_' + name
                 pyx.write(
-                    f'        ("{name}", {typeconv.get_field_type(field.underlying_spelling)}),\n')
+                    f'        ("{name}", {from_cursor(field.cursor.type, field.cursor).ctypes_type}),\n')
             pyx.write('    ]\n\n')
 
         if flags.default_constructor:

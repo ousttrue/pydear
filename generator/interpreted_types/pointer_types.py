@@ -1,4 +1,5 @@
 import re
+import io
 from typing import Iterable
 from .basetype import BaseType
 from .const import const
@@ -14,12 +15,72 @@ class PointerType(BaseType):
     def __init__(self, base: BaseType, is_const=False):
         super().__init__(add_asterisk(base.name), base, is_const)
 
+    @property
+    def ctypes_type(self) -> str:
+        return 'ctypes.c_void_p'
+
+    @property
+    def typing(self) -> str:
+        return 'ctypes.c_void_p'
+
+    def param(self, name: str) -> str:
+        return f'{name}: ctypes.c_void_p'
+
+    def cdef_param(self, indent: str, i: int, name: str) -> str:
+        return f'{indent}cdef {self.name} p{i} = <{self.name}>{name}'
+
+    def cdef_result(self, indent: str, call: str) -> str:
+        sio = io.StringIO()
+        sio.write(f'{indent}cdef void* value = <void*>{call}\n')
+        sio.write(f"{indent}return ctypes.c_void_p(value)\n")
+        return sio.getvalue()
+
 
 class ReferenceType(BaseType):
     base: BaseType
 
     def __init__(self, base: BaseType, is_const=False):
         super().__init__(base.name + '&', base, is_const)
+
+    @property
+    def ctypes_type(self) -> str:
+        return 'ctypes.c_void_p'
+
+    @property
+    def typing(self) -> str:
+        return 'ctypes.c_void_p'
+
+    def param(self, name: str) -> str:
+        return f'{name}: ctypes.c_void_p'
+
+    def cdef_param(self, indent: str, i: int, name: str) -> str:
+        return f'{indent}cdef {self.name} p{i} = <{self.name}>{name}'
+
+    def cdef_result(self, indent: str, call: str) -> str:
+        sio = io.StringIO()
+        sio.write(f'{indent}cdef void* value = <void*>{call}\n')
+        sio.write(f"{indent}return ctypes.c_void_p(value)\n")
+        return sio.getvalue()
+
+
+class ArrayType(BaseType):
+    size: int
+
+    def __init__(self, base: BaseType, size: int, is_const=False):
+        super().__init__(f'base.name[{size}]', base, is_const)
+        self.size = size
+
+    @property
+    def ctypes_type(self) -> str:
+        if not self.base:
+            raise RuntimeError()
+        return f'{self.base.ctypes_type} * {self.size}'
+
+    def param(self, name: str) -> str:
+        return f'{name}: ctypes.Array'
+
+    def cdef_param(self, indent: str, i: int, name: str) -> str:
+        return f'{indent}cdef {self.name} p{i} = {name}'
 
 # class BytesType(PointerType):
 #     '''

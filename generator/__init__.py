@@ -200,35 +200,37 @@ from libc.string cimport memcpy
 
         for header in headers:
             header.write_pyx(pyx, parser)
+            break
 
-    #
-    # pyi
-    #
-    with pyi_path.open('w') as pyi:
-        pyi.write('''import ctypes
-from . imgui_enum import *
-from typing import Any, Union, Tuple
-''')
+    if False:
+        #
+        # pyi
+        #
+        with pyi_path.open('w') as pyi:
+            pyi.write('''import ctypes
+    from . imgui_enum import *
+    from typing import Any, Union, Tuple
+    ''')
 
-        pyi.write(IMVECTOR)
+            pyi.write(IMVECTOR)
 
-        for v in wrap_types.WRAP_TYPES:
-            for cursors in parser.typedef_struct_list:
-                if cursors.cursor.spelling == v.name:
-                    cursors.write_pyi(pyi, flags=v)
+            for v in wrap_types.WRAP_TYPES:
+                for cursors in parser.typedef_struct_list:
+                    if cursors.cursor.spelling == v.name:
+                        cursors.write_pyi(pyi, flags=v)
 
-        overload = {}
-        for cursors in parser.functions:
-            if is_exclude_function(cursors):
-                continue
+            overload = {}
+            for cursors in parser.functions:
+                if is_exclude_function(cursors):
+                    continue
 
-            name = cursors[-1].spelling
-            if True:
-                # if name in INCLUDE_FUNCS:
-                count = overload.get(name, 0) + 1
-                function.write_pyx_function(
-                    pyi, cursors[-1], pyi=True, overload=count)
-                overload[name] = count
+                name = cursors[-1].spelling
+                if True:
+                    # if name in INCLUDE_FUNCS:
+                    count = overload.get(name, 0) + 1
+                    function.write_pyx_function(
+                        pyi, cursors[-1], pyi=True, overload=count)
+                    overload[name] = count
 
     #
     # enum

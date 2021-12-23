@@ -3,6 +3,7 @@ import io
 from clang import cindex
 from .typewrap import TypeWrap
 from . import typeconv
+from . import interpreted_types
 
 
 def cj(src: Iterable[str]) -> str:
@@ -59,8 +60,8 @@ PYX
 def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> List[str]:
     param_names = []
     for i, param in enumerate(params):
-        t = typeconv.get_type(param.underlying_spelling)
-        pyx.write(f'{t.param(indent, i, param.name, param.is_const)}\n')
+        t = interpreted_types.from_cursor(param.cursor.type, param.cursor)
+        pyx.write(f'{t.cdef_param(indent, i, param.name)}\n')
         if param.type.kind == cindex.TypeKind.LVALUEREFERENCE:
             # deref
             param_names.append(f'p{i}[0]')
@@ -70,26 +71,17 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
 
 
 def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, overload=1):
-    if function.spelling == 'ImFileDialog_SetTextureCallback':
-        pass
     result = TypeWrap.from_function_result(function)
-    result_is_const = result.is_const
-    result_t = typeconv.get_type(result.underlying_spelling)
+    result_t = interpreted_types.from_cursor(result.type, result.cursor)
     params = TypeWrap.get_function_params(function)
 
     overload = '' if overload == 1 else f'_{overload}'
 
     # signature
-    def name_type_default_value(param: TypeWrap) -> str:
-        pt = typeconv.get_type(param.underlying_spelling).param_typing
-        if pt.startswith('impl.'):
-            return f'{pt} {param.name}{param.default_value}'
-        else:
-            return f'{param.name}: {pt}{param.default_value}'
     pyx.write(
-        f"def {function.spelling}{overload}{cj(name_type_default_value(param) for param in params)}")
+        f"def {function.spelling}{overload}{cj(interpreted_types.from_cursor(param.type, param.cursor).param(param.name) for param in params)}")
     # return type
-    pyx.write(f'->{result_t.result_typing}:')
+    pyx.write(f'->{result_t.typing}:')
 
     if pyi:
         pyx.write(' ...\n')
@@ -103,32 +95,23 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
     param_names = extract_parameters(pyx, params, indent)
 
     # body
+    call = f'impl.{function.spelling}{cj(param_names)}'
     if result.is_void:
         pyx.write(
-            f'{indent}impl.{function.spelling}{cj(param_names)}\n\n')
+            f'{indent}{call}\n\n')
     else:
-        ref = ''
-        if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
-            # reference to pointer
-            ref = '&'
-
-        pyx.write(
-            f'{indent}{result_t.to_cdef(result_is_const)} value = {ref}impl.{function.spelling}{cj(param_names)}\n')
-        pyx.write(f"{indent}return {result_t.to_py('value')}\n\n")
+        pyx.write(result_t.cdef_result(indent, call))
 
 
 def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Cursor, *, pyi=False):
     params = TypeWrap.get_function_params(method)
     result = TypeWrap.from_function_result(method)
-    result_is_const = result.is_const
-    result_t = typeconv.get_type(result.underlying_spelling)
+    result_t = interpreted_types.from_cursor(result.type, result.cursor)
 
     # signature
-    def name_type_default_value(param: TypeWrap) -> str:
-        return f'{param.name}: {typeconv.get_type(param.underlying_spelling).param_typing}{param.default_value}'
     pyx.write(
-        f'    def {method.spelling}{self_cj(name_type_default_value(param) for param in params)}')
-    pyx.write(f'->{result_t.result_typing}:')
+        f'    def {method.spelling}{self_cj(interpreted_types.from_cursor(param.cursor.type, param.cursor).param(param.name) for param in params)}')
+    pyx.write(f'->{result_t.typing}:')
 
     if pyi:
         pyx.write(' ...\n')
@@ -139,21 +122,16 @@ def write_pyx_method(pyx: io.IOBase, cursor: cindex.Cursor, method: cindex.Curso
     indent = '        '
 
     # self to ptr
-    pyx.write(f'{indent}cdef impl.{cursor.spelling} *ptr = <impl.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)\n')
+    pyx.write(
+        f'{indent}cdef impl.{cursor.spelling} *ptr = <impl.{cursor.spelling}*><uintptr_t>ctypes.addressof(self)\n')
 
     # cdef parameters
     param_names = extract_parameters(pyx, params, indent)
 
     # body
+    call = f'ptr.{method.spelling}{cj(param_names)}'
     if result.is_void:
         pyx.write(
-            f'{indent}ptr.{method.spelling}{cj(param_names)}\n\n')
+            f'{indent}{call}\n\n')
     else:
-        ref = ''
-        if result.type.kind == cindex.TypeKind.LVALUEREFERENCE:
-            # reference to pointer
-            ref = '&'
-
-        pyx.write(
-            f'{indent}{result_t.to_cdef(result_is_const)} value = {ref}ptr.{method.spelling}{cj(param_names)}\n\n')
-        pyx.write(f"{indent}return {result_t.to_py('value')}\n\n")
+        pyx.write(result_t.cdef_result(indent, call))
