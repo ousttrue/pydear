@@ -114,7 +114,7 @@ class TestInterpretedTypes(unittest.TestCase):
         typedef = parse_get_param_type(0, '''typedef int INT
         void func(INT p0);
         ''')
-        self.assertIsInstance(typedef, interpreted_types.TypedefType)
+        self.assertIsInstance(typedef, interpreted_types.primitive_types.Int32Type)
 
         const_p = parse_get_param_type(0, '''
         struct Some{

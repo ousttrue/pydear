@@ -4,7 +4,6 @@ from clang import cindex
 from .typewrap import TypeWrap
 from .interpreted_types.wrap_types import WrapFlags
 from . import function
-from generator import typeconv
 from .interpreted_types import from_cursor
 
 
