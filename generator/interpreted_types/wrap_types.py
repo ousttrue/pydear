@@ -43,8 +43,8 @@ WRAP_TYPES = [
     WrapFlags('ImDrawListSplitter', fields=True),
     WrapFlags('ImDrawCmdHeader', fields=True),
     WrapFlags('ImDrawList', fields=True),
-    WrapFlags('ImGuiStyle'),
     WrapFlags('ImGuiViewport', fields=True, methods=True),
+    WrapFlags('ImGuiStyle'),
     WrapFlags('ImGuiWindowClass'),
 ]
 

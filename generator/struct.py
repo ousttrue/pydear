@@ -133,8 +133,8 @@ class StructDecl(NamedTuple):
                 name = field.name
                 if flags.custom_fields.get(name):
                     name = '_' + name
-                pyi.write(
-                    f'    {name}: {typeconv.get_type(field.underlying_spelling).result_typing}\n')
+                pyi.write(from_cursor(field.type, field.cursor).ctypes_field(
+                    '        ', field.name))
             pyi.write('\n')
 
         for k, v in flags.custom_fields.items():

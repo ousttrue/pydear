@@ -25,6 +25,9 @@ class PointerType(BaseType):
             raise RuntimeError()
         return f'ctypes.Array'
 
+    def ctypes_field(self, indent: str, name: str) -> str:
+        return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
+
     def param(self, name: str) -> str:
         return f'{name}: {self.ctypes_type}'
 
@@ -56,6 +59,9 @@ class ReferenceType(BaseType):
     @property
     def ctypes_type(self) -> str:
         return 'ctypes.Array'
+
+    def ctypes_field(self, indent: str, name: str) -> str:
+        return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
 
     def param(self, name: str) -> str:
         return f'{name}: {self.ctypes_type}'
@@ -99,6 +105,10 @@ class ArrayType(BaseType):
 {indent}cdef {base_name} *p{i} = <{base_name}*><void*><uintptr_t>ctypes.addressof({name})
 '''
 
+    @property
+    def result_typing(self) -> str:
+        return 'ctypes.c_void_p'
+
 
 class PointerToStructType(BaseType):
     def __init__(self, base: BaseType, is_const: bool):
@@ -109,6 +119,9 @@ class PointerToStructType(BaseType):
         if not self.base:
             raise RuntimeError()
         return f'{self.base.name}'
+
+    def ctypes_field(self, indent: str, name: str) -> str:
+        return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
 
     def param(self, name: str) -> str:
         return f'{name}: {self.ctypes_type}'
