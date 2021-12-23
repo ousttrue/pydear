@@ -121,6 +121,8 @@ class TypeWrap(NamedTuple):
         '''
         pxd
         '''
+        if self.type.kind == cindex.TypeKind.ENUM:
+            return 'int'
         match self.type.spelling:
             case 'std::string':
                 return 'string'
@@ -161,7 +163,7 @@ class TypeWrap(NamedTuple):
         def token_filter(src: str) -> str:
 
             match src:
-                case 'NULL':
+                case 'NULL' | 'nullptr':
                     return 'None'
                 case 'true':
                     return 'True'

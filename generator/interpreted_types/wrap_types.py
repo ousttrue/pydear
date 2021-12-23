@@ -94,3 +94,12 @@ class ImVec4WrapType(BaseType):
 {indent}cdef impl.ImVec4 value = {call}
 {indent}return (value.x, value.y, value.z, value.w)
 '''
+
+
+class ImVector(BaseType):
+    def __init__(self):
+        super().__init__('ImVector')
+
+    @property
+    def ctypes_type(self) -> str:
+        return 'ImVector'

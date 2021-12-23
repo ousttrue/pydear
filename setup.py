@@ -39,7 +39,7 @@ extensions = [Extension('cydeer.impl',
                         ],
                         include_dirs=include_dirs,
                         language='c++',
-                        extra_compile_args=['/wd4244'],
+                        extra_compile_args=['/wd4244', '/std:c++17'],
                         # cmake built
                         libraries=["imgui", "Advapi32", "Gdi32"],
                         library_dirs=[str(CMAKE_BUILD / 'Release/lib')],

@@ -1,15 +1,17 @@
 from typing import List
+import logging
 import io
+from os import write
+import pathlib
 '''
 use from setup.py
 '''
-from os import write
-import pathlib
 from clang import cindex
 from . import function
 from .interpreted_types import wrap_types
 from .parser import Parser
 
+logger = logging.getLogger(__name__)
 
 EXCLUDE_TYPES = (
     'va_list',
@@ -74,6 +76,9 @@ def is_exclude_function(cursors: tuple) -> bool:
     function: cindex.Cursor = cursors[-1]
     if function.spelling in EXCLUDE_FUNCS:
         return True
+    if function.spelling.startswith('operator'):
+        logger.debug(f'exclude; {function.spelling}')
+        return True
     if function.result_type.spelling in EXCLUDE_TYPES:
         return True
     for child in function.get_children():
@@ -98,6 +103,17 @@ class Header:
         self.namespace = namespace
 
     def write_pxd(self, pxd: io.IOBase, parser: Parser):
+        # enum
+        enums = [x for x in parser.enums if pathlib.Path(
+            x.cursor.location.file.name) == self.header]
+        if enums:
+            pxd.write(f'''cdef extern from "{self.header.name}" namespace "{self.namespace}":
+''')
+            for enum in enums:
+                pxd.write(f'    ctypedef enum {enum.cursor.spelling}:\n')
+                pxd.write(f'        pass\n')
+
+        # typedef & struct
         types = [x for x in parser.typedef_struct_list if pathlib.Path(
             x.cursor.location.file.name) == self.header]
         if types:
@@ -123,8 +139,6 @@ cdef extern from "{self.header.name}" namespace "{self.namespace}":
                 function.write_pxd_function(pxd, cursors[-1])
 
     def write_pyx(self, pyx: io.IOBase, parser: Parser):
-        pyx.write(IMVECTOR)
-
         types = [x for x in parser.typedef_struct_list if pathlib.Path(
             x.cursor.location.file.name) == self.header]
         if types:
@@ -155,14 +169,17 @@ def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathli
     files = [
         'imgui/imgui.h',
         'ImFileDialogWrap.h',
+        'ImGuizmo/ImGuizmo.h',
     ]
     namespaces = [
         'ImGui',
         'ifd',
+        'ImGuizmo',
     ]
     include_dirs = [
         external_dir,
         external_dir / 'imgui',
+        external_dir / 'ImGuizmo',
     ]
 
     parser = Parser(external_dir, files)
@@ -197,6 +214,7 @@ from libc.stdint cimport uintptr_t
 from libc.string cimport memcpy 
 
 ''')
+        pyx.write(IMVECTOR)
 
         for header in headers:
             header.write_pyx(pyx, parser)

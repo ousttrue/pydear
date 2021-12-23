@@ -4,117 +4,9 @@ from clang import cindex
 from .basetype import BaseType
 from . import primitive_types
 from .pointer_types import PointerType, ReferenceType, ArrayType, PointerToStructType, ReferenceToStructType
-from . import wrap_types
-
-
-class TypedefType(BaseType):
-    @property
-    def result_typing(self) -> str:
-        return self.name
-
-    def ctypes_field(self, indent: str, name: str) -> str:
-        return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
-
-    def param(self, name: str, default_value: str) -> str:
-        return name + default_value
-
-    def cdef_param(self, indent: str, i: int, name: str) -> str:
-
-        return f'''{indent}# {self}
-{indent}cdef impl.{self.name} p{i} = <impl.{self.name}><uintptr_t>{name}
-'''
-
-    def cdef_result(self, indent: str, call: str) -> str:
-        return f'''{indent}# {self}
-{indent}return {call}
-'''
-
-
-class StructType(BaseType):
-    cursor: cindex.Cursor
-
-    def __init__(self, name: str, cursor: cindex.Cursor, is_const=False):
-        super().__init__(name, is_const=is_const)
-        self.cursor = cursor
-
-    @property
-    def ctypes_type(self) -> str:
-        return self.cursor.spelling
-
-    @property
-    def result_typing(self) -> str:
-        return self.cursor.spelling
-
-    def param(self, name: str, default_value: str) -> str:
-        return name + default_value
-
-    def cdef_param(self, indent: str, i: int, name: str) -> str:
-        return f'''{indent}# {self}
-{indent}cdef p{i} = {name}
-'''
-
-    def cdef_result(self, indent: str, call: str) -> str:
-        return f'''{indent}# {self}
-{indent}cdef void* value = <void*>{call}
-{indent}return ctypes.c_void_p(value)
-'''
-
-
-class ImVector(BaseType):
-    def __init__(self):
-        super().__init__('ImVector')
-
-    @property
-    def ctypes_type(self) -> str:
-        return 'ImVector'
-
-
-class StringType(BaseType):
-    def __init__(self):
-        super().__init__('std::string')
-
-    @property
-    def ctypes_type(self) -> str:
-        return 'string'
-
-    @property
-    def result_typing(self) -> str:
-        return 'string'
-
-    def cdef_result(self, indent: str, call: str) -> str:
-        return f'''{indent}# {self}
-{indent}return {call}
-'''
-
-class CStringType(BaseType):
-    def __init__(self):
-        super().__init__('const char *')
-
-    @property
-    def ctypes_type(self) -> str:
-        return 'ctypes.c_void_p'
-
-    def param(self, name: str, default_value: str) -> str:
-        return f'{name}: Union[bytes, str]{default_value}'
-
-    def cdef_param(self, indent: str, i: int, name: str) -> str:
-        return f'''{indent}# {self}
-{indent}cdef const char *p{i} = NULL;
-{indent}if isinstance({name}, bytes):
-{indent}    p{i} = <const char *>{name}
-{indent}if isinstance({name}, str):
-{indent}    pp{i} = {name}.encode('utf-8')
-{indent}    p{i} = <const char *>pp{i}
-'''
-
-    @property
-    def result_typing(self) -> str:
-        return 'bytes'
-
-    def cdef_result(self, indent: str, call: str) -> str:
-        return f'''{indent}# {self}
-{indent}return {call}
-'''
+from .wrap_types import WRAP_TYPES, ImVector, ImVec2WrapType, ImVec4WrapType
+from .definition import StructType, TypedefType, EnumType
+from .string import StringType, CStringType
 
 
 IMVECTOR = ImVector()
@@ -190,9 +82,9 @@ def get(c: TypeWithCursor) -> BaseType:
         case 'size_t':
             return primitive_types.SizeType()
         case 'ImVec2' | 'const ImVec2 &':
-            return wrap_types.ImVec2WrapType()
+            return ImVec2WrapType()
         case 'ImVec4':
-            return wrap_types.ImVec4WrapType()
+            return ImVec4WrapType()
 
     match c.type.kind:
         case cindex.TypeKind.VOID:
@@ -227,7 +119,7 @@ def get(c: TypeWithCursor) -> BaseType:
         case cindex.TypeKind.POINTER:
             pointee = c.type.get_pointee()
             base = get(TypeWithCursor(pointee, c.cursor))
-            if isinstance(base, StructType) and any(t for t in wrap_types.WRAP_TYPES if t.name == base.name):
+            if isinstance(base, StructType) and any(t for t in WRAP_TYPES if t.name == base.name):
                 return PointerToStructType(base, is_const=c.type.is_const_qualified())
 
             return PointerType(base, is_const=c.type.is_const_qualified())
@@ -235,7 +127,7 @@ def get(c: TypeWithCursor) -> BaseType:
         case cindex.TypeKind.LVALUEREFERENCE:
             pointee = c.type.get_pointee()
             base = get(TypeWithCursor(pointee, c.cursor))
-            if isinstance(base, StructType) and any(t for t in wrap_types.WRAP_TYPES if t.name == base.name):
+            if isinstance(base, StructType) and any(t for t in WRAP_TYPES if t.name == base.name):
                 return ReferenceToStructType(base, is_const=c.type.is_const_qualified())
 
             return ReferenceType(base, is_const=c.type.is_const_qualified())
@@ -268,6 +160,9 @@ def get(c: TypeWithCursor) -> BaseType:
 
         case cindex.TypeKind.FUNCTIONPROTO:
             return PointerType(primitive_types.VoidType(), is_const=c.type.is_const_qualified())
+
+        case cindex.TypeKind.ENUM:
+            return EnumType(c.type.spelling)
 
     raise RuntimeError(f"unknown type: {c.type.kind}")
 
