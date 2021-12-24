@@ -9,6 +9,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Release/bin)
 set(CMAKE_CXX_STANDARD 17)
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 add_definitions(-DNOMINMAX)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -30,7 +32,9 @@ add_library(
   _external/ImGuizmo/GraphEditor.cpp
   _external/ImGuizmo/ImCurveEdit.cpp
   _external/ImGuizmo/ImGradient.cpp
-  _external/ImGuizmo/ImSequencer.cpp)
-target_include_directories(${PROJECT_NAME} PRIVATE _external _external/imgui
-                                                   _external/stb)
+  _external/ImGuizmo/ImSequencer.cpp
+  _external/tinygizmo/tinygizmo/tiny-gizmo.cpp)
+target_include_directories(
+  ${PROJECT_NAME} PRIVATE _external _external/imgui _external/stb
+                          _external/tinygizmo/tinygizmo)
 target_link_libraries(${PROJECT_NAME} PUBLIC Advapi32.lib)
