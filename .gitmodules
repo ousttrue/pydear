@@ -16,3 +16,6 @@
 [submodule "_external/ImGuizmo"]
 	path = _external/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "_external/tinygizmo"]
+	path = _external/tinygizmo
+	url = https://github.com/ousttrue/tinygizmo.git
