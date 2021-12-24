@@ -65,7 +65,7 @@ def extract_parameters(pyx: io.IOBase, params: List[TypeWrap], indent: str) -> L
     return param_names
 
 
-def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, overload=1):
+def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, overload=1, prefix=''):
     result = TypeWrap.from_function_result(function)
     result_t = interpreted_types.from_cursor(result.type, result.cursor)
     params = TypeWrap.get_function_params(function)
@@ -74,7 +74,7 @@ def write_pyx_function(pyx: io.IOBase, function: cindex.Cursor, *, pyi=False, ov
 
     # signature
     pyx.write(
-        f"def {function.spelling}{overload}{cj(interpreted_types.from_cursor(param.type, param.cursor).param(param.name, param.default_value) for param in params)}")
+        f"def {prefix}{function.spelling}{overload}{cj(interpreted_types.from_cursor(param.type, param.cursor).param(param.name, param.default_value) for param in params)}")
     # return type
     pyx.write(f'->{result_t.result_typing}:')
 

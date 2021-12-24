@@ -10,16 +10,15 @@ logger = logging.getLogger(__name__)
 
 
 class Parser:
-    def __init__(self, dir: pathlib.Path, headers: List[str]) -> None:
+    def __init__(self, headers: List[pathlib.Path]) -> None:
         sio = io.StringIO()
         for header in headers:
-            sio.write(f'#include "{header}"\n')
+            sio.write(f'#include "{header.name}"\n')
         import pycindex
 
-        self.headers = [dir / header for header in headers]
+        self.headers = headers
 
-        include_dirs = [str(dir)] + [str((dir / header).parent)
-                                     for header in headers]
+        include_dirs = [str(header.parent)for header in headers]
         unsaved = pycindex.Unsaved('tmp.h', sio.getvalue())
         self.tu = pycindex.get_tu(
             'tmp.h', include_dirs=include_dirs, unsaved=[unsaved])

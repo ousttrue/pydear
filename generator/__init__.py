@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import logging
 import io
 from os import write
@@ -98,9 +98,11 @@ def is_exclude_function(cursors: tuple) -> bool:
 
 
 class Header:
-    def __init__(self, dir: pathlib.Path, file: str, namespace: str) -> None:
+    def __init__(self, dir: pathlib.Path, file: str, namespace: str, *, prefix: str = '', include_dirs: List[pathlib.Path] = None) -> None:
         self.header = dir / file
         self.namespace = namespace
+        self.prefix = prefix
+        self.include_dirs = include_dirs or ()
 
     def write_pxd(self, pxd: io.IOBase, parser: Parser):
         # enum
@@ -160,34 +162,49 @@ cdef extern from "{self.header.name}" namespace "{self.namespace}":
                     # if name in INCLUDE_FUNCS:
                     count = overload.get(name, 0) + 1
                     function.write_pyx_function(
-                        pyx, cursors[-1], overload=count)
+                        pyx, cursors[-1], overload=count, prefix=self.prefix)
+                    overload[name] = count
+
+    def write_pyi(self, pyi: io.IOBase, parser: Parser):
+        types = [x for x in parser.typedef_struct_list if pathlib.Path(
+            x.cursor.location.file.name) == self.header]
+        if types:
+            for v in wrap_types.WRAP_TYPES:
+                for cursors in types:
+                    if cursors.cursor.spelling == v.name:
+                        cursors.write_pyi(pyi, flags=v)
+
+        funcs = [x for x in parser.functions if pathlib.Path(
+            x[-1].location.file.name) == self.header]
+        if funcs:
+            overload = {}
+            for cursors in funcs:
+                if is_exclude_function(cursors):
+                    continue
+
+                name = cursors[-1].spelling
+                if True:
+                    # if name in INCLUDE_FUNCS:
+                    count = overload.get(name, 0) + 1
+                    function.write_pyx_function(
+                        pyi, cursors[-1], pyi=True, overload=count, prefix=self.prefix)
                     overload[name] = count
 
 
 def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path, enum_py_path: pathlib.Path) -> List[str]:
 
-    files = [
-        'imgui/imgui.h',
-        'ImFileDialogWrap.h',
-        'ImGuizmo/ImGuizmo.h',
-    ]
-    namespaces = [
-        'ImGui',
-        'ifd',
-        'ImGuizmo',
-    ]
-    include_dirs = [
-        external_dir,
-        external_dir / 'imgui',
-        external_dir / 'ImGuizmo',
+    headers: List[Header] = [
+        Header(
+            external_dir, 'imgui/imgui.h', 'ImGui', include_dirs=[external_dir / 'imgui']),
+        Header(
+            external_dir, 'ImFileDialogWrap.h', 'ifd', include_dirs=[external_dir]),
+        Header(external_dir, 'ImGuizmo/ImGuizmo.h', 'ImGuizmo',
+               include_dirs=[external_dir / 'ImGuizmo'], prefix='ImGuizmo_'),
     ]
 
-    parser = Parser(external_dir, files)
+    parser = Parser([header.header for header in headers])
     parser.traverse()
     ext_dir.mkdir(parents=True, exist_ok=True)
-
-    headers = [Header(external_dir, file, namespace)
-               for file, namespace in zip(files, namespaces)]
 
     #
     # pxd
@@ -230,23 +247,8 @@ from typing import Any, Union, Tuple
 
         pyi.write(IMVECTOR)
 
-        for v in wrap_types.WRAP_TYPES:
-            for cursors in parser.typedef_struct_list:
-                if cursors.cursor.spelling == v.name:
-                    cursors.write_pyi(pyi, flags=v)
-
-        overload = {}
-        for cursors in parser.functions:
-            if is_exclude_function(cursors):
-                continue
-
-            name = cursors[-1].spelling
-            if True:
-                # if name in INCLUDE_FUNCS:
-                count = overload.get(name, 0) + 1
-                function.write_pyx_function(
-                    pyi, cursors[-1], pyi=True, overload=count)
-                overload[name] = count
+        for header in headers:
+            header.write_pyi(pyi, parser)
 
     #
     # enum
@@ -258,4 +260,4 @@ from typing import Any, Union, Tuple
         for e in parser.enums:
             e.write_to(enum_py)
 
-    return [str(dir) for dir in include_dirs]
+    return [str(include_dir) for header in headers for include_dir in header.include_dirs]
