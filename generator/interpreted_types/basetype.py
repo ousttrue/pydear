@@ -25,6 +25,9 @@ class BaseType:
         '''
         raise NotImplementedError()
 
+    def pyi_field(self, indent: str, name: str) -> str:
+        return f'{indent}{name}: {self.ctypes_type} # {self}\n'
+
     def ctypes_field(self, indent: str, name: str) -> str:
         return f'{indent}("{name}", {self.ctypes_type}), # {self}\n'
 

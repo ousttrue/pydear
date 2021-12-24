@@ -7,8 +7,10 @@ class TypedefType(BaseType):
     def result_typing(self) -> str:
         return self.name
 
-    def ctypes_field(self, indent: str, name: str) -> str:
-        return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
+    @property
+    def ctypes_type(self) -> str:
+        # TODO:
+        return 'ctypes.c_void_p' # function pointer
 
     def param(self, name: str, default_value: str) -> str:
         return name + default_value

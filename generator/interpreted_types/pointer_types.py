@@ -19,7 +19,7 @@ class PointerType(BaseType):
         return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
 
     def param(self, name: str, default_value: str) -> str:
-        return f'{name}: {self.ctypes_type}{default_value}'
+        return f'{name}: Union[ctypes.c_void_p, ctypes.Array, ctypes.Structure]{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         base_name = self.base.name
@@ -29,7 +29,7 @@ class PointerType(BaseType):
 {indent}cdef {base_name} *p{i} = NULL;
 {indent}if isinstance({name}, ctypes.c_void_p):
 {indent}    p{i} = <{base_name} *><uintptr_t>({name}.value)
-{indent}if isinstance({name}, ctypes.Array):
+{indent}if isinstance({name}, (ctypes.Array, ctypes.Structure)):
 {indent}    p{i} = <{base_name} *><uintptr_t>ctypes.addressof({name})
 '''
 

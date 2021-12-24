@@ -245,8 +245,7 @@ from . imgui_enum import *
 from typing import Any, Union, Tuple
 ''')
 
-        pyi.write(IMVECTOR)
-
+        # pyi.write(IMVECTOR)
         for header in headers:
             header.write_pyi(pyi, parser)
 
