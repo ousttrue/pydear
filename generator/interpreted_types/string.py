@@ -9,8 +9,7 @@ class StringType(BaseType):
     def ctypes_type(self) -> str:
         return 'string'
 
-    @property
-    def result_typing(self) -> str:
+    def result_typing(self, pyi: bool) -> str:
         return 'string'
 
     def cdef_result(self, indent: str, call: str) -> str:
@@ -27,7 +26,7 @@ class CStringType(BaseType):
     def ctypes_type(self) -> str:
         return 'ctypes.c_void_p'
 
-    def param(self, name: str, default_value: str) -> str:
+    def param(self, name: str, default_value: str, pyi: bool) -> str:
         return f'{name}: Union[bytes, str]{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
@@ -40,8 +39,7 @@ class CStringType(BaseType):
 {indent}    p{i} = <const char *>pp{i}
 '''
 
-    @property
-    def result_typing(self) -> str:
+    def result_typing(self, pyi: bool) -> str:
         return 'bytes'
 
     def cdef_result(self, indent: str, call: str) -> str:

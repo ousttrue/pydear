@@ -3,8 +3,7 @@ from .basetype import BaseType
 
 
 class TypedefType(BaseType):
-    @property
-    def result_typing(self) -> str:
+    def result_typing(self, pyi: bool) -> str:
         return self.name
 
     @property
@@ -12,7 +11,7 @@ class TypedefType(BaseType):
         # TODO:
         return 'ctypes.c_void_p' # function pointer
 
-    def param(self, name: str, default_value: str) -> str:
+    def param(self, name: str, default_value: str, pyi: bool) -> str:
         return name + default_value
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
@@ -38,11 +37,10 @@ class StructType(BaseType):
     def ctypes_type(self) -> str:
         return self.cursor.spelling
 
-    @property
-    def result_typing(self) -> str:
+    def result_typing(self, pyi: bool) -> str:
         return self.cursor.spelling
 
-    def param(self, name: str, default_value: str) -> str:
+    def param(self, name: str, default_value: str, pyi: bool) -> str:
         return name + default_value
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
@@ -61,7 +59,7 @@ class EnumType(BaseType):
     def __init__(self, name: str):
         super().__init__(name)
 
-    def param(self, name: str, default_value: str) -> str:
+    def param(self, name: str, default_value: str, pyi: bool) -> str:
         return f'{name}: int{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:

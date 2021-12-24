@@ -55,7 +55,7 @@ class ImVec2WrapType(BaseType):
     def ctypes_type(self) -> str:
         return 'ImVec2'
 
-    def param(self, name: str, default_value: str) -> str:
+    def param(self, name: str, default_value: str, pyi: bool) -> str:
         return f'{name}: Union[ImVec2, Tuple[float, float]]{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
@@ -63,8 +63,7 @@ class ImVec2WrapType(BaseType):
 {indent}cdef impl.ImVec2 p{i} = impl.ImVec2({name}[0], {name}[1]) if isinstance({name}, tuple) else impl.ImVec2({name}.x, {name}.y)
 '''
 
-    @property
-    def result_typing(self) -> str:
+    def result_typing(self, pyi: bool) -> str:
         return 'Tuple[float, float]'
 
     def cdef_result(self, indent: str, call: str) -> str:
@@ -82,11 +81,10 @@ class ImVec4WrapType(BaseType):
     def ctypes_type(self) -> str:
         return 'ImVec4'
 
-    def param(self, name: str, default_value: str) -> str:
+    def param(self, name: str, default_value: str, pyi: bool) -> str:
         return f'{name}: Union[ImVec4, Tuple[float, float, float, float]]{default_value}'
 
-    @property
-    def result_typing(self) -> str:
+    def result_typing(self, pyi: bool) -> str:
         return 'Tuple[float, float, float, float]'
 
     def cdef_result(self, indent: str, call: str) -> str:

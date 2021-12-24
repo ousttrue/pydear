@@ -31,14 +31,13 @@ class BaseType:
     def ctypes_field(self, indent: str, name: str) -> str:
         return f'{indent}("{name}", {self.ctypes_type}), # {self}\n'
 
-    def param(self, name: str, default_value: str) -> str:
+    def param(self, name: str, default_value: str, pyi: bool) -> str:
         '''
         function param
         '''
         raise NotImplementedError()
 
-    @property
-    def result_typing(self) -> str:
+    def result_typing(self, pyi: bool) -> str:
         '''
         return
         '''
