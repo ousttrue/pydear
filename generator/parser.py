@@ -21,7 +21,7 @@ class Parser:
         include_dirs = [str(header.parent)for header in headers]
         unsaved = pycindex.Unsaved('tmp.h', sio.getvalue())
         self.tu = pycindex.get_tu(
-            'tmp.h', include_dirs=include_dirs, unsaved=[unsaved])
+            'tmp.h', include_dirs=include_dirs, unsaved=[unsaved], flags=['-DNOMINMAX'])
         self.functions: List[Tuple[cindex.Cursor, ...]] = []
         self.enums: List[EnumDecl] = []
         self.typedef_struct_list: List[Union[TypedefDecl, StructDecl]] = []

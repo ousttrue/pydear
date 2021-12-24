@@ -11,7 +11,7 @@ EXT_DIR = HERE / 'src/cydeer/impl'
 EXTERNAL_DIR = HERE / '_external'
 ENUM_PATH = HERE / 'src/cydeer/imgui_enum.py'
 CMAKE_BUILD = HERE / 'build'
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s]%(name)s:%(lineno)s:%(message)s')
 
 # generate pyd, pyx, pyi from imgui.h
 try:

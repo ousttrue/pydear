@@ -195,11 +195,17 @@ def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathli
 
     headers: List[Header] = [
         Header(
-            external_dir, 'imgui/imgui.h', 'ImGui', include_dirs=[external_dir / 'imgui']),
+            external_dir, 'imgui/imgui.h', 'ImGui',
+            include_dirs=[external_dir / 'imgui']),
         Header(
-            external_dir, 'ImFileDialogWrap.h', 'ifd', include_dirs=[external_dir]),
-        Header(external_dir, 'ImGuizmo/ImGuizmo.h', 'ImGuizmo',
-               include_dirs=[external_dir / 'ImGuizmo'], prefix='ImGuizmo_'),
+            external_dir, 'ImFileDialogWrap.h', 'ifd',
+            include_dirs=[external_dir]),
+        Header(
+            external_dir, 'ImGuizmo/ImGuizmo.h', 'ImGuizmo',
+            include_dirs=[external_dir / 'ImGuizmo'], prefix='ImGuizmo_'),
+        Header(
+            external_dir, 'tinygizmo/tinygizmo/tiny-gizmo.hpp', 'tinygizmo',
+            include_dirs=[external_dir / 'tinygizmo/tinygizmo'], prefix='tinygizmo_')
     ]
 
     parser = Parser([header.header for header in headers])
@@ -245,7 +251,7 @@ from . imgui_enum import *
 from typing import Any, Union, Tuple
 ''')
 
-        # pyi.write(IMVECTOR)
+        pyi.write(IMVECTOR)
         for header in headers:
             header.write_pyi(pyi, parser)
 
