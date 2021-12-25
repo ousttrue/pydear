@@ -5,7 +5,7 @@ from clang import cindex
 from .basetype import BaseType
 from . import primitive_types
 from .pointer_types import PointerType, ReferenceType, ArrayType, PointerToStructType, ReferenceToStructType, RefenreceToStdArrayType
-from .wrap_types import WRAP_TYPES, ImVector, ImVec2WrapType, ImVec4WrapType
+from .wrap_types import WRAP_TYPES, ImVector, ImVec2WrapType, ImVec4WrapType, VertexBufferType
 from .definition import StructType, TypedefType, EnumType
 from .string import StringType, CStringType
 
@@ -95,6 +95,8 @@ def get(c: TypeWithCursor) -> BaseType:
             return ImVec2WrapType()
         case 'ImVec4':
             return ImVec4WrapType()
+        case 'tinygizmo::VertexBuffer':
+            return VertexBufferType()
 
     match c.type.kind:
         case cindex.TypeKind.VOID:

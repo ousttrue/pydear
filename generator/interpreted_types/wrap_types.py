@@ -44,6 +44,9 @@ WRAP_TYPES = [
     WrapFlags('ImGuiViewport', fields=True, methods=True),
     WrapFlags('ImGuiStyle'),
     WrapFlags('ImGuiWindowClass'),
+
+    # tinygizmo
+    WrapFlags('gizmo_context', fields=True, methods=True),
 ]
 
 
@@ -101,3 +104,21 @@ class ImVector(BaseType):
     @property
     def ctypes_type(self) -> str:
         return 'ImVector'
+
+
+class VertexBufferType(BaseType):
+    def __init__(self):
+        super().__init__('VertexBuffer')
+
+    @property
+    def ctypes_type(self) -> str:
+        return 'VertexBuffer'
+
+    def result_typing(self, pyi: bool) -> str:
+        return 'Tuple[ctypes.c_void_p, int, ctypes.c_void_p, int]'
+
+    def cdef_result(self, indent: str, call: str) -> str:
+        return f'''{indent}# {self}
+{indent}cdef impl.VertexBuffer value = {call}
+{indent}return (ctypes.c_void_p(<uintptr_t>value.vertices), value.vertices_count, ctypes.c_void_p(<uintptr_t>value.indices), value.indices_count)
+'''

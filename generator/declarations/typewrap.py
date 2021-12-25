@@ -131,6 +131,8 @@ class TypeWrap(NamedTuple):
 
         filtered = template_filter(self.type.spelling).replace('[]', '*')
         filtered = filtered.replace('std::string', 'string')
+        filtered = filtered.replace('tinygizmo::VertexBuffer', 'VertexBuffer')
+        filtered = filtered.replace('uint32_t', 'unsigned int')
 
         def filter(m):
             return f'{m.group(1)}{m.group(2)}'
