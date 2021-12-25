@@ -27,6 +27,22 @@ class ImVector(ctypes.Structure):
 
 '''
 
+STD_ARRAY = '''
+cdef extern from "<array>" namespace "std" nogil:
+  cdef cppclass float2 "std::array<float, 2>":
+    float2() except+
+    float& operator[](size_t)
+cdef extern from "<array>" namespace "std" nogil:
+  cdef cppclass float3 "std::array<float, 3>":
+    float3() except+
+    float& operator[](size_t)
+cdef extern from "<array>" namespace "std" nogil:
+  cdef cppclass float4 "std::array<float, 4>":
+    float4() except+
+    float& operator[](size_t)
+
+'''
+
 PXD_SPAN = '''
 cdef struct Span:
     void *_data
@@ -38,18 +54,18 @@ cdef struct Span:
 def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path, enum_py_path: pathlib.Path) -> List[str]:
 
     headers: List[Header] = [
-        # Header(
-        #     external_dir, 'imgui/imgui.h', 'ImGui',
-        #     include_dirs=[external_dir / 'imgui']),
-        # Header(
-        #     external_dir, 'ImFileDialogWrap.h', 'ifd',
-        #     include_dirs=[external_dir]),
-        # Header(
-        #     external_dir, 'ImGuizmo/ImGuizmo.h', 'ImGuizmo',
-        #     include_dirs=[external_dir / 'ImGuizmo'], prefix='ImGuizmo_'),
         Header(
             external_dir, 'tinygizmo/tinygizmo/tiny-gizmo.hpp', 'tinygizmo',
-            include_dirs=[external_dir / 'tinygizmo/tinygizmo'], prefix='tinygizmo_')
+            include_dirs=[external_dir / 'tinygizmo/tinygizmo'], prefix='tinygizmo_'),
+        Header(
+            external_dir, 'imgui/imgui.h', 'ImGui',
+            include_dirs=[external_dir / 'imgui']),
+        Header(
+            external_dir, 'ImFileDialogWrap.h', 'ifd',
+            include_dirs=[external_dir]),
+        Header(
+            external_dir, 'ImGuizmo/ImGuizmo.h', 'ImGuizmo',
+            include_dirs=[external_dir / 'ImGuizmo'], prefix='ImGuizmo_'),
     ]
 
     parser = Parser([header.header for header in headers])
@@ -66,6 +82,7 @@ from libcpp.pair cimport pair
 
 ''')
 
+        pxd.write(STD_ARRAY)
         pxd.write(PXD_SPAN)
         for header in headers:
             header.write_pxd(pxd, parser)
@@ -85,9 +102,9 @@ cimport impl
 
 ''')
         pyx.write(IMVECTOR)
-
-        # for header in headers:
-        #     header.write_pyx(pyx, parser)
+        pyx.write(STD_ARRAY)
+        for header in headers:
+            header.write_pyx(pyx, parser)
 
     #
     # pyi

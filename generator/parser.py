@@ -55,6 +55,12 @@ class Parser:
                 ):
                     pass
 
+                case (
+                    cindex.CursorKind.NAMESPACE_REF
+                    | cindex.CursorKind.TEMPLATE_REF
+                ):
+                    pass
+
                 case cindex.CursorKind.FUNCTION_DECL:
                     if(cursor.spelling.startswith('operator ')):
                         pass

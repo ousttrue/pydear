@@ -160,9 +160,9 @@ class DoubleType(PrimitiveType):
         return 'ctypes.c_float'
 
 
-def get(src: str) -> PrimitiveType:
+def get(src: str, is_const: bool) -> PrimitiveType:
     match src:
         case 'float':
-            return FloatType()
+            return FloatType(is_const=is_const)
 
     raise RuntimeError()

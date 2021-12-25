@@ -1,17 +1,22 @@
 from typing import Optional
 from .basetype import BaseType
-from .primitive_types import PrimitiveType
+from .primitive_types import PrimitiveType, VoidType
 
 
 def add_impl(base: Optional[BaseType]) -> str:
     if not base:
         raise RuntimeError()
 
+    # Find types that don't require impl
     match base:
-        case PrimitiveType():
+        case PrimitiveType() | VoidType():
             return base.name
-        case _:
-            return 'impl.' + base.name
+        case PointerType():
+            match base.base:
+                case PrimitiveType() | VoidType():
+                    return base.name
+
+    return 'impl.' + base.name
 
 
 class PointerType(BaseType):
@@ -106,6 +111,37 @@ class ArrayType(BaseType):
         return f'''{indent}# {self}
 {indent}cdef {base_name} *p{i} = <{base_name}*><void*><uintptr_t>ctypes.addressof({name})
 '''
+
+    def result_typing(self, pyi: bool) -> str:
+        return 'ctypes.c_void_p'
+
+
+class RefenreceToStdArrayType(BaseType):
+    size: int
+
+    def __init__(self, base: BaseType, size: int, is_const=False):
+        super().__init__(f'{base.name}[{size}]', base, is_const)
+        self.size = size
+
+    @property
+    def ctypes_type(self) -> str:
+        if not self.base:
+            raise RuntimeError()
+        return f'{self.base.ctypes_type} * {self.size}'
+
+    def param(self, name: str, default_value: str, pyi: bool) -> str:
+        return f'{name}: ctypes.Array{default_value}'
+
+    def cdef_param(self, indent: str, i: int, name: str) -> str:
+        type_name = f'{self.const_prefix}{self.base.name}{self.size}'
+        return f'''{indent}# {self}
+{indent}cdef {type_name} *p{i} = NULL
+{indent}if isinstance({name}, (ctypes.Array, ctypes.Structure)):
+{indent}    p{i} = <{type_name}*><uintptr_t>ctypes.addressof({name})
+'''
+
+    def call_param(self, i: int) -> str:
+        return f'p{i}[0]'
 
     def result_typing(self, pyi: bool) -> str:
         return 'ctypes.c_void_p'

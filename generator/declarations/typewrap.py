@@ -131,9 +131,11 @@ class TypeWrap(NamedTuple):
 
         filtered = template_filter(self.type.spelling).replace('[]', '*')
         filtered = filtered.replace('std::string', 'string')
-        filtered = filtered.replace('std::array[float, 2]', 'float[2]')
-        filtered = filtered.replace('std::array[float, 3]', 'float[3]')
-        filtered = filtered.replace('std::array[float, 4]', 'float[4]')
+
+        def filter(m):
+            return f'{m.group(1)}{m.group(2)}'
+        STD_ARRAY_PATTERN = re.compile(r'std::array\[(\w+), (\d+)\]')
+        filtered = STD_ARRAY_PATTERN.sub(filter, filtered)
 
         if 'simple::' in filtered:
             filtered = re.sub(r'simple::Span\[[^\]]+\]', filtered, 'Span')
@@ -167,7 +169,7 @@ class TypeWrap(NamedTuple):
                         token.spelling for token in self.cursor.get_tokens()]
                     if '=' not in tokens:
                         tokens = []
-                case cindex.CursorKind.TYPE_REF:
+                case cindex.CursorKind.TYPE_REF | cindex.CursorKind.TEMPLATE_REF | cindex.CursorKind.NAMESPACE_REF:
                     pass
                 case _:
                     logger.debug(f'{self.cursor.spelling}: {child.kind}')

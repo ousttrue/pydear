@@ -4,7 +4,7 @@ import re
 from clang import cindex
 from .basetype import BaseType
 from . import primitive_types
-from .pointer_types import PointerType, ReferenceType, ArrayType, PointerToStructType, ReferenceToStructType
+from .pointer_types import PointerType, ReferenceType, ArrayType, PointerToStructType, ReferenceToStructType, RefenreceToStdArrayType
 from .wrap_types import WRAP_TYPES, ImVector, ImVec2WrapType, ImVec4WrapType
 from .definition import StructType, TypedefType, EnumType
 from .string import StringType, CStringType
@@ -71,7 +71,7 @@ def is_void_p(base: BaseType) -> bool:
     return True
 
 
-STD_ARRAY = re.compile(r'(?:const )?std::array<(\w+), (\d+)> &')
+STD_ARRAY = re.compile(r'(const )?std::array<(\w+), (\d+)> &')
 
 
 def get(c: TypeWithCursor) -> BaseType:
@@ -80,8 +80,9 @@ def get(c: TypeWithCursor) -> BaseType:
 
     m = STD_ARRAY.match(c.spelling)
     if m:
-        base = primitive_types.get(m.group(1))
-        return ArrayType(base, int(m.group(2)), is_const=c.type.is_const_qualified())
+        is_const = True if m.group(1) else False
+        base = primitive_types.get(m.group(2), False)
+        return RefenreceToStdArrayType(base, int(m.group(3)), is_const=is_const)
 
     match c.type.spelling:
         case 'std::string' | 'const std::string &':
