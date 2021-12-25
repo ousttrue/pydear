@@ -1,11 +1,12 @@
-from typing import NamedTuple, Tuple, List, Union
+from typing import List, Union
 import io
 import pathlib
 import logging
 from clang import cindex
-from . typedef import TypedefDecl
-from . struct import StructDecl
-from .enum import EnumDecl
+from .declarations.typedef import TypedefDecl
+from .declarations.struct import StructDecl
+from .declarations.enum import EnumDecl
+from .declarations.function import FunctionDecl
 logger = logging.getLogger(__name__)
 
 
@@ -22,7 +23,7 @@ class Parser:
         unsaved = pycindex.Unsaved('tmp.h', sio.getvalue())
         self.tu = pycindex.get_tu(
             'tmp.h', include_dirs=include_dirs, unsaved=[unsaved], flags=['-DNOMINMAX'])
-        self.functions: List[Tuple[cindex.Cursor, ...]] = []
+        self.functions: List[FunctionDecl] = []
         self.enums: List[EnumDecl] = []
         self.typedef_struct_list: List[Union[TypedefDecl, StructDecl]] = []
 
@@ -58,7 +59,7 @@ class Parser:
                     if(cursor.spelling.startswith('operator ')):
                         pass
                     else:
-                        self.functions.append(cursor_path)
+                        self.functions.append(FunctionDecl(cursor_path))
                 case cindex.CursorKind.ENUM_DECL:
                     self.enums.append(EnumDecl(cursor_path))
                 case cindex.CursorKind.TYPEDEF_DECL:

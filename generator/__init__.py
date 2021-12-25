@@ -7,29 +7,6 @@ from .header import Header
 logger = logging.getLogger(__name__)
 
 
-INCLUDE_FUNCS = (
-    'CreateContext',
-    'DestroyContext',
-    'GetIO',
-    'GetCurrentContext',
-    'NewFrame',
-    'Render',
-    'GetDrawData',
-    'StyleColorsDark',
-    #
-    'ShowDemoWindow',
-    'ShowMetricsWindow',
-    'Begin',
-    'End',
-    'Text',
-    'Checkbox',
-    'SliderFloat',
-    'ColorEdit3',
-    'Button',
-    'SameLine',
-)
-
-
 IMVECTOR = '''
 
 def iterate(data: ctypes.c_void_p, t: Type[ctypes.Structure], count: int)->Iterable[ctypes.Structure]:

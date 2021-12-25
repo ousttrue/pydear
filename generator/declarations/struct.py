@@ -2,9 +2,9 @@ from typing import NamedTuple, Tuple
 import io
 from clang import cindex
 from .typewrap import TypeWrap
-from .interpreted_types.wrap_types import WrapFlags
+from ..interpreted_types.wrap_types import WrapFlags
 from . import function
-from .interpreted_types import from_cursor
+from ..interpreted_types import from_cursor
 
 
 def is_forward_declaration(cursor: cindex.Cursor) -> bool:
