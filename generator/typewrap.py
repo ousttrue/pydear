@@ -23,12 +23,13 @@ def template_filter(src: str) -> str:
     '''
     replace Some<T> to Some[T]
     '''
-    def rep_typearg(m):
-        ret = f'[{m.group(0)[1:-1]}]'
-        return ret
-    dst = TEMPLATE_PATTERN.sub(rep_typearg, src)
+    # def rep_typearg(m):
+    #     ret = f'[{m.group(0)[1:-1]}]'
+    #     return ret
+    # dst = TEMPLATE_PATTERN.sub(rep_typearg, src)
 
-    return dst
+    # return dst
+    return src.replace('<', '[').replace('>', ']')
 
 
 class TypeWrap(NamedTuple):
@@ -39,6 +40,10 @@ class TypeWrap(NamedTuple):
     '''
     type: cindex.Type
     cursor: cindex.Cursor
+    namespace: str = 'tinygizmo::'
+
+    def remove_namespce(self, src: str) -> str:
+        return src.replace(self.namespace, '')
 
     @staticmethod
     def from_function_result(cursor: cindex.Cursor):
@@ -123,10 +128,20 @@ class TypeWrap(NamedTuple):
         '''
         if self.type.kind == cindex.TypeKind.ENUM:
             return 'int'
-        match self.type.spelling:
-            case 'std::string':
-                return 'string'
-        return template_filter(self.type.spelling).replace('[]', '*')
+
+        filtered = template_filter(self.type.spelling).replace('[]', '*')
+        filtered = filtered.replace('std::string', 'string')
+        filtered = filtered.replace('std::array[float, 2]', 'float[2]')
+        filtered = filtered.replace('std::array[float, 3]', 'float[3]')
+        filtered = filtered.replace('std::array[float, 4]', 'float[4]')
+
+        if 'simple::' in filtered:
+            filtered = re.sub(r'simple::Span\[[^\]]+\]', filtered, 'Span')
+
+        if filtered.startswith('std::tuple['):
+            return filtered.replace('std::tuple', 'pair')
+
+        return filtered
 
     @property
     def c_type_with_name(self) -> str:
@@ -139,7 +154,7 @@ class TypeWrap(NamedTuple):
         if len(splitted) == 2:
             return f"{splitted[0]}(*{name}){splitted[1]}"
         else:
-            return f"{c_type} {name}"
+            return f"{self.remove_namespce(c_type)} {name}"
 
     @property
     def default_value(self) -> str:

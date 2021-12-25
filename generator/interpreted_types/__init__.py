@@ -1,4 +1,5 @@
 from typing import Optional, NamedTuple
+import re
 #
 from clang import cindex
 from .basetype import BaseType
@@ -70,12 +71,20 @@ def is_void_p(base: BaseType) -> bool:
     return True
 
 
+STD_ARRAY = re.compile(r'(?:const )?std::array<(\w+), (\d+)> &')
+
+
 def get(c: TypeWithCursor) -> BaseType:
     if c.spelling.startswith('ImVector<'):
         return IMVECTOR
 
+    m = STD_ARRAY.match(c.spelling)
+    if m:
+        base = primitive_types.get(m.group(1))
+        return ArrayType(base, int(m.group(2)), is_const=c.type.is_const_qualified())
+
     match c.type.spelling:
-        case 'std::string':
+        case 'std::string' | 'const std::string &':
             return StringType()
         case 'const char *':
             return CStringType()

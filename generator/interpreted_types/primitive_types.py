@@ -158,3 +158,11 @@ class DoubleType(PrimitiveType):
     @property
     def ctypes_type(self) -> str:
         return 'ctypes.c_float'
+
+
+def get(src: str) -> PrimitiveType:
+    match src:
+        case 'float':
+            return FloatType()
+
+    raise RuntimeError()

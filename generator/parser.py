@@ -44,7 +44,7 @@ class Parser:
             match cursor.kind:
                 case cindex.CursorKind.NAMESPACE:
                     # enter namespace
-                    logger.info(f'namespace: {cursor.spelling}')
+                    # logger.info(f'namespace: {cursor.spelling}')
                     return True
                 case (
                     cindex.CursorKind.MACRO_DEFINITION

@@ -2,12 +2,29 @@ from .basetype import BaseType
 
 
 class StringType(BaseType):
+    '''
+    http://docs.cython.org/en/latest/src/tutorial/strings.html#c-strings
+    '''
+
     def __init__(self):
         super().__init__('std::string')
 
     @property
     def ctypes_type(self) -> str:
         return 'string'
+
+    def param(self, name: str, default_value: str, pyi: bool) -> str:
+        return f'{name}: str{default_value}'
+
+    def cdef_param(self, indent: str, i: int, name: str) -> str:
+        return f'''{indent}# {self}
+{indent}cdef string p{i}
+{indent}if isinstance({name}, bytes):
+{indent}    p{i} = {name}
+{indent}if isinstance({name}, str):
+{indent}    pp{i} = {name}.encode('utf-8')
+{indent}    p{i} = pp{i}
+'''
 
     def result_typing(self, pyi: bool) -> str:
         return 'string'

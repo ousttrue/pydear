@@ -1,4 +1,17 @@
+from typing import Optional
 from .basetype import BaseType
+from .primitive_types import PrimitiveType
+
+
+def add_impl(base: Optional[BaseType]) -> str:
+    if not base:
+        raise RuntimeError()
+
+    match base:
+        case PrimitiveType():
+            return base.name
+        case _:
+            return 'impl.' + base.name
 
 
 class PointerType(BaseType):
@@ -21,9 +34,7 @@ class PointerType(BaseType):
         return f'{name}: Union[ctypes.c_void_p, ctypes.Array, ctypes.Structure]{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
-        base_name = self.base.name
-        if base_name.startswith("Im"):
-            base_name = 'impl.' + base_name
+        base_name = add_impl(self.base)
         return f'''{indent}# {self}
 {indent}cdef {base_name} *p{i} = NULL;
 {indent}if isinstance({name}, ctypes.c_void_p):
@@ -59,9 +70,7 @@ class ReferenceType(BaseType):
         return f'{name}: {self.ctypes_type}{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
-        base_name = self.base.name
-        if base_name.startswith("Im"):
-            base_name = 'impl.' + base_name
+        base_name = add_impl(self.base)
         return f'''{indent}# {self}
 {indent}cdef {base_name} *p{i} = <{base_name} *><void*><uintptr_t>(ctypes.addressof({name}))
 '''
@@ -93,9 +102,7 @@ class ArrayType(BaseType):
         return f'{name}: ctypes.Array{default_value}'
 
     def cdef_param(self, indent: str, i: int, name: str) -> str:
-        base_name = self.base.name
-        if base_name.startswith("Im"):
-            base_name = 'impl.' + base_name
+        base_name = add_impl(self.base)
         return f'''{indent}# {self}
 {indent}cdef {base_name} *p{i} = <{base_name}*><void*><uintptr_t>ctypes.addressof({name})
 '''
