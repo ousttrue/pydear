@@ -63,4 +63,4 @@ def get_result() -> Optional[pathlib.Path]:
 
     result = ImGui.ImFileDialog_GetResult(FILE_DIALOG)
     if result:
-        return pathlib.Path(result)
+        return pathlib.Path(result.decode('utf-8'))
