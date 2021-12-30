@@ -6,10 +6,8 @@ import pathlib
 import subprocess
 HERE = pathlib.Path(__file__).parent
 sys.path.append(str(HERE / '_external/pycindex/src'))
-PYI_PATH = HERE / 'src/pydeer/__init__.pyi'
-EXT_DIR = HERE / 'src/pydeer/impl'
+PACKAGE_DIR = HERE / 'src/pydeer'
 EXTERNAL_DIR = HERE / '_external'
-ENUM_PATH = HERE / 'src/pydeer/imgui_enum.py'
 CMAKE_BUILD = HERE / 'build'
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s]%(name)s:%(lineno)s:%(message)s')
 
@@ -20,7 +18,7 @@ except:
     # get clang
     import _external.pycindex.setup
 import generator  # noqa
-include_dirs = generator.generate(EXTERNAL_DIR, EXT_DIR, PYI_PATH, ENUM_PATH)
+include_dirs = generator.generate(EXTERNAL_DIR, PACKAGE_DIR)
 
 
 def rel_path(src: pathlib.Path) -> str:
@@ -35,7 +33,7 @@ subprocess.run('cmake --build build --config Release')
 
 extensions = [Extension('pydeer.impl',
                         sources=[
-                            rel_path(EXT_DIR / 'impl.pyx'),  # generated
+                            rel_path(PACKAGE_DIR / 'impl/impl.pyx'),  # generated
                         ],
                         include_dirs=include_dirs,
                         language='c++',

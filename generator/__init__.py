@@ -7,121 +7,32 @@ from .header import Header
 logger = logging.getLogger(__name__)
 
 
-IMVECTOR = '''
-
-def iterate(data: ctypes.c_void_p, t: Type[ctypes.Structure], count: int)->Iterable[ctypes.Structure]:
-    p = ctypes.cast(data, ctypes.POINTER(t))
-    for i in range(count):
-        yield p[i]
-
-
-class ImVector(ctypes.Structure):
-    _fields_ = (
-        ('Size', ctypes.c_int),
-        ('Capacity', ctypes.c_int),
-        ('Data', ctypes.c_void_p),
-    )
-
-    def each(self, t: Type[ctypes.Structure])->Iterable[ctypes.Structure]:
-        return iterate(self.Data, t, self.Size)
-
-'''
-
-STD_ARRAY = '''
-cdef extern from "<array>" namespace "std" nogil:
-  cdef cppclass float2 "std::array<float, 2>":
-    float2() except+
-    float& operator[](size_t)
-cdef extern from "<array>" namespace "std" nogil:
-  cdef cppclass float3 "std::array<float, 3>":
-    float3() except+
-    float& operator[](size_t)
-cdef extern from "<array>" namespace "std" nogil:
-  cdef cppclass float4 "std::array<float, 4>":
-    float4() except+
-    float& operator[](size_t)
-
-'''
-
-PXD_SPAN = '''
-cdef struct Span:
-    void *_data
-    size_t count
-
-'''
-
-
-def generate(external_dir: pathlib.Path, ext_dir: pathlib.Path, pyi_path: pathlib.Path, enum_py_path: pathlib.Path) -> List[str]:
-
+def generate(external_dir: pathlib.Path, package_dir: pathlib.Path) -> List[str]:
     headers: List[Header] = [
         Header(
-            external_dir, 'tinygizmo/tinygizmo/tiny-gizmo.hpp', 'tinygizmo',
+            external_dir, 'tinygizmo/tinygizmo/tiny-gizmo.hpp',
             include_dirs=[external_dir / 'tinygizmo/tinygizmo'], prefix='tinygizmo_'),
         Header(
-            external_dir, 'imgui/imgui.h', 'ImGui',
+            external_dir, 'imgui/imgui.h',
             include_dirs=[external_dir / 'imgui']),
         Header(
-            external_dir, 'ImFileDialogWrap.h', 'ifd',
+            external_dir, 'ImFileDialogWrap.h',
             include_dirs=[external_dir]),
         Header(
-            external_dir, 'ImGuizmo/ImGuizmo.h', 'ImGuizmo',
+            external_dir, 'ImGuizmo/ImGuizmo.h',
             include_dirs=[external_dir / 'ImGuizmo'], prefix='ImGuizmo_'),
     ]
 
     parser = Parser([header.header for header in headers])
     parser.traverse()
-    ext_dir.mkdir(parents=True, exist_ok=True)
 
-    #
-    # pxd
-    #
-    with (ext_dir / 'impl.pxd').open('w') as pxd:
-        pxd.write(f'''from libcpp cimport bool
-from libcpp.string cimport string
-from libcpp.pair cimport pair
-
-''')
-
-        pxd.write(STD_ARRAY)
-        pxd.write(PXD_SPAN)
-        for header in headers:
-            header.write_pxd(pxd, parser)
-
-    #
-    # pyx
-    #
-    with (ext_dir / 'impl.pyx').open('w') as pyx:
-        pyx.write('''from typing import Tuple, Any, Union, Iterable, Type
-import ctypes
-from libcpp cimport bool
-from libcpp.string cimport string
-from libcpp.pair cimport pair
-from libc.stdint cimport uintptr_t
-from libc.string cimport memcpy 
-cimport impl
-
-''')
-        pyx.write(IMVECTOR)
-        pyx.write(STD_ARRAY)
-        for header in headers:
-            header.write_pyx(pyx, parser)
-
-    #
-    # pyi
-    #
-    with pyi_path.open('w') as pyi:
-        pyi.write('''import ctypes
-from . imgui_enum import *
-from typing import Any, Union, Tuple
-''')
-
-        pyi.write(IMVECTOR)
-        for header in headers:
-            header.write_pyi(pyi, parser)
+    from . import cython_writer
+    cython_writer.write(package_dir, parser, headers)
 
     #
     # enum
     #
+    enum_py_path = package_dir / 'imgui_enum.py'
     with enum_py_path.open('w') as enum_py:
         enum_py.write('''from enum import IntEnum
 
