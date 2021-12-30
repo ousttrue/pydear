@@ -9,6 +9,7 @@
 /src/pydeer/_version.py
 /src/pydeer/imgui
 /src/pydeer/imgui_enum.py
+/src/pydeer/bind/
 /typings/
 /build/
 /dist/

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 import logging
 import pathlib
 from .parser import Parser
@@ -7,27 +7,12 @@ from .header import Header
 logger = logging.getLogger(__name__)
 
 
-def generate(external_dir: pathlib.Path, package_dir: pathlib.Path) -> List[str]:
-    headers: List[Header] = [
-        Header(
-            external_dir, 'tinygizmo/tinygizmo/tiny-gizmo.hpp',
-            include_dirs=[external_dir / 'tinygizmo/tinygizmo'], prefix='tinygizmo_'),
-        Header(
-            external_dir, 'imgui/imgui.h',
-            include_dirs=[external_dir / 'imgui']),
-        Header(
-            external_dir, 'ImFileDialogWrap.h',
-            include_dirs=[external_dir]),
-        Header(
-            external_dir, 'ImGuizmo/ImGuizmo.h',
-            include_dirs=[external_dir / 'ImGuizmo'], prefix='ImGuizmo_'),
-    ]
+def generate(headers: List[Header], package_dir: pathlib.Path, write: Callable[[pathlib.Path, Parser, List[Header]], None]):
 
     parser = Parser([header.header for header in headers])
     parser.traverse()
 
-    from . import cython_writer
-    cython_writer.write(package_dir, parser, headers)
+    write(package_dir, parser, headers)
 
     #
     # enum
@@ -39,5 +24,3 @@ def generate(external_dir: pathlib.Path, package_dir: pathlib.Path) -> List[str]
 ''')
         for e in parser.enums:
             e.write_to(enum_py)
-
-    return [str(include_dir) for header in headers for include_dir in header.include_dirs]
