@@ -11,29 +11,6 @@ from .interpreted_types import wrap_types
 logger = logging.getLogger(__name__)
 
 
-INCLUDE_FUNCS = (
-    'CreateContext',
-    'DestroyContext',
-    'GetIO',
-    'GetCurrentContext',
-    'NewFrame',
-    'Render',
-    'GetDrawData',
-    'StyleColorsDark',
-    #
-    'ShowDemoWindow',
-    'ShowMetricsWindow',
-    'Begin',
-    'End',
-    'Text',
-    'Checkbox',
-    'SliderFloat',
-    'ColorEdit3',
-    'Button',
-    'SameLine',
-)
-
-
 def get_namespace(cursors: Tuple[cindex.Cursor, ...]) -> str:
     namespaces = [cursor for cursor in cursors if cursor.kind ==
                   cindex.CursorKind.NAMESPACE]
@@ -111,12 +88,10 @@ class Header:
                     continue
 
                 name = func.spelling
-                if True:
-                    # if name in INCLUDE_FUNCS:
-                    count = overload.get(name, 0) + 1
-                    function.write_pyx_function(
-                        pyx, func.cursor, overload=count, prefix=self.prefix)
-                    overload[name] = count
+                count = overload.get(name, 0) + 1
+                function.write_pyx_function(
+                    pyx, func.cursor, overload=count, prefix=self.prefix)
+                overload[name] = count
 
     def write_pyi(self, pyi: io.IOBase, parser: Parser):
         types = [x for x in parser.typedef_struct_list if pathlib.Path(
@@ -136,9 +111,7 @@ class Header:
                     continue
 
                 name = func.spelling
-                if True:
-                    # if name in INCLUDE_FUNCS:
-                    count = overload.get(name, 0) + 1
-                    function.write_pyx_function(
-                        pyi, func.cursor, pyi=True, overload=count, prefix=self.prefix)
-                    overload[name] = count
+                count = overload.get(name, 0) + 1
+                function.write_pyx_function(
+                    pyi, func.cursor, pyi=True, overload=count, prefix=self.prefix)
+                overload[name] = count
