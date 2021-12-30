@@ -12,8 +12,9 @@
         "cdef",
         "cindex",
         "cmake",
-        "cydeer",
+        "pydeer",
         "imgui",
         "pointee"
-    ]
+    ],
+    "cmake.generator": "Ninja"
 }

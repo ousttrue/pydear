@@ -6,10 +6,10 @@ import pathlib
 import subprocess
 HERE = pathlib.Path(__file__).parent
 sys.path.append(str(HERE / '_external/pycindex/src'))
-PYI_PATH = HERE / 'src/cydeer/__init__.pyi'
-EXT_DIR = HERE / 'src/cydeer/impl'
+PYI_PATH = HERE / 'src/pydeer/__init__.pyi'
+EXT_DIR = HERE / 'src/pydeer/impl'
 EXTERNAL_DIR = HERE / '_external'
-ENUM_PATH = HERE / 'src/cydeer/imgui_enum.py'
+ENUM_PATH = HERE / 'src/pydeer/imgui_enum.py'
 CMAKE_BUILD = HERE / 'build'
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s]%(name)s:%(lineno)s:%(message)s')
 
@@ -33,7 +33,7 @@ subprocess.run('cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release')
 subprocess.run('cmake --build build --config Release')
 
 
-extensions = [Extension('cydeer.impl',
+extensions = [Extension('pydeer.impl',
                         sources=[
                             rel_path(EXT_DIR / 'impl.pyx'),  # generated
                         ],
@@ -46,26 +46,26 @@ extensions = [Extension('cydeer.impl',
                         )]
 
 setup(
-    name='cydeer',
+    name='pydeer',
     description='Dear imgui binding using cython',
     author='ousttrue',
     author_email='ousttrue@gmail.com',
-    url='https://github.com/ousttrue/cydeer',
+    url='https://github.com/ousttrue/pydeer',
     package_dir={'': 'src'},
     include_package_data=True,
     packages=[
-        'cydeer',
-        'cydeer.imgui',  # from imgui.h
-        'cydeer.backends',
-        'cydeer.utils',
+        'pydeer',
+        'pydeer.impl',  # extension
+        'pydeer.backends',
+        'pydeer.utils',
     ],
     package_data={
-        'cydeer': ['py.typed', '*.pyi']
+        'pydeer': ['py.typed', '*.pyi']
     },
     ext_modules=cythonize(extensions, compiler_directives={
                           'language_level': '3'}),
     use_scm_version={
-        'write_to': 'src/cydeer/_version.py',
+        'write_to': 'src/pydeer/_version.py',
     },
     setup_requires=['setuptools_scm'],
 )
