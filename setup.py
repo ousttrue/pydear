@@ -43,15 +43,16 @@ import generator  # noqa
 
 class ExtType(Enum):
     CYTHON = 'cython'
-    PYBIND = 'pybind'
+    RAWTYPES = 'rawtypes'
 
 
-EXT_TYPE = ExtType.PYBIND
+EXT_TYPE = ExtType.RAWTYPES
 match EXT_TYPE:
-    case ExtType.PYBIND:
-        from generator.pybind11_writer import write
+    case ExtType.RAWTYPES:
+        from generator.rawtypes_writer import write
     case ExtType.CYTHON:
         from generator.cython_writer import write
+
 generator.generate(headers, PACKAGE_DIR, write)
 
 
@@ -65,24 +66,19 @@ subprocess.run('cmake --build build --config Release')
 
 extensions = []
 match EXT_TYPE:
-    case ExtType.PYBIND:
-        import pybind11
-        import pybind11.setup_helpers
-        extensions = [pybind11.setup_helpers.Pybind11Extension(
+    case ExtType.RAWTYPES:
+        extensions = [setuptools.Extension(
             'pydeer.impl',
             sources=[
                 # generated
-                rel_path(
-                    PACKAGE_DIR / 'bind/impl.cpp'),
+                rel_path(PACKAGE_DIR / 'rawtypes/implmodule.cpp'),
             ],
             include_dirs=[
-                str(include_dir) for header in headers for include_dir in header.include_dirs] + [pybind11.get_include()],
+                str(include_dir) for header in headers for include_dir in header.include_dirs],
             language='c++',
-            extra_compile_args=[
-                '/wd4244', '/std:c++17'],
+            extra_compile_args=['/wd4244', '/std:c++17'],
             # cmake built
-            libraries=[
-                "imgui", "Advapi32", "Gdi32"],
+            libraries=["imgui", "Advapi32", "Gdi32"],
             library_dirs=[
                 str(CMAKE_BUILD / 'Release/lib')],
         )]

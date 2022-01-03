@@ -2,13 +2,12 @@
 
 実装メモ。
 `cython` である程度動くところまで作ったのだけど、
-`pybind11` に乗り換えることにした。
-`namespace` に入った型の取り扱いなど `c++` 要素が手に負えなくなってきたのだ。
+`namespace` に入った型の取り扱いなど `c++` 要素が手に負えなくなってきた。
 (`im3d` のラップを試みて失敗した)
 
 ```{toctree}
 cython/index
-pybind11/index
+rawtypes/index
 ```
 
 ## Indices and tables
