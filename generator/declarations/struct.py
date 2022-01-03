@@ -1,6 +1,9 @@
 from typing import NamedTuple, Tuple
 import io
+import pathlib
+#
 from clang import cindex
+#
 from .typewrap import TypeWrap
 from ..interpreted_types.wrap_types import WrapFlags
 from . import function
@@ -30,6 +33,10 @@ class StructDecl(NamedTuple):
     @property
     def cursor(self) -> cindex.Cursor:
         return self.cursors[-1]
+
+    @property
+    def path(self) -> pathlib.Path:
+        return pathlib.Path(self.cursor.location.file.name)
 
     def write_pxd(self, pxd: io.IOBase, *, excludes=()):
         cursor = self.cursors[-1]

@@ -9,7 +9,9 @@
 /src/pydeer/_version.py
 /src/pydeer/imgui
 /src/pydeer/imgui_enum.py
+/src/pydeer/ctypes.py
 /src/pydeer/bind/
+/src/pydeer/rawtypes/
 /typings/
 /build/
 /dist/

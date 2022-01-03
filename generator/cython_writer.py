@@ -8,26 +8,6 @@ from .declarations import function
 from .interpreted_types import wrap_types
 
 
-IMVECTOR = '''
-
-def iterate(data: ctypes.c_void_p, t: Type[ctypes.Structure], count: int)->Iterable[ctypes.Structure]:
-    p = ctypes.cast(data, ctypes.POINTER(t))
-    for i in range(count):
-        yield p[i]
-
-
-class ImVector(ctypes.Structure):
-    _fields_ = (
-        ('Size', ctypes.c_int),
-        ('Capacity', ctypes.c_int),
-        ('Data', ctypes.c_void_p),
-    )
-
-    def each(self, t: Type[ctypes.Structure])->Iterable[ctypes.Structure]:
-        return iterate(self.Data, t, self.Size)
-
-'''
-
 STD_ARRAY = '''
 cdef extern from "<array>" namespace "std" nogil:
   cdef cppclass float2 "std::array<float, 2>":
@@ -190,7 +170,7 @@ from libc.string cimport memcpy
 cimport impl
 
 ''')
-        pyx.write(IMVECTOR)
+        pyx.write(wrap_types.IMVECTOR)
         pyx.write(STD_ARRAY)
         for header in headers:
             write_pyx(header, pyx, parser)
@@ -205,6 +185,6 @@ from . imgui_enum import *
 from typing import Any, Union, Tuple
 ''')
 
-        pyi.write(IMVECTOR)
+        pyi.write(wrap_types.IMVECTOR)
         for header in headers:
             write_pyi(header, pyi, parser)

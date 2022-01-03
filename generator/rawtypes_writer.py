@@ -8,11 +8,13 @@ from .parser import Parser
 from .header import Header
 from .declarations.typewrap import TypeWrap
 from .declarations.function import FunctionDecl
+from .declarations.struct import StructDecl
+from .interpreted_types import wrap_types
 from . import interpreted_types
 
 CTYPS_CAST = '''
 template<typename T>
-T ctypes_cast(PyObject *src)
+T ctypes_get_pointer(PyObject *src)
 {
     if(!src){
         return (T)nullptr;
@@ -45,6 +47,33 @@ T ctypes_cast(PyObject *src)
     return (T)nullptr;
 }
 
+static PyObject* GetCTypesType(const char *t)
+{
+    static std::unordered_map<std::string, PyObject*> s_map;
+    auto found = s_map.find(t);
+    if(found!=s_map.end())
+    {
+        return found->second;
+    }
+
+    static auto pydeer_ctypes = PyImport_ImportModule("pydeer.ctypes");
+    auto T = PyObject_GetAttrString(pydeer_ctypes, t);
+    static auto ctypes = PyImport_ImportModule("ctypes");
+    static auto POINTER = PyObject_GetAttrString(ctypes, "POINTER");
+    auto result = PyObject_CallFunction(POINTER, "O", T);
+    s_map.insert(std::make_pair(std::string(t), result));
+    return result;
+}
+
+static PyObject* ctypes_cast(PyObject *src, const char *t)
+{
+    // ctypes.cast(src, ctypes.POINTER(t))[0]
+    static auto ctypes = PyImport_ImportModule("ctypes");
+    static auto cast = PyObject_GetAttrString(ctypes, "cast");
+    auto ptype = GetCTypesType(t);
+    auto p = PyObject_CallFunction(cast, "OO", src, ptype);
+    return PySequence_GetItem(p, 0);
+}
 '''
 
 IMGUI_TYPE = '''
@@ -62,6 +91,10 @@ static PyObject* c_void_p(const void* address)
     
     return PyObject_CallFunction(c_void_p, "K", (uintptr_t)address);
 }
+'''
+
+CTYPES_BEGIN = '''from typing import Iterable, Type
+import ctypes
 '''
 
 
@@ -128,7 +161,72 @@ def write_function(w: io.IOBase, f: FunctionDecl, overload: str):
     return f'{{"{f.spelling}{overload}", {func_name}, METH_VARARGS, "{namespace}{f.spelling}"}},\n'
 
 
-def write_header(w: io.IOBase, parser: Parser, header: Header):
+def write_struct(w: io.IOBase, s: StructDecl):
+    cursor = s.cursors[-1]
+
+    definition = cursor.get_definition()
+    if definition and definition != cursor:
+        # skip forward decl
+        return
+
+    w.write(f'class {cursor.spelling}(ctypes.Structure):\n')
+    fields = TypeWrap.get_struct_fields(cursor)  # if flags.fields else []
+    if fields:
+        w.write('    _fields_=[\n')
+        indent = '        '
+        for field in fields:
+            name = field.name
+            # if flags.custom_fields.get(name):
+            #     name = '_' + name
+            w.write(interpreted_types.from_cursor(
+                field.cursor.type, field.cursor).ctypes_field(indent, name))
+        w.write('    ]\n\n')
+
+#     if flags.default_constructor:
+#         constructor = TypeWrap.get_default_constructor(cursor)
+#         if constructor:
+#             w.write(f'''    def __init__(self, **kwargs):
+#     p = new impl.{cursor.spelling}()
+#     memcpy(<void *><uintptr_t>ctypes.addressof(self), p, sizeof(impl.{cursor.spelling}))
+#     del p
+#     super().__init__(**kwargs)
+
+# ''')
+
+    # for _, v in flags.custom_fields.items():
+    #     w.write('    @property\n')
+    #     for l in v.splitlines():
+    #         w.write(f'    {l}\n')
+    #     w.write('\n')
+
+    # methods = TypeWrap.get_struct_methods(cursor, includes=flags.methods)
+    # if methods:
+    #     for method in methods:
+    #         function.write_pyx_method(w, cursor, method)
+
+    # for code in flags.custom_methods:
+    #     for l in code.splitlines():
+    #         w.write(f'    {l}\n')
+    #     w.write('\n')
+
+    if not fields:  # and not methods and not flags.custom_methods:
+        w.write('    pass\n\n')
+
+
+def write_header(w: io.IOBase, parser: Parser, header: Header, ctw: io.IOBase):
+    # structs
+    ctw.write(CTYPES_BEGIN)
+    ctw.write(wrap_types.IMVECTOR)
+    for v in wrap_types.WRAP_TYPES:
+        for t in parser.typedef_struct_list:
+            if v.name == t.cursor.spelling:
+                match t:
+                    case StructDecl():
+                        if t.path != header.path:
+                            continue
+                        write_struct(ctw, t)
+
+    # functions
     w.write(f'''
 # include <{header.path.name}>
 
@@ -157,23 +255,28 @@ def write(package_dir: pathlib.Path, parser: Parser, headers: List[Header]):
     cpp_path = package_dir / 'rawtypes/implmodule.cpp'
     cpp_path.parent.mkdir(parents=True, exist_ok=True)
 
+    ctypes_path = package_dir / 'ctypes.py'
+
     with cpp_path.open('w') as w:
-        w.write('''// generated
-# define PY_SSIZE_T_CLEAN
-# include <Python.h>
+        with ctypes_path.open('w') as ctw:
+            w.write('''// generated
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <string>
+#include <unordered_map>
 
 ''')
 
-        w.write(CTYPS_CAST)
-        w.write(C_VOID_P)
+            w.write(CTYPS_CAST)
+            w.write(C_VOID_P)
 
-        sio = io.StringIO()
-        for header in headers:
-            for method in write_header(w, parser, header):
-                sio.write('    ')
-                sio.write(method)
+            sio = io.StringIO()
+            for header in headers:
+                for method in write_header(w, parser, header, ctw):
+                    sio.write('    ')
+                    sio.write(method)
 
-        w.write(f'''
+            w.write(f'''
 static PyMethodDef Methods[] = {{
 {sio.getvalue()}
     {{NULL, NULL, 0, NULL}}        /* Sentinel */

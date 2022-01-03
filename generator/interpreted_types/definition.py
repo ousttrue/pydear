@@ -27,9 +27,9 @@ class TypedefType(BaseType):
 
     def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
         if default_value:
-            return f'{indent}{self.name} p{i} = t{i} ? ctypes_cast<{self.name}>(t{i}) : {default_value};\n'
+            return f'{indent}{self.name} p{i} = t{i} ? ctypes_get_pointer<{self.name}>(t{i}) : {default_value};\n'
         else:
-            return f'{indent}{self.name} p{i} = ctypes_cast<{self.name}>(t{i});\n'
+            return f'{indent}{self.name} p{i} = ctypes_get_pointer<{self.name}>(t{i});\n'
 
 
 class StructType(BaseType):
