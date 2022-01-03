@@ -108,6 +108,12 @@ class ImVec4WrapType(BaseType):
 {indent}return (value.x, value.y, value.z, value.w)
 '''
 
+    def cpp_result(self, indent: str, call: str) -> str:
+        return f'''{indent}// {self}
+{indent}auto value = {call};
+{indent}return Py_BuildValue("(ffff)", value.x, value.y, value.z, value.w);
+'''
+
 
 class ImVector(BaseType):
     def __init__(self):

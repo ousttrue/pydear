@@ -132,6 +132,12 @@ class SizeType(PrimitiveType):
     def ctypes_type(self) -> str:
         return 'ctypes.c_uint64'
 
+    def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
+        if default_value:
+            return f'{indent}size_t p{i} = t{i} ? PyLong_AsSize_t(t{i}) : {default_value};\n'
+        else:
+            return f'{indent}size_t p{i} = PyLong_AsSize_t(t{i});\n'
+
 
 class Int8Type(PrimitiveType):
     def __init__(self, is_const=False):
@@ -164,6 +170,11 @@ class Int32Type(PrimitiveType):
             return f'{indent}int p{i} = t{i} ? PyLong_AsLong(t{i}) : {default_value};\n'
         else:
             return f'{indent}int p{i} = PyLong_AsLong(t{i});\n'
+
+    def cpp_result(self, indent: str, call: str) -> str:
+        return f'''{indent}auto value = {call};
+{indent}return PyLong_FromLong(value);
+'''
 
 
 class Int64Type(PrimitiveType):
@@ -202,6 +213,17 @@ class DoubleType(PrimitiveType):
     @property
     def ctypes_type(self) -> str:
         return 'ctypes.c_float'
+
+    def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
+        if default_value:
+            return f'{indent}float p{i} = t{i} ? PyFloat_AsDouble(t{i}) : {default_value};\n'
+        else:
+            return f'{indent}float p{i} = PyFloat_AsDouble(t{i});\n'
+
+    def cpp_result(self, indent: str, call: str) -> str:
+        return f'''{indent}auto value = {call};
+{indent}return PyFloat_FromDouble(value);
+'''
 
 
 def get(src: str, is_const: bool) -> PrimitiveType:

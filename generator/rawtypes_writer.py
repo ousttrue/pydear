@@ -95,8 +95,10 @@ def get_params(indent: str, cursor: cindex.Cursor) -> Tuple[List[interpreted_typ
     return types, format, sio_extract.getvalue(), sio_cpp_from_py.getvalue()
 
 
-def write_function(w: io.IOBase, f: FunctionDecl, func_name: str):
+def write_function(w: io.IOBase, f: FunctionDecl, overload: str):
     # signature
+    func_name = f'{f.path.stem}_{f.spelling}{overload}'
+
     namespace = get_namespace(f.cursors)
     result = TypeWrap.from_function_result(f.cursor)
     indent = '  '
@@ -123,7 +125,7 @@ def write_function(w: io.IOBase, f: FunctionDecl, func_name: str):
 
 ''')
 
-    return f'{{"{f.spelling}", {func_name}, METH_VARARGS, "{namespace}{f.spelling}"}},\n'
+    return f'{{"{f.spelling}{overload}", {func_name}, METH_VARARGS, "{namespace}{f.spelling}"}},\n'
 
 
 def write_header(w: io.IOBase, parser: Parser, header: Header):
@@ -136,19 +138,18 @@ def write_header(w: io.IOBase, parser: Parser, header: Header):
         w.write(IMGUI_TYPE)
 
     overload_map = {}
-    for f in parser.functions[:160]:
+    for f in parser.functions:
         if header.path != f.path:
             continue
         if f.is_exclude_function():
-            continue        
+            continue
 
-        func_name = f'{f.path.stem}_{f.spelling}'
-        overload = overload_map.get(f.spelling, 0) + 1
-        if overload > 1:
-            func_name += f'_{overload}'
-        overload_map[f.spelling] = overload
-
-        yield write_function(w, f, func_name)
+        overload_count = overload_map.get(f.spelling, 0) + 1
+        overload_map[f.spelling] = overload_count
+        overload = ''
+        if overload_count > 1:
+            overload += f'_{overload_count}'
+        yield write_function(w, f, overload)
 
 
 def write(package_dir: pathlib.Path, parser: Parser, headers: List[Header]):
