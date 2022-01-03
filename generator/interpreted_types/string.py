@@ -63,3 +63,14 @@ class CStringType(BaseType):
         return f'''{indent}# {self}
 {indent}return {call}
 '''
+
+    def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
+        if default_value:
+            return f'{indent}const char *p{i} = t{i} ? PyUnicode_AsUTF8(t{i}) : {default_value};\n'
+        else:
+            return f'{indent}const char *p{i} = PyUnicode_AsUTF8(t{i});\n'
+
+    def cpp_result(self, indent: str, call: str) -> str:
+        return f'''{indent}auto value = {call};
+{indent}return PyUnicode_FromString(value);
+'''

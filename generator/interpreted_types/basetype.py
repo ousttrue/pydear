@@ -61,17 +61,16 @@ class BaseType:
     def cpp_extract_name(self, i: int):
         return f't{i}'
 
-    def cpp_param_declare(self, indent: str, i: int, name: str) -> str:
-        '''
-        extract params
-        '''
-        raise NotImplementedError()
+    def cpp_param_declare(self, indent: str, i: int, name) -> str:
+        return f'''{indent}// {self}
+{indent}PyObject *{self.cpp_extract_name(i)} = NULL;
+'''
 
     @property
     def format(self) -> str:
-        raise NotImplemented()
+        return 'O'
 
-    def cpp_from_py(self, indent: str, i: int) -> str:
+    def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
         raise NotImplementedError()
 
     def cpp_call_name(self, i: int):

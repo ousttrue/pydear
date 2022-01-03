@@ -75,6 +75,18 @@ class ImVec2WrapType(BaseType):
 {indent}return (value.x, value.y)
 '''
 
+    def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
+        if default_value:
+            return f'{indent}ImVec2 p{i} = t{i} ? get_ImVec2(t{i}) : {default_value};\n'
+        else:
+            return f'{indent}ImVec2 p{i} = get_ImVec2(t{i});\n'
+
+    def cpp_result(self, indent: str, call: str) -> str:
+        return f'''{indent}// {self}
+{indent}auto value = {call};
+{indent}return Py_BuildValue("(ff)", value.x, value.y);
+'''
+
 
 class ImVec4WrapType(BaseType):
     def __init__(self):

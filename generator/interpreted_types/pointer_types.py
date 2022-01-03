@@ -54,17 +54,11 @@ class PointerType(BaseType):
 {indent}return ctypes.c_void_p(<uintptr_t>value)
 '''
 
-    def cpp_param_declare(self, indent: str, i: int, name) -> str:
-        return f'''{indent}// {self}
-{indent}PyObject *{self.cpp_extract_name(i)} = NULL;
-'''
-
-    @property
-    def format(self) -> str:
-        return 'O'
-
-    def cpp_from_py(self, indent: str, i: int) -> str:
-        return f'{indent}{self.base.name} *p{i} = ctypes_cast<{self.base.name}*>(t{i});\n'
+    def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
+        if default_value:
+            return f'{indent}{self.name} p{i} = t{i} ? ctypes_cast<{self.name}>(t{i}) : {default_value};\n'
+        else:
+            return f'{indent}{self.name} p{i} = ctypes_cast<{self.name}>(t{i});\n'
 
     def cpp_result(self, indent: str, call: str) -> str:
         return f'''{indent}// {self}
@@ -199,9 +193,10 @@ class PointerToStructType(PointerType):
         return f'{self.ctypes_type}'
 
 
-class ReferenceToStructType(BaseType):
+class ReferenceToStructType(PointerType):
     def __init__(self, base: BaseType, is_const: bool):
-        super().__init__(base.name + '&', base, is_const)
+        super().__init__(base, is_const)
+        self.name = base.name + '&'
 
     @property
     def ctypes_type(self) -> str:
@@ -233,3 +228,9 @@ class ReferenceToStructType(BaseType):
 
     def result_typing(self, pyi: bool) -> str:
         return f'{self.ctypes_type}'
+
+    def cpp_result(self, indent: str, call: str) -> str:
+        return f'''{indent}// {self}
+{indent}auto &value = {call};
+{indent}return c_void_p(&value);
+'''

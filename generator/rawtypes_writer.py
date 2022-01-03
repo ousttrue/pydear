@@ -47,6 +47,13 @@ T ctypes_cast(PyObject *src)
 
 '''
 
+IMGUI_TYPE = '''
+static ImVec2 get_ImVec2(PyObject *src)
+{
+    return {};
+}
+'''
+
 C_VOID_P = '''
 static PyObject* c_void_p(void* address)
 {
@@ -66,54 +73,48 @@ def get_namespace(cursors: Tuple[cindex.Cursor, ...]) -> str:
     return sio.getvalue()
 
 
-def get_params(indent: str, cursor: cindex.Cursor) -> Tuple[List[interpreted_types.basetype.BaseType], List[str], str, str]:
+def get_params(indent: str, cursor: cindex.Cursor) -> Tuple[List[interpreted_types.basetype.BaseType], str, str, str]:
     sio_extract = io.StringIO()
     sio_cpp_from_py = io.StringIO()
     types = []
-    defaults = []
+    format = ''
+    last_format = None
     for i, param in enumerate(TypeWrap.get_function_params(cursor)):
         t = interpreted_types.from_cursor(param.type, param.cursor)
         sio_extract.write(t.cpp_param_declare(indent, i, param.name))
         types.append(t)
-        defaults.append(param.default_value(use_filter=False))
-        sio_cpp_from_py.write(t.cpp_from_py(indent, i))
-    return types, defaults, sio_extract.getvalue(), sio_cpp_from_py.getvalue()
+        d = param.default_value(use_filter=False)
+        if not last_format and d:
+            format += '|'
+        last_format = d
+        format += t.format
+        if d:
+            d = d.split('=', maxsplit=1)[1]
+        sio_cpp_from_py.write(t.cpp_from_py(
+            indent, i, d))
+    return types, format, sio_extract.getvalue(), sio_cpp_from_py.getvalue()
 
 
-def write_function(w: io.IOBase, f: FunctionDecl):
+def write_function(w: io.IOBase, f: FunctionDecl, func_name: str):
     # signature
     namespace = get_namespace(f.cursors)
     result = TypeWrap.from_function_result(f.cursor)
-    func_name = f'{f.path.stem}_{f.spelling}'
     indent = '  '
     w.write(
         f'static PyObject *{func_name}(PyObject *self, PyObject *args){{\n')
 
     # prams
-    types, defaults, extract, cpp_from_py = get_params(indent, f.cursor)
+    types, format, extract, cpp_from_py = get_params(indent, f.cursor)
     w.write(extract)
-
-    format = ''
-    last_d = None
-    set_defaults = ''
-    for t, d in zip(types, defaults):
-        if not last_d and d:
-            format += '|'
-        last_d = d
-        format += t.format
-        set_defaults += f'{indent}if(!t0) t0{d};\n'
 
     extract_params = ''.join(', &' + t.cpp_extract_name(i)
                              for i, t in enumerate(types))
     w.write(
         f'{indent}if(!PyArg_ParseTuple(args, "{format}"{extract_params})) return NULL;\n')
-
-    w.write(set_defaults)
-
     w.write(cpp_from_py)
 
     # call & result
-    call_params = ''.join(t.cpp_call_name(i) for i, t in enumerate(types))
+    call_params = ', '.join(t.cpp_call_name(i) for i, t in enumerate(types))
     call = f'{namespace}{f.spelling}({call_params})'
     w.write(interpreted_types.from_cursor(
         result.type, result.cursor).cpp_result(indent, call))
@@ -130,11 +131,22 @@ def write_header(w: io.IOBase, parser: Parser, header: Header):
 # include <{header.path.name}>
 
 ''')
-    for f in parser.functions[:1]:
+
+    if header.path.name == 'imgui.h':
+        w.write(IMGUI_TYPE)
+
+    overload_map = {}
+    for f in parser.functions[:40]:
         if header.path != f.path:
             continue
 
-        yield write_function(w, f)
+        func_name = f'{f.path.stem}_{f.spelling}'
+        overload = overload_map.get(f.spelling, 0) + 1
+        if overload > 1:
+            func_name += f'_{overload}'
+        overload_map[f.spelling] = overload
+
+        yield write_function(w, f, func_name)
 
 
 def write(package_dir: pathlib.Path, parser: Parser, headers: List[Header]):
@@ -155,11 +167,12 @@ def write(package_dir: pathlib.Path, parser: Parser, headers: List[Header]):
         sio = io.StringIO()
         for header in headers:
             for method in write_header(w, parser, header):
+                sio.write('    ')
                 sio.write(method)
 
         w.write(f'''
 static PyMethodDef Methods[] = {{
-    {sio.getvalue()}
+{sio.getvalue()}
     {{NULL, NULL, 0, NULL}}        /* Sentinel */
 }};
 
