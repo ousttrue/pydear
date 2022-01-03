@@ -1,10 +1,13 @@
 from typing import List, Tuple
 import io
 import pathlib
+#
 from clang import cindex
+#
 from .parser import Parser
 from .header import Header
 from .declarations.typewrap import TypeWrap
+from .declarations.function import FunctionDecl
 from . import interpreted_types
 
 CTYPS_CAST = '''
@@ -77,58 +80,61 @@ def get_params(indent: str, cursor: cindex.Cursor) -> Tuple[List[interpreted_typ
     return types, defaults, sio_extract.getvalue(), sio_cpp_from_py.getvalue()
 
 
+def write_function(w: io.IOBase, f: FunctionDecl):
+    # signature
+    namespace = get_namespace(f.cursors)
+    result = TypeWrap.from_function_result(f.cursor)
+    func_name = f'{f.path.stem}_{f.spelling}'
+    indent = '  '
+    w.write(
+        f'static PyObject *{func_name}(PyObject *self, PyObject *args){{\n')
+
+    # prams
+    types, defaults, extract, cpp_from_py = get_params(indent, f.cursor)
+    w.write(extract)
+
+    format = ''
+    last_d = None
+    set_defaults = ''
+    for t, d in zip(types, defaults):
+        if not last_d and d:
+            format += '|'
+        last_d = d
+        format += t.format
+        set_defaults += f'{indent}if(!t0) t0{d};\n'
+
+    extract_params = ''.join(', &' + t.cpp_extract_name(i)
+                             for i, t in enumerate(types))
+    w.write(
+        f'{indent}if(!PyArg_ParseTuple(args, "{format}"{extract_params})) return NULL;\n')
+
+    w.write(set_defaults)
+
+    w.write(cpp_from_py)
+
+    # call & result
+    call_params = ''.join(t.cpp_call_name(i) for i, t in enumerate(types))
+    call = f'{namespace}{f.spelling}({call_params})'
+    w.write(interpreted_types.from_cursor(
+        result.type, result.cursor).cpp_result(indent, call))
+
+    w.write(f'''}}
+
+''')
+
+    return f'{{"{f.spelling}", {func_name}, METH_VARARGS, "{namespace}{f.spelling}"}},\n'
+
+
 def write_header(w: io.IOBase, parser: Parser, header: Header):
     w.write(f'''
 # include <{header.path.name}>
 
 ''')
-    for f in parser.functions:
+    for f in parser.functions[:1]:
         if header.path != f.path:
             continue
 
-        # signature
-        namespace = get_namespace(f.cursors)
-        result = TypeWrap.from_function_result(f.cursor)
-        func_name = f'{header.path.stem}_{f.spelling}'
-        indent = '  '
-        w.write(
-            f'static PyObject *{func_name}(PyObject *self, PyObject *args){{\n')
-
-        # prams
-        types, defaults, extract, cpp_from_py = get_params(indent, f.cursor)
-        w.write(extract)
-
-        format = ''
-        last_d = None
-        set_defaults = ''
-        for t, d in zip(types, defaults):
-            if not last_d and d:
-                format += '|'
-            last_d = d
-            format += t.format
-            set_defaults += f'{indent}if(!t0) t0{d};\n'
-
-        extract_params = ''.join(', &' + t.cpp_extract_name(i)
-                                 for i, t in enumerate(types))
-        w.write(
-            f'{indent}if(!PyArg_ParseTuple(args, "{format}"{extract_params})) return NULL;\n')
-
-        w.write(set_defaults)
-
-        w.write(cpp_from_py)
-
-        # call & result
-        call_params = ''.join(t.cpp_call_name(i) for i, t in enumerate(types))
-        call = f'{namespace}{f.spelling}({call_params})'
-        w.write(interpreted_types.from_cursor(
-            result.type, result.cursor).cpp_result(indent, call))
-
-        w.write(f'''}}
-
-''')
-
-        yield f'{{"{f.spelling}", {func_name}, METH_VARARGS, "{namespace}{f.spelling}"}},\n'
-        break
+        yield write_function(w, f)
 
 
 def write(package_dir: pathlib.Path, parser: Parser, headers: List[Header]):
