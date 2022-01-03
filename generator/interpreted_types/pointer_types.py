@@ -56,9 +56,9 @@ class PointerType(BaseType):
 
     def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
         if default_value:
-            return f'{indent}{self.name} p{i} = t{i} ? ctypes_cast<{self.name}>(t{i}) : {default_value};\n'
+            return f'{indent}{self.base.name} *p{i} = t{i} ? ctypes_cast<{self.base.name}*>(t{i}) : {default_value};\n'
         else:
-            return f'{indent}{self.name} p{i} = ctypes_cast<{self.name}>(t{i});\n'
+            return f'{indent}{self.base.name} *p{i} = ctypes_cast<{self.base.name}*>(t{i});\n'
 
     def cpp_result(self, indent: str, call: str) -> str:
         return f'''{indent}// {self}
@@ -102,12 +102,13 @@ class ReferenceType(BaseType):
 '''
 
 
-class ArrayType(BaseType):
+class ArrayType(PointerType):
     size: int
 
     def __init__(self, base: BaseType, size: int, is_const=False):
-        super().__init__(f'{base.name}[{size}]', base, is_const)
+        super().__init__(base, is_const)
         self.size = size
+        self.name = f'{base.name}[{size}]'
 
     @property
     def ctypes_type(self) -> str:
@@ -231,7 +232,9 @@ class ReferenceToStructType(PointerType):
 
     def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
         if default_value:
-            return f'{indent}{self.name} p{i} = t{i} ? ctypes_cast<{self.name}>(t{i}) : {default_value};\n'
+            return f'''{indent}{self.name} default_value{i} = {default_value};
+{indent}{self.base.name} *p{i} = t{i} ? ctypes_cast<{self.base.name}*>(t{i}) : &default_value{i};
+'''
         else:
             return f'{indent}{self.base.name} *p{i} = ctypes_cast<{self.base.name}*>(t{i});\n'
 

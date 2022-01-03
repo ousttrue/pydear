@@ -109,6 +109,11 @@ class UInt32Type(PrimitiveType):
         else:
             return f'{indent}unsigned int p{i} = PyLong_AsUnsignedLong(t{i});\n'
 
+    def cpp_result(self, indent: str, call: str) -> str:
+        return f'''{indent}auto value = {call};
+{indent}return PyLong_FromUnsignedLong(value);
+'''
+
 
 class UInt64Type(PrimitiveType):
     def __init__(self, is_const=False):

@@ -55,7 +55,7 @@ static ImVec2 get_ImVec2(PyObject *src)
 '''
 
 C_VOID_P = '''
-static PyObject* c_void_p(void* address)
+static PyObject* c_void_p(const void* address)
 {
     static auto ctypes = PyImport_ImportModule("ctypes");
     static auto c_void_p = PyObject_GetAttrString(ctypes, "c_void_p");
@@ -136,9 +136,11 @@ def write_header(w: io.IOBase, parser: Parser, header: Header):
         w.write(IMGUI_TYPE)
 
     overload_map = {}
-    for f in parser.functions[:80]:
+    for f in parser.functions[:160]:
         if header.path != f.path:
             continue
+        if f.is_exclude_function():
+            continue        
 
         func_name = f'{f.path.stem}_{f.spelling}'
         overload = overload_map.get(f.spelling, 0) + 1
