@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Iterable, Optional
 import io
 import pathlib
 #
@@ -7,7 +7,7 @@ from clang import cindex
 from .parser import Parser
 from .header import Header
 from .declarations.typewrap import TypeWrap
-from .declarations.function import FunctionDecl
+from .declarations.function import FunctionDecl, self_cj
 from .declarations.struct import StructDecl
 from .interpreted_types import wrap_types
 from . import interpreted_types
@@ -21,26 +21,34 @@ T ctypes_get_pointer(PyObject *src)
     }
 
     static auto ctypes = PyImport_ImportModule("ctypes");
-    static auto addressof = PyObject_GetAttrString(ctypes, "addressof");
-    static auto ctypes_Array = PyObject_GetAttrString(ctypes, "Array");
-    static auto ctypes_Structure = PyObject_GetAttrString(ctypes, "Structure");
-    static auto c_void_p = PyObject_GetAttrString(ctypes, "c_void_p");
-    static auto value = PyUnicode_FromString("value");
 
     // ctypes.c_void_p
+    static auto c_void_p = PyObject_GetAttrString(ctypes, "c_void_p");
+    static auto value = PyUnicode_FromString("value");
     if(PyObject_IsInstance(src, c_void_p)){
         if(PyObject *p = PyObject_GetAttr(src, value))
         {
-            return (T)PyLong_AsVoidPtr(p);
+            auto pp = PyLong_AsVoidPtr(p);
+            return (T)pp;
         }
     }
 
     // ctypes.Array   
     // ctypes.Structure
+    static auto addressof = PyObject_GetAttrString(ctypes, "addressof");
+    static auto ctypes_Array = PyObject_GetAttrString(ctypes, "Array");
+    static auto ctypes_Structure = PyObject_GetAttrString(ctypes, "Structure");
     if(PyObject_IsInstance(src, ctypes_Array) || PyObject_IsInstance(src, ctypes_Structure)){
         if(PyObject *p = PyObject_CallFunction(addressof, "O", src))
         {
-            return (T)PyLong_AsVoidPtr(p);
+            if (PyErr_Occurred()) {
+                return (T)nullptr;
+            }            
+            auto pp = PyLong_AsVoidPtr(p);
+            if (PyErr_Occurred()) {
+                return (T)nullptr;
+            }            
+            return (T)pp;
         }
     }
 
@@ -93,7 +101,7 @@ static PyObject* c_void_p(const void* address)
 }
 '''
 
-CTYPES_BEGIN = '''from typing import Iterable, Type
+CTYPES_BEGIN = '''from typing import Iterable, Type, Tuple
 import ctypes
 '''
 
@@ -161,7 +169,71 @@ def write_function(w: io.IOBase, f: FunctionDecl, overload: str):
     return f'{{"{f.spelling}{overload}", {func_name}, METH_VARARGS, "{namespace}{f.spelling}"}},\n'
 
 
-def write_struct(w: io.IOBase, s: StructDecl):
+def write_method(w: io.IOBase, c: cindex.Cursor,  m: cindex.Cursor):
+    # signature
+    func_name = f'{c.spelling}_{m.spelling}'
+
+    # namespace = get_namespace(f.cursors)
+    result = TypeWrap.from_function_result(m)
+    indent = '  '
+    w.write(
+        f'static PyObject *{func_name}(PyObject *self, PyObject *args){{\n')
+
+    # prams
+    types, format, extract, cpp_from_py = get_params(indent, m)
+
+    format = 'O' + format
+
+    w.write(f'''{indent}// {c.spelling}
+{indent}PyObject *py_this = NULL;
+''')
+    w.write(extract)
+
+    extract_params = ', &py_this' + ''.join(', &' + t.cpp_extract_name(i)
+                                            for i, t in enumerate(types))
+    w.write(
+        f'{indent}if(!PyArg_ParseTuple(args, "{format}"{extract_params})) return NULL;\n')
+
+    w.write(
+        f'{indent}{c.spelling} *ptr = ctypes_get_pointer<{c.spelling}*>(py_this);\n')
+    w.write(cpp_from_py)
+
+    # call & result
+    call_params = ', '.join(t.cpp_call_name(i) for i, t in enumerate(types))
+    call = f'ptr->{m.spelling}({call_params})'
+    w.write(interpreted_types.from_cursor(
+        result.type, result.cursor).cpp_result(indent, call))
+
+    w.write(f'''}}
+
+''')
+
+    return f'{{"{c.spelling}_{m.spelling}", {c.spelling}_{m.spelling}, METH_VARARGS, "{c.spelling}::{m.spelling}"}},\n'
+
+
+def write_ctypes_method(w: io.IOBase, cursor: cindex.Cursor, method: cindex.Cursor, *, pyi=False):
+    params = TypeWrap.get_function_params(method)
+    result = TypeWrap.from_function_result(method)
+    result_t = interpreted_types.from_cursor(result.type, result.cursor)
+
+    # signature
+    w.write(
+        f'    def {method.spelling}{self_cj(param.name for param in params)}')
+    w.write(f'->{result_t.result_typing(pyi=pyi)}:')
+
+    if pyi:
+        w.write(' ...\n')
+        return
+
+    w.write('\n')
+
+    indent = '        '
+
+    w.write(f'{indent}from . import impl\n')
+    w.write(f'{indent}return impl.{cursor.spelling}_{method.spelling}{self_cj(param.name for param in params)}\n')
+
+
+def write_struct(w: io.IOBase, s: StructDecl, flags: wrap_types.WrapFlags) -> Iterable[Tuple[cindex.Cursor, cindex.Cursor]]:
     cursor = s.cursors[-1]
 
     definition = cursor.get_definition()
@@ -170,14 +242,14 @@ def write_struct(w: io.IOBase, s: StructDecl):
         return
 
     w.write(f'class {cursor.spelling}(ctypes.Structure):\n')
-    fields = TypeWrap.get_struct_fields(cursor)  # if flags.fields else []
+    fields = TypeWrap.get_struct_fields(cursor) if flags.fields else []
     if fields:
         w.write('    _fields_=[\n')
         indent = '        '
         for field in fields:
             name = field.name
-            # if flags.custom_fields.get(name):
-            #     name = '_' + name
+            if flags.custom_fields.get(name):
+                name = '_' + name
             w.write(interpreted_types.from_cursor(
                 field.cursor.type, field.cursor).ctypes_field(indent, name))
         w.write('    ]\n\n')
@@ -193,16 +265,17 @@ def write_struct(w: io.IOBase, s: StructDecl):
 
 # ''')
 
-    # for _, v in flags.custom_fields.items():
-    #     w.write('    @property\n')
-    #     for l in v.splitlines():
-    #         w.write(f'    {l}\n')
-    #     w.write('\n')
+    for _, v in flags.custom_fields.items():
+        w.write('    @property\n')
+        for l in v.splitlines():
+            w.write(f'    {l}\n')
+        w.write('\n')
 
-    # methods = TypeWrap.get_struct_methods(cursor, includes=flags.methods)
-    # if methods:
-    #     for method in methods:
-    #         function.write_pyx_method(w, cursor, method)
+    methods = TypeWrap.get_struct_methods(cursor, includes=flags.methods)
+    if methods:
+        for method in methods:
+            write_ctypes_method(w, cursor, method)
+            yield cursor, method
 
     # for code in flags.custom_methods:
     #     for l in code.splitlines():
@@ -214,27 +287,27 @@ def write_struct(w: io.IOBase, s: StructDecl):
 
 
 def write_header(w: io.IOBase, parser: Parser, header: Header, ctw: io.IOBase):
-    # structs
-    ctw.write(CTYPES_BEGIN)
-    ctw.write(wrap_types.IMVECTOR)
-    for v in wrap_types.WRAP_TYPES:
-        for t in parser.typedef_struct_list:
-            if v.name == t.cursor.spelling:
-                match t:
-                    case StructDecl():
-                        if t.path != header.path:
-                            continue
-                        write_struct(ctw, t)
-
-    # functions
     w.write(f'''
 # include <{header.path.name}>
 
 ''')
-
     if header.path.name == 'imgui.h':
         w.write(IMGUI_TYPE)
 
+    # structs
+    ctw.write(CTYPES_BEGIN)
+    ctw.write(wrap_types.IMVECTOR)
+    for wrap_type in wrap_types.WRAP_TYPES:
+        for t in parser.typedef_struct_list:
+            if wrap_type.name == t.cursor.spelling:
+                match t:
+                    case StructDecl():
+                        if t.path != header.path:
+                            continue
+                        for struct, method in write_struct(ctw, t, wrap_type):
+                            yield write_method(w, struct, method)
+
+    # functions
     overload_map = {}
     for f in parser.functions:
         if header.path != f.path:
@@ -261,8 +334,13 @@ def write(package_dir: pathlib.Path, parser: Parser, headers: List[Header]):
         with ctypes_path.open('w') as ctw:
             w.write('''// generated
 #define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <string>
+#ifdef _DEBUG
+  #undef _DEBUG
+  #include <Python.h>
+  #define _DEBUG
+#else
+  #include <Python.h>
+#endif#include <string>
 #include <unordered_map>
 
 ''')

@@ -15,7 +15,12 @@ class TestStringMethods(unittest.TestCase):
         c = ctypes.cast(p, ctypes.POINTER(Num))
         self.assertEqual(123, c[0].value)
 
-        x = c[0]
+        pp = ctypes.addressof(c[0])
+        x = ctypes.cast(ctypes.c_void_p(pp), ctypes.POINTER(Num))[0]
+        print(pp)
+        print(type(x))
+        print(ctypes.addressof(x))
+
 
     def test_address(self):
         p = ctypes.c_void_p()

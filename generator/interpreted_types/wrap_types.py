@@ -53,7 +53,7 @@ WRAP_TYPES = [
     WrapFlags('ImFontAtlas', fields=True, methods=True),
     WrapFlags('ImGuiIO', fields=True, custom_fields={
         'Fonts': '''def Fonts(self)->'ImFontAtlas':
-    return ctypes.cast(self._Fonts, ctypes.POINTER(ImFontAtlas))[0]
+    return ctypes.cast(ctypes.c_void_p(self._Fonts), ctypes.POINTER(ImFontAtlas))[0]
 '''
     }),
     WrapFlags('ImGuiContext'),

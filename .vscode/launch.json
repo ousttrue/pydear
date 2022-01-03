@@ -11,7 +11,8 @@
             "program": "${workspaceFolder}/setup.py",
             "args": [
                 "build_ext",
-                "-i"
+                "-i",
+                "--debug"
             ],
             "console": "integratedTerminal",
             "justMyCode": false
@@ -32,6 +33,19 @@
             "args": [],
             "console": "integratedTerminal",
             "justMyCode": false
-        }
+        },
+        {
+            "name": "example_glfw_opengl3(dbg)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "C:/Python310/Python.exe",
+            "args": [
+                "${workspaceFolder}/examples/example_glfw_opengl3.py"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "integratedTerminal"
+        },
     ]
 }
