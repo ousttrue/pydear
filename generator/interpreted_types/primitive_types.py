@@ -178,6 +178,12 @@ class FloatType(PrimitiveType):
     def ctypes_type(self) -> str:
         return 'ctypes.c_float'
 
+    def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
+        if default_value:
+            return f'{indent}float p{i} = t{i} ? PyFloat_AsDouble(t{i}) : {default_value};\n'
+        else:
+            return f'{indent}float p{i} = PyFloat_AsDouble(t{i});\n'
+
     def cpp_result(self, indent: str, call: str) -> str:
         return f'''{indent}auto value = {call};
 {indent}return PyFloat_FromDouble(value);

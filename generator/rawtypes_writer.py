@@ -136,7 +136,7 @@ def write_header(w: io.IOBase, parser: Parser, header: Header):
         w.write(IMGUI_TYPE)
 
     overload_map = {}
-    for f in parser.functions[:40]:
+    for f in parser.functions[:80]:
         if header.path != f.path:
             continue
 

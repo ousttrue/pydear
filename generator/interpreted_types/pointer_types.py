@@ -229,6 +229,15 @@ class ReferenceToStructType(PointerType):
     def result_typing(self, pyi: bool) -> str:
         return f'{self.ctypes_type}'
 
+    def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
+        if default_value:
+            return f'{indent}{self.name} p{i} = t{i} ? ctypes_cast<{self.name}>(t{i}) : {default_value};\n'
+        else:
+            return f'{indent}{self.base.name} *p{i} = ctypes_cast<{self.base.name}*>(t{i});\n'
+
+    def cpp_call_name(self, i: int):
+        return f'*p{i}'
+
     def cpp_result(self, indent: str, call: str) -> str:
         return f'''{indent}// {self}
 {indent}auto &value = {call};
