@@ -11,14 +11,20 @@ CTYPS_CAST = '''
 template<typename T>
 T ctypes_cast(PyObject *src)
 {
+    if(!src){
+        return (T)nullptr;
+    }
+
     static auto ctypes = PyImport_ImportModule("ctypes");
     static auto addressof = PyObject_GetAttrString(ctypes, "addressof");
     static auto ctypes_Array = PyObject_GetAttrString(ctypes, "Array");
     static auto ctypes_Structure = PyObject_GetAttrString(ctypes, "Structure");
+    static auto c_void_p = PyObject_GetAttrString(ctypes, "c_void_p");
+    static auto value = PyUnicode_FromString("value");
 
     // ctypes.c_void_p
-    if(PyObject_HasAttrString(src, "value")){
-        if(PyObject *p = PyObject_GetAttrString(src, "value"))
+    if(PyObject_IsInstance(src, c_void_p)){
+        if(PyObject *p = PyObject_GetAttr(src, value))
         {
             return (T)PyLong_AsVoidPtr(p);
         }
@@ -57,16 +63,18 @@ def get_namespace(cursors: Tuple[cindex.Cursor, ...]) -> str:
     return sio.getvalue()
 
 
-def get_params(indent: str, cursor: cindex.Cursor) -> Tuple[List[interpreted_types.basetype.BaseType], str, str]:
+def get_params(indent: str, cursor: cindex.Cursor) -> Tuple[List[interpreted_types.basetype.BaseType], List[str], str, str]:
     sio_extract = io.StringIO()
     sio_cpp_from_py = io.StringIO()
-    params = []
+    types = []
+    defaults = []
     for i, param in enumerate(TypeWrap.get_function_params(cursor)):
         t = interpreted_types.from_cursor(param.type, param.cursor)
         sio_extract.write(t.cpp_param_declare(indent, i, param.name))
-        params.append(t)
+        types.append(t)
+        defaults.append(param.default_value(use_filter=False))
         sio_cpp_from_py.write(t.cpp_from_py(indent, i))
-    return params, sio_extract.getvalue(), sio_cpp_from_py.getvalue()
+    return types, defaults, sio_extract.getvalue(), sio_cpp_from_py.getvalue()
 
 
 def write_header(w: io.IOBase, parser: Parser, header: Header):
@@ -78,27 +86,39 @@ def write_header(w: io.IOBase, parser: Parser, header: Header):
         if header.path != f.path:
             continue
 
+        # signature
         namespace = get_namespace(f.cursors)
         result = TypeWrap.from_function_result(f.cursor)
-
         func_name = f'{header.path.stem}_{f.spelling}'
-
         indent = '  '
         w.write(
             f'static PyObject *{func_name}(PyObject *self, PyObject *args){{\n')
-        types, extract, cpp_from_py = get_params(indent, f.cursor)
+
+        # prams
+        types, defaults, extract, cpp_from_py = get_params(indent, f.cursor)
         w.write(extract)
 
-        format = ''.join(t.format for t in types)
+        format = ''
+        last_d = None
+        set_defaults = ''
+        for t, d in zip(types, defaults):
+            if not last_d and d:
+                format += '|'
+            last_d = d
+            format += t.format
+            set_defaults += f'{indent}if(!t0) t0{d};\n'
+
         extract_params = ''.join(', &' + t.cpp_extract_name(i)
                                  for i, t in enumerate(types))
-        call_params = ''.join(t.cpp_call_name(i) for i, t in enumerate(types))
-
         w.write(
             f'{indent}if(!PyArg_ParseTuple(args, "{format}"{extract_params})) return NULL;\n')
 
+        w.write(set_defaults)
+
         w.write(cpp_from_py)
 
+        # call & result
+        call_params = ''.join(t.cpp_call_name(i) for i, t in enumerate(types))
         call = f'{namespace}{f.spelling}({call_params})'
         w.write(interpreted_types.from_cursor(
             result.type, result.cursor).cpp_result(indent, call))

@@ -41,7 +41,7 @@ class PointerType(BaseType):
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         base_name = add_impl(self.base)
         return f'''{indent}# {self}
-{indent}cdef {base_name} *p{i} = NULL;
+{indent}cdef {base_name} *p{i};
 {indent}if isinstance({name}, ctypes.c_void_p):
 {indent}    p{i} = <{base_name} *><uintptr_t>({name}.value)
 {indent}if isinstance({name}, (ctypes.Array, ctypes.Structure)):
@@ -56,7 +56,7 @@ class PointerType(BaseType):
 
     def cpp_param_declare(self, indent: str, i: int, name) -> str:
         return f'''{indent}// {self}
-{indent}PyObject *{self.cpp_extract_name(i)};
+{indent}PyObject *{self.cpp_extract_name(i)} = NULL;
 '''
 
     @property
@@ -67,7 +67,8 @@ class PointerType(BaseType):
         return f'{indent}{self.base.name} *p{i} = ctypes_cast<{self.base.name}*>(t{i});\n'
 
     def cpp_result(self, indent: str, call: str) -> str:
-        return f'''{indent}auto value = {call};
+        return f'''{indent}// {self}
+{indent}auto value = {call};
 {indent}return c_void_p(value);
 '''
 

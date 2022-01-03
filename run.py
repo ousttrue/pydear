@@ -6,4 +6,5 @@ HERE = pathlib.Path(__file__).absolute().parent
 sys.path.append(str(HERE / 'src'))
 
 import pydeer.impl
-print(pydeer.impl.CreateContext(None))
+print(pydeer.impl.CreateContext())
+print('done')
