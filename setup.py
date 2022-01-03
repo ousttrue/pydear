@@ -17,18 +17,18 @@ logging.basicConfig(level=logging.DEBUG,
                     format='[%(levelname)s]%(name)s:%(lineno)s:%(message)s')
 
 headers: List[Header] = [
-    Header(
-        EXTERNAL_DIR, 'tinygizmo/tinygizmo/tiny-gizmo.hpp',
-        include_dirs=[EXTERNAL_DIR / 'tinygizmo/tinygizmo'], prefix='tinygizmo_'),
+    # Header(
+    #     EXTERNAL_DIR, 'tinygizmo/tinygizmo/tiny-gizmo.hpp',
+    #     include_dirs=[EXTERNAL_DIR / 'tinygizmo/tinygizmo'], prefix='tinygizmo_'),
     Header(
         EXTERNAL_DIR, 'imgui/imgui.h',
         include_dirs=[EXTERNAL_DIR / 'imgui']),
-    Header(
-        EXTERNAL_DIR, 'ImFileDialogWrap.h',
-        include_dirs=[EXTERNAL_DIR]),
-    Header(
-        EXTERNAL_DIR, 'ImGuizmo/ImGuizmo.h',
-        include_dirs=[EXTERNAL_DIR / 'ImGuizmo'], prefix='ImGuizmo_'),
+    # Header(
+    #     EXTERNAL_DIR, 'ImFileDialogWrap.h',
+    #     include_dirs=[EXTERNAL_DIR]),
+    # Header(
+    #     EXTERNAL_DIR, 'ImGuizmo/ImGuizmo.h',
+    #     include_dirs=[EXTERNAL_DIR / 'ImGuizmo'], prefix='ImGuizmo_'),
 ]
 
 

@@ -67,10 +67,10 @@ def enter_namespace(header: Header, pxd: io.IOBase, cursors: Tuple[cindex.Cursor
 
     if namespace:
         pxd.write(
-            f'cdef extern from "{header.header.name}" namespace "{namespace}":\n')
+            f'cdef extern from "{header.path.name}" namespace "{namespace}":\n')
     else:
         pxd.write(
-            f'cdef extern from "{header.header.name}":\n')
+            f'cdef extern from "{header.path.name}":\n')
     header.current_nemespace = namespace
 
 
@@ -79,7 +79,7 @@ def write_pxd(header: Header, pxd: io.IOBase, parser: Parser):
 
     # enum
     for enum in parser.enums:
-        if pathlib.Path(enum.cursor.location.file.name) != header.header:
+        if pathlib.Path(enum.cursor.location.file.name) != header.path:
             continue
         enter_namespace(header, pxd, enum.cursors)
         pxd.write(f'    ctypedef enum {enum.cursor.spelling}:\n')
@@ -87,7 +87,7 @@ def write_pxd(header: Header, pxd: io.IOBase, parser: Parser):
 
     # typedef & struct
     for t in parser.typedef_struct_list:
-        if pathlib.Path(t.cursor.location.file.name) != header.header:
+        if pathlib.Path(t.cursor.location.file.name) != header.path:
             continue
         if t.cursor.spelling in function.EXCLUDE_TYPES:
             # TODO: nested type
@@ -98,7 +98,7 @@ def write_pxd(header: Header, pxd: io.IOBase, parser: Parser):
 
     # funcs
     for func in parser.functions:
-        if pathlib.Path(func.cursor.location.file.name) != header.header:
+        if pathlib.Path(func.cursor.location.file.name) != header.path:
             continue
         enter_namespace(header, pxd, func.cursors)
         if func.is_exclude_function():
@@ -108,7 +108,7 @@ def write_pxd(header: Header, pxd: io.IOBase, parser: Parser):
 
 def write_pyx(header: Header, pyx: io.IOBase, parser: Parser):
     types = [x for x in parser.typedef_struct_list if pathlib.Path(
-        x.cursor.location.file.name) == header.header]
+        x.cursor.location.file.name) == header.path]
     if types:
         for v in wrap_types.WRAP_TYPES:
             for func in types:
@@ -116,7 +116,7 @@ def write_pyx(header: Header, pyx: io.IOBase, parser: Parser):
                     func.write_pyx_ctypes(pyx, flags=v)
 
     funcs = [x for x in parser.functions if pathlib.Path(
-        x.cursor.location.file.name) == header.header]
+        x.cursor.location.file.name) == header.path]
     if funcs:
         overload = {}
         for func in funcs:
@@ -132,7 +132,7 @@ def write_pyx(header: Header, pyx: io.IOBase, parser: Parser):
 
 def write_pyi(header: Header, pyi: io.IOBase, parser: Parser):
     types = [x for x in parser.typedef_struct_list if pathlib.Path(
-        x.cursor.location.file.name) == header.header]
+        x.cursor.location.file.name) == header.path]
     if types:
         for v in wrap_types.WRAP_TYPES:
             for func in types:
@@ -140,7 +140,7 @@ def write_pyi(header: Header, pyi: io.IOBase, parser: Parser):
                     func.write_pyi(pyi, flags=v)
 
     funcs = [x for x in parser.functions if pathlib.Path(
-        x.cursor.location.file.name) == header.header]
+        x.cursor.location.file.name) == header.path]
     if funcs:
         overload = {}
         for func in funcs:

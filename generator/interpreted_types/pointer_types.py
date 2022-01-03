@@ -54,6 +54,23 @@ class PointerType(BaseType):
 {indent}return ctypes.c_void_p(<uintptr_t>value)
 '''
 
+    def cpp_param_declare(self, indent: str, i: int, name) -> str:
+        return f'''{indent}// {self}
+{indent}PyObject *{self.cpp_extract_name(i)};
+'''
+
+    @property
+    def format(self) -> str:
+        return 'O'
+
+    def cpp_from_py(self, indent: str, i: int) -> str:
+        return f'{indent}{self.base.name} *p{i} = ctypes_cast<{self.base.name}*>(t{i});\n'
+
+    def cpp_result(self, indent: str, call: str) -> str:
+        return f'''{indent}auto value = {call};
+{indent}return c_void_p(value);
+'''
+
 
 class ReferenceType(BaseType):
     base: BaseType
@@ -147,9 +164,9 @@ class RefenreceToStdArrayType(BaseType):
         return 'ctypes.c_void_p'
 
 
-class PointerToStructType(BaseType):
+class PointerToStructType(PointerType):
     def __init__(self, base: BaseType, is_const: bool):
-        super().__init__(base.name + '*', base, is_const)
+        super().__init__(base, is_const)
 
     @property
     def ctypes_type(self) -> str:

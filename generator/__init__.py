@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def generate(headers: List[Header], package_dir: pathlib.Path, write: Callable[[pathlib.Path, Parser, List[Header]], None]):
 
-    parser = Parser([header.header for header in headers])
+    parser = Parser([header.path for header in headers])
     parser.traverse()
 
     write(package_dir, parser, headers)

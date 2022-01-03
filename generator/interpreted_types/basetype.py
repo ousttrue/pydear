@@ -57,3 +57,25 @@ class BaseType:
         extract result
         '''
         raise NotImplementedError()
+
+    def cpp_extract_name(self, i: int):
+        return f't{i}'
+
+    def cpp_param_declare(self, indent: str, i: int, name: str) -> str:
+        '''
+        extract params
+        '''
+        raise NotImplementedError()
+
+    @property
+    def format(self) -> str:
+        raise NotImplemented()
+
+    def cpp_from_py(self, indent: str, i: int) -> str:
+        raise NotImplementedError()
+
+    def cpp_call_name(self, i: int):
+        return f'p{i}'
+
+    def cpp_result(self, indent: str, call: str) -> str:
+        raise NotImplementedError()

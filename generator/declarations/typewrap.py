@@ -160,8 +160,7 @@ class TypeWrap(NamedTuple):
         else:
             return f"{self.remove_namespce(c_type)} {name}"
 
-    @property
-    def default_value(self) -> str:
+    def default_value(self, use_filter: bool) -> str:
         tokens = []
         for child in self.cursor.get_children():
             # logger.debug(child.spelling)
@@ -202,5 +201,10 @@ class TypeWrap(NamedTuple):
                     return src
 
         equal = tokens.index('=')
-        value = ' '.join(token_filter(t) for t in tokens[equal+1:])
+
+        if use_filter:
+            value = ' '.join(token_filter(t) for t in tokens[equal+1:])
+        else:
+            value = ' '.join(t for t in tokens[equal+1:])
+
         return '= ' + value
