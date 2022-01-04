@@ -217,7 +217,7 @@ class DoubleType(PrimitiveType):
 
     @property
     def ctypes_type(self) -> str:
-        return 'ctypes.c_float'
+        return 'ctypes.c_double'
 
     def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
         if default_value:
