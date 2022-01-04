@@ -7,15 +7,22 @@ import pathlib
 import subprocess
 #
 import vcenv  # search setup vc path
-from generator.header import Header
 HERE = pathlib.Path(__file__).parent
 sys.path.append(str(HERE / '_external/pycindex/src'))
+print(sys.path)
 PACKAGE_DIR = HERE / 'src/pydeer'
 EXTERNAL_DIR = HERE / '_external'
 CMAKE_BUILD = HERE / 'build'
 logging.basicConfig(level=logging.DEBUG,
                     format='[%(levelname)s]%(name)s:%(lineno)s:%(message)s')
 
+# generate pyd, pyx, pyi from imgui.h
+try:
+    from clang import cindex
+except:
+    # get clang
+    import _external.pycindex.setup
+from generator.header import Header
 headers: List[Header] = [
     # Header(
     #     EXTERNAL_DIR, 'tinygizmo/tinygizmo/tiny-gizmo.hpp',
@@ -31,13 +38,6 @@ headers: List[Header] = [
     #     include_dirs=[EXTERNAL_DIR / 'ImGuizmo'], prefix='ImGuizmo_'),
 ]
 
-
-# generate pyd, pyx, pyi from imgui.h
-try:
-    from clang import cindex
-except:
-    # get clang
-    import _external.pycindex.setup
 import generator  # noqa
 
 
@@ -113,7 +113,6 @@ setuptools.setup(
     include_package_data=True,
     packages=[
         'pydeer',
-        'pydeer.impl',  # extension
         'pydeer.backends',
         'pydeer.utils',
     ],
