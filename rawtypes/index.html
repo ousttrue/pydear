@@ -1,0 +1,173 @@
+
+
+<!doctype html>
+
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>rawtypes &#8212; pydeer  ドキュメント</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/translations.js"></script>
+    <script src="../_static/bizstyle.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="prev" title="out" href="../cython/out/index.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="総合索引"
+             accesskey="I">索引</a></li>
+        <li class="right" >
+          <a href="../cython/out/index.html" title="out"
+             accesskey="P">前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pydeer  ドキュメント</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">rawtypes</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section class="tex2jax_ignore mathjax_ignore" id="rawtypes">
+<h1>rawtypes<a class="headerlink" href="#rawtypes" title="このヘッドラインへのパーマリンク">¶</a></h1>
+<p>自前でコード生成する。</p>
+<p><a class="reference external" href="https://docs.python.org/3/extending/extending.html">https://docs.python.org/3/extending/extending.html</a></p>
+<section id="id1">
+<h2>関数<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>登録する関数のシグネチャーは以下の通り。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span><span class="nf">EXPORT_FUNC</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">args</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="id2">
+<h2>引数の取り出し<a class="headerlink" href="#id2" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p><a class="reference external" href="https://docs.python.org/3/c-api/arg.html">https://docs.python.org/3/c-api/arg.html</a></p>
+<p><code class="docutils literal notranslate"><span class="pre">PyObject</span> <span class="pre">*args</span></code> から値を取り出す。</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/extending/extending.html#extracting-parameters-in-extension-functions">https://docs.python.org/3/extending/extending.html#extracting-parameters-in-extension-functions</a></p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/c-api/index.html">https://docs.python.org/3/c-api/index.html</a></p></li>
+</ul>
+<section id="int-float-bool">
+<h3>int, float, bool<a class="headerlink" href="#int-float-bool" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/c-api/number.html">https://docs.python.org/3/c-api/number.html</a></p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/c-api/long.html">https://docs.python.org/3/c-api/long.html</a></p></li>
+</ul>
+</section>
+<section id="object">
+<h3>object<a class="headerlink" href="#object" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<p><a class="reference external" href="https://docs.python.org/3/c-api/object.html">https://docs.python.org/3/c-api/object.html</a></p>
+</section>
+<section id="ctypes-c-void-p">
+<h3>ctypes.c_void_p<a class="headerlink" href="#ctypes-c-void-p" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/python/cpython/blob/main/Modules/_ctypes/ctypes.h">https://github.com/python/cpython/blob/main/Modules/_ctypes/ctypes.h</a></p></li>
+<li><p><a class="reference external" href="https://github.com/python/cpython/blob/main/Modules/_ctypes/_ctypes.c">https://github.com/python/cpython/blob/main/Modules/_ctypes/_ctypes.c</a></p></li>
+</ul>
+</section>
+<section id="ctypes-array">
+<h3>ctypes.Array<a class="headerlink" href="#ctypes-array" title="このヘッドラインへのパーマリンク">¶</a></h3>
+</section>
+</section>
+<section id="id3">
+<h2>返り値<a class="headerlink" href="#id3" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> を返す。</p>
+<section id="id4">
+<h3>int, float, bool<a class="headerlink" href="#id4" title="このヘッドラインへのパーマリンク">¶</a></h3>
+</section>
+<section id="id5">
+<h3>ctypes.c_void_p<a class="headerlink" href="#id5" title="このヘッドラインへのパーマリンク">¶</a></h3>
+</section>
+<section id="id6">
+<h3>ctypes.Array<a class="headerlink" href="#id6" title="このヘッドラインへのパーマリンク">¶</a></h3>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">目次</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">rawtypes</a><ul>
+<li><a class="reference internal" href="#id1">関数</a></li>
+<li><a class="reference internal" href="#id2">引数の取り出し</a><ul>
+<li><a class="reference internal" href="#int-float-bool">int, float, bool</a></li>
+<li><a class="reference internal" href="#object">object</a></li>
+<li><a class="reference internal" href="#ctypes-c-void-p">ctypes.c_void_p</a></li>
+<li><a class="reference internal" href="#ctypes-array">ctypes.Array</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id3">返り値</a><ul>
+<li><a class="reference internal" href="#id4">int, float, bool</a></li>
+<li><a class="reference internal" href="#id5">ctypes.c_void_p</a></li>
+<li><a class="reference internal" href="#id6">ctypes.Array</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>前のトピックへ</h4>
+  <p class="topless"><a href="../cython/out/index.html"
+                        title="前の章へ">out</a></p>
+  <div role="note" aria-label="source link">
+    <h3>このページ</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/rawtypes/index.md.txt"
+            rel="nofollow">ソースコードを表示</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">クイック検索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="検索" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="総合索引"
+             >索引</a></li>
+        <li class="right" >
+          <a href="../cython/out/index.html" title="out"
+             >前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pydeer  ドキュメント</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">rawtypes</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, ousttrue.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    </div>
+  </body>
+</html>

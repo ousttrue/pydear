@@ -36,6 +36,6 @@ $(window).resize(function(){
         $("li.nav-item-0 a").text("Top");
     }
     else {
-        $("li.nav-item-0 a").text("cydeer  ドキュメント");
+        $("li.nav-item-0 a").text("pydeer  ドキュメント");
     }
 });

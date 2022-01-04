@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>cydeer 🦌 &#8212; cydeer  ドキュメント</title>
+    <title>pydeer 🦌 &#8212; pydeer  ドキュメント</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
     
@@ -19,7 +19,7 @@
     <script src="_static/bizstyle.js"></script>
     <link rel="index" title="索引" href="genindex.html" />
     <link rel="search" title="検索" href="search.html" />
-    <link rel="next" title="in" href="in/index.html" />
+    <link rel="next" title="cython" href="cython/index.html" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
     <script src="_static/css3-mediaqueries.js"></script>
@@ -32,10 +32,10 @@
           <a href="genindex.html" title="総合索引"
              accesskey="I">索引</a></li>
         <li class="right" >
-          <a href="in/index.html" title="in"
+          <a href="cython/index.html" title="cython"
              accesskey="N">次へ</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">cydeer  ドキュメント</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">cydeer 🦌</a></li> 
+        <li class="nav-item nav-item-0"><a href="#">pydeer  ドキュメント</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pydeer 🦌</a></li> 
       </ul>
     </div>  
 
@@ -44,53 +44,51 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section class="tex2jax_ignore mathjax_ignore" id="cydeer">
-<h1>cydeer 🦌<a class="headerlink" href="#cydeer" title="このヘッドラインへのパーマリンク">¶</a></h1>
-<p>実装メモ。</p>
-<section id="cython-ctypes">
-<h2>cython + ctypes<a class="headerlink" href="#cython-ctypes" title="このヘッドラインへのパーマリンク">¶</a></h2>
-<p>型の <code class="docutils literal notranslate"><span class="pre">wrap</span></code> を cython の <code class="docutils literal notranslate"><span class="pre">cdef</span> <span class="pre">class</span></code> ではなく、 <code class="docutils literal notranslate"><span class="pre">ctypes.Structure</span></code> で実装してみた。</p>
-<ul class="simple">
-<li><p>cython: imgui の statlic library からの関数呼び出し</p></li>
-<li><p>ctypes: ImGuiIO などの型の wrap。<code class="docutils literal notranslate"><span class="pre">c++</span></code> から得たポインタを <code class="docutils literal notranslate"><span class="pre">ctypes.Structure</span></code> にキャストしてる。</p></li>
-</ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">GetIO</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">ImGuiIO</span><span class="p">:</span>
-    <span class="n">cdef</span> <span class="n">impl</span><span class="o">.</span><span class="n">ImGuiIO</span> <span class="o">*</span> <span class="n">value</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">impl</span><span class="o">.</span><span class="n">GetIO</span><span class="p">()</span>
-    <span class="c1"># pointer を ctypes.Structure にキャストする</span>
-    <span class="k">return</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">ctypes</span><span class="o">.</span><span class="n">c_void_p</span><span class="p">(</span><span class="o">&lt;</span><span class="nb">long</span> <span class="nb">long</span><span class="o">&gt;</span><span class="n">value</span><span class="p">),</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">POINTER</span><span class="p">(</span><span class="n">ImGuiIO</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
-</pre></div>
-</div>
-<ul class="simple">
-<li><p>cython: class method の呼び出し</p></li>
-</ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ImFontAtlas</span><span class="p">(</span><span class="n">ctypes</span><span class="o">.</span><span class="n">Structure</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">ClearTexData</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
-        <span class="c1"># self を pointer にキャスト  </span>
-        <span class="n">cdef</span> <span class="n">impl</span><span class="o">.</span><span class="n">ImFontAtlas</span> <span class="o">*</span><span class="n">ptr</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">impl</span><span class="o">.</span><span class="n">ImFontAtlas</span><span class="o">*&gt;&lt;</span><span class="n">uintptr_t</span><span class="o">&gt;</span><span class="n">ctypes</span><span class="o">.</span><span class="n">addressof</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="c1"># ptr からメソッド呼び出し</span>
-        <span class="n">ptr</span><span class="o">.</span><span class="n">ClearTexData</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>ちと変則的だが、いい感じになった。</p>
-</section>
-<section id="id1">
-<h2>個別の型変換<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h2>
+  <section class="tex2jax_ignore mathjax_ignore" id="pydeer">
+<h1>pydeer 🦌<a class="headerlink" href="#pydeer" title="このヘッドラインへのパーマリンク">¶</a></h1>
+<p>実装メモ。
+<code class="docutils literal notranslate"><span class="pre">cython</span></code> である程度動くところまで作ったのだけど、
+<code class="docutils literal notranslate"><span class="pre">namespace</span></code> に入った型の取り扱いなど <code class="docutils literal notranslate"><span class="pre">c++</span></code> 要素が手に負えなくなってきた。
+(<code class="docutils literal notranslate"><span class="pre">im3d</span></code> のラップを試みて失敗した)</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="in/index.html">in</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="in/index.html#primitive">primitive</a></li>
-<li class="toctree-l2"><a class="reference internal" href="in/index.html#pointer">pointer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="in/index.html#const-char">const char *</a></li>
-<li class="toctree-l2"><a class="reference internal" href="in/index.html#const-imvec2">const ImVec2&amp;</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cython/index.html">cython</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cython/index.html#cython-ctypes">cython + ctypes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cython/index.html#id1">個別の型変換</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cython/in/index.html">in</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cython/in/index.html#primitive">primitive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cython/in/index.html#pointer">pointer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cython/in/index.html#const-char">const char *</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cython/in/index.html#const-imvec2">const ImVec2&amp;</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="out/index.html">out</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="out/index.html#struct">Struct &amp;</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cython/out/index.html">out</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cython/out/index.html#struct">Struct &amp;</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rawtypes/index.html">rawtypes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rawtypes/index.html#id1">関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rawtypes/index.html#id2">引数の取り出し</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#int-float-bool">int, float, bool</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#object">object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#ctypes-c-void-p">ctypes.c_void_p</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#ctypes-array">ctypes.Array</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rawtypes/index.html#id3">返り値</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#id4">int, float, bool</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#id5">ctypes.c_void_p</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#id6">ctypes.Array</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 </div>
-</section>
 <section id="indices-and-tables">
 <h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="このヘッドラインへのパーマリンク">¶</a></h2>
 <ul class="simple">
@@ -110,17 +108,15 @@
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">目次</a></h3>
   <ul>
-<li><a class="reference internal" href="#">cydeer 🦌</a><ul>
-<li><a class="reference internal" href="#cython-ctypes">cython + ctypes</a></li>
-<li><a class="reference internal" href="#id1">個別の型変換</a></li>
+<li><a class="reference internal" href="#">pydeer 🦌</a><ul>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>次のトピックへ</h4>
-  <p class="topless"><a href="in/index.html"
-                        title="次の章へ">in</a></p>
+  <p class="topless"><a href="cython/index.html"
+                        title="次の章へ">cython</a></p>
   <div role="note" aria-label="source link">
     <h3>このページ</h3>
     <ul class="this-page-menu">
@@ -149,10 +145,10 @@
           <a href="genindex.html" title="総合索引"
              >索引</a></li>
         <li class="right" >
-          <a href="in/index.html" title="in"
+          <a href="cython/index.html" title="cython"
              >次へ</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">cydeer  ドキュメント</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">cydeer 🦌</a></li> 
+        <li class="nav-item nav-item-0"><a href="#">pydeer  ドキュメント</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pydeer 🦌</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
