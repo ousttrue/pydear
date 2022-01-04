@@ -1,4 +1,5 @@
 from typing import NamedTuple, Union, Tuple, Dict
+import io
 from .basetype import BaseType
 from .pointer_types import PointerType, ReferenceType
 
@@ -109,11 +110,8 @@ class ImVec2WrapType(BaseType):
         else:
             return f'{indent}ImVec2 p{i} = get_ImVec2(t{i});\n'
 
-    def cpp_result(self, indent: str, call: str) -> str:
-        return f'''{indent}// {self}
-{indent}auto value = {call};
-{indent}return Py_BuildValue("(ff)", value.x, value.y);
-'''
+    def py_value(self, value: str) -> str:
+        return f'Py_BuildValue("(ff)", {value}.x, {value}.y)'
 
 
 class ImVec4WrapType(BaseType):
@@ -136,11 +134,8 @@ class ImVec4WrapType(BaseType):
 {indent}return (value.x, value.y, value.z, value.w)
 '''
 
-    def cpp_result(self, indent: str, call: str) -> str:
-        return f'''{indent}// {self}
-{indent}auto value = {call};
-{indent}return Py_BuildValue("(ffff)", value.x, value.y, value.z, value.w);
-'''
+    def py_value(self, value: str) -> str:
+        return f'Py_BuildValue("(ffff)", {value}.x, {value}.y, {value}.z, {value}.w)'
 
 
 class ImVector(BaseType):
@@ -203,18 +198,11 @@ class PointerToStructType(PointerType):
     def result_typing(self, pyi: bool) -> str:
         return f'{self.ctypes_type}'
 
-    def cpp_result(self, indent: str, call: str) -> str:
+    def py_value(self, value: str) -> str:
         if is_wrap_type(self.base.name):
-            return f'''{indent}// {self}
-{indent}auto value = {call};
-{indent}auto p = c_void_p(value);
-{indent}return ctypes_cast(p, "{self.base.name}");
-'''
+            return f'ctypes_cast(c_void_p({value}), "{self.base.name}")'
         else:
-            return f'''{indent}// {self}
-{indent}auto value = {call};
-{indent}return c_void_p(value);
-'''
+            return f'c_void_p({value})'
 
 
 class ReferenceToStructType(ReferenceType):
@@ -261,14 +249,13 @@ class ReferenceToStructType(ReferenceType):
             return f'{indent}{self.base.name} *p{i} = ctypes_get_pointer<{self.base.name}*>(t{i});\n'
 
     def cpp_result(self, indent: str, call: str) -> str:
+        sio = io.StringIO()
+        sio.write(f'{indent}// {self}\n')
+        sio.write(f'{indent}auto value = &{call};\n')
+        sio.write(f'{indent}auto py_value = c_void_p(value);\n')
         if is_wrap_type(self.base.name):
-            return f'''{indent}// {self}
-{indent}auto value = &{call};
-{indent}auto p = c_void_p(value);
-{indent}return ctypes_cast(p, "{self.base.name}");
-'''
-        else:
-            return f'''{indent}// {self}
-{indent}auto value = &{call};
-{indent}return c_void_p(value);
-'''
+            sio.write(
+                f'{indent}py_value = ctypes_cast(py_value, "{self.base.name}");\n')
+        sio.write(f'{indent}Py_INCREF(py_value);\n')
+        sio.write(f'{indent}return py_value;\n')
+        return sio.getvalue()

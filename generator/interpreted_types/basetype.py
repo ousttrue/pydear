@@ -76,5 +76,12 @@ class BaseType:
     def cpp_call_name(self, i: int):
         return f'p{i}'
 
-    def cpp_result(self, indent: str, call: str) -> str:
+    def py_value(self, value: str):
         raise NotImplementedError()
+
+    def cpp_result(self, indent: str, call: str) -> str:
+        return f'''auto value = {indent}{call};
+{indent}PyObject* py_value = {self.py_value("value")};
+{indent}Py_INCREF(py_value);        
+{indent}return py_value;
+'''

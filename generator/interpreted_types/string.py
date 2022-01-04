@@ -69,7 +69,5 @@ class CStringType(BaseType):
             default_value = 'nullptr'
         return f'{indent}const char *p{i} = get_cstring(t{i}, {default_value});\n'
 
-    def cpp_result(self, indent: str, call: str) -> str:
-        return f'''{indent}auto value = {call};
-{indent}return PyUnicode_FromString(value);
-'''
+    def py_value(self, value: str) -> str:
+        return f'PyUnicode_FromString({value})'

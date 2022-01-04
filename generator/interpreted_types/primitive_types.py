@@ -28,6 +28,7 @@ class VoidType(BaseType):
 
     def cpp_result(self, indent: str, call: str) -> str:
         return f'''{indent}{call};
+{indent}Py_INCREF(Py_None);        
 {indent}return Py_None;
 '''
 
@@ -71,10 +72,8 @@ class BoolType(PrimitiveType):
         else:
             return f'{indent}bool p{i} = t{i} == Py_True;\n'
 
-    def cpp_result(self, indent: str, call: str) -> str:
-        return f'''{indent}auto value = {call};
-{indent}return value ? Py_True : Py_False;
-'''
+    def py_value(self, value: str):
+        return f'({value} ? Py_True : Py_False)'
 
 
 class UInt8Type(PrimitiveType):
@@ -100,6 +99,7 @@ class UInt16Type(PrimitiveType):
         else:
             return f'{indent}unsigned short p{i} = PyLong_AsUnsignedLong(t{i});\n'
 
+
 class UInt32Type(PrimitiveType):
     def __init__(self, is_const=False):
         super().__init__('unsigned int', is_const)
@@ -114,10 +114,8 @@ class UInt32Type(PrimitiveType):
         else:
             return f'{indent}unsigned int p{i} = PyLong_AsUnsignedLong(t{i});\n'
 
-    def cpp_result(self, indent: str, call: str) -> str:
-        return f'''{indent}auto value = {call};
-{indent}return PyLong_FromUnsignedLong(value);
-'''
+    def py_value(self, value: str):
+        return f'PyLong_FromUnsignedLong({value})'
 
 
 class UInt64Type(PrimitiveType):
@@ -176,10 +174,8 @@ class Int32Type(PrimitiveType):
         else:
             return f'{indent}int p{i} = PyLong_AsLong(t{i});\n'
 
-    def cpp_result(self, indent: str, call: str) -> str:
-        return f'''{indent}auto value = {call};
-{indent}return PyLong_FromLong(value);
-'''
+    def py_value(self, value: str) -> str:
+        return f'PyLong_FromLong({value})'
 
 
 class Int64Type(PrimitiveType):
@@ -205,10 +201,8 @@ class FloatType(PrimitiveType):
         else:
             return f'{indent}float p{i} = PyFloat_AsDouble(t{i});\n'
 
-    def cpp_result(self, indent: str, call: str) -> str:
-        return f'''{indent}auto value = {call};
-{indent}return PyFloat_FromDouble(value);
-'''
+    def py_value(self, value: str) -> str:
+        return f'PyFloat_FromDouble({value})'
 
 
 class DoubleType(PrimitiveType):
@@ -225,10 +219,8 @@ class DoubleType(PrimitiveType):
         else:
             return f'{indent}float p{i} = PyFloat_AsDouble(t{i});\n'
 
-    def cpp_result(self, indent: str, call: str) -> str:
-        return f'''{indent}auto value = {call};
-{indent}return PyFloat_FromDouble(value);
-'''
+    def py_value(self, value: str) -> str:
+        return f'PyFloat_FromDouble({value})'
 
 
 def get(src: str, is_const: bool) -> PrimitiveType:

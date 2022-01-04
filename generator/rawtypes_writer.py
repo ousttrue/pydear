@@ -13,6 +13,51 @@ from .interpreted_types import wrap_types
 from . import interpreted_types
 
 CTYPS_CAST = '''
+static PyObject* s_ctypes = nullptr;
+static PyObject* s_ctypes_c_void_p = nullptr;
+static PyObject* s_ctypes_addressof = nullptr;
+static PyObject* s_ctypes_Array = nullptr;
+static PyObject* s_ctypes_Structure = nullptr;
+static PyObject* s_ctypes_POINTER = nullptr;
+static PyObject* s_ctypes_cast = nullptr;
+static PyObject* s_value = nullptr;
+static PyObject* s_pydeer_ctypes = nullptr;
+
+static void s_initialize()
+{
+    if(s_ctypes)
+    {
+        return;
+    }
+    // ctypes
+    s_ctypes = PyImport_ImportModule("ctypes");    
+    Py_INCREF(s_ctypes);
+
+    s_ctypes_c_void_p = PyObject_GetAttrString(s_ctypes, "c_void_p");
+    Py_INCREF(s_ctypes_c_void_p);
+
+    s_ctypes_addressof = PyObject_GetAttrString(s_ctypes, "addressof");
+    Py_INCREF(s_ctypes_addressof);
+
+    s_ctypes_Array = PyObject_GetAttrString(s_ctypes, "Array");
+    Py_INCREF(s_ctypes_Array);
+
+    s_ctypes_Structure = PyObject_GetAttrString(s_ctypes, "Structure");
+    Py_INCREF(s_ctypes_Structure);
+
+    s_ctypes_POINTER = PyObject_GetAttrString(s_ctypes, "POINTER");
+    Py_INCREF(s_ctypes_POINTER);
+
+    s_ctypes_cast = PyObject_GetAttrString(s_ctypes, "cast");
+    Py_INCREF(s_ctypes_cast);
+    //
+    s_value = PyUnicode_FromString("value");
+    Py_INCREF(s_value);
+    //
+    s_pydeer_ctypes = PyImport_ImportModule("pydeer.ctypes");
+    Py_INCREF(s_pydeer_ctypes);
+}
+
 template<typename T>
 T ctypes_get_pointer(PyObject *src)
 {
@@ -20,36 +65,25 @@ T ctypes_get_pointer(PyObject *src)
         return (T)nullptr;
     }
 
-    static auto ctypes = PyImport_ImportModule("ctypes");
-
     // ctypes.c_void_p
-    static auto c_void_p = PyObject_GetAttrString(ctypes, "c_void_p");
-    static auto value = PyUnicode_FromString("value");
-    if(PyObject_IsInstance(src, c_void_p)){
-        if(PyObject *p = PyObject_GetAttr(src, value))
+    if(PyObject_IsInstance(src, s_ctypes_c_void_p)){
+        if(PyObject *p = PyObject_GetAttr(src, s_value))
         {
             auto pp = PyLong_AsVoidPtr(p);
             return (T)pp;
         }
+        PyErr_Clear();
     }
 
     // ctypes.Array   
     // ctypes.Structure
-    static auto addressof = PyObject_GetAttrString(ctypes, "addressof");
-    static auto ctypes_Array = PyObject_GetAttrString(ctypes, "Array");
-    static auto ctypes_Structure = PyObject_GetAttrString(ctypes, "Structure");
-    if(PyObject_IsInstance(src, ctypes_Array) || PyObject_IsInstance(src, ctypes_Structure)){
-        if(PyObject *p = PyObject_CallFunction(addressof, "O", src))
+    if(PyObject_IsInstance(src, s_ctypes_Array) || PyObject_IsInstance(src, s_ctypes_Structure)){
+        if(PyObject *p = PyObject_CallFunction(s_ctypes_addressof, "O", src))
         {
-            if (PyErr_Occurred()) {
-                return (T)nullptr;
-            }            
             auto pp = PyLong_AsVoidPtr(p);
-            if (PyErr_Occurred()) {
-                return (T)nullptr;
-            }            
             return (T)pp;
         }
+        PyErr_Clear();
     }
 
     return (T)nullptr;
@@ -64,11 +98,9 @@ static PyObject* GetCTypesType(const char *t)
         return found->second;
     }
 
-    static auto pydeer_ctypes = PyImport_ImportModule("pydeer.ctypes");
-    auto T = PyObject_GetAttrString(pydeer_ctypes, t);
-    static auto ctypes = PyImport_ImportModule("ctypes");
-    static auto POINTER = PyObject_GetAttrString(ctypes, "POINTER");
-    auto result = PyObject_CallFunction(POINTER, "O", T);
+    auto T = PyObject_GetAttrString(s_pydeer_ctypes, t);
+    auto result = PyObject_CallFunction(s_ctypes_POINTER, "O", T);
+    Py_INCREF(result);
     s_map.insert(std::make_pair(std::string(t), result));
     return result;
 }
@@ -76,10 +108,8 @@ static PyObject* GetCTypesType(const char *t)
 static PyObject* ctypes_cast(PyObject *src, const char *t)
 {
     // ctypes.cast(src, ctypes.POINTER(t))[0]
-    static auto ctypes = PyImport_ImportModule("ctypes");
-    static auto cast = PyObject_GetAttrString(ctypes, "cast");
     auto ptype = GetCTypesType(t);
-    auto p = PyObject_CallFunction(cast, "OO", src, ptype);
+    auto p = PyObject_CallFunction(s_ctypes_cast, "OO", src, ptype);
     return PySequence_GetItem(p, 0);
 }
 
@@ -411,6 +441,8 @@ PyInit_impl(void)
         Py_DECREF(m);
         return NULL;
     }}
+
+    s_initialize();
 
     return m;
 }}

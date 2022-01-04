@@ -60,11 +60,8 @@ class PointerType(BaseType):
         else:
             return f'{indent}{self.base.name} *p{i} = ctypes_get_pointer<{self.base.name}*>(t{i});\n'
 
-    def cpp_result(self, indent: str, call: str) -> str:
-        return f'''{indent}// {self}
-{indent}auto value = {call};
-{indent}return c_void_p(value);
-'''
+    def py_value(self, value: str) -> str:
+        return f'c_void_p({value})'
 
 
 class ReferenceType(PointerType):
@@ -108,7 +105,9 @@ class ReferenceType(PointerType):
     def cpp_result(self, indent: str, call: str) -> str:
         return f'''{indent}// {self}
 {indent}auto *value = &{call};
-{indent}return c_void_p(value);
+{indent}auto py_value = c_void_p(value);
+{indent}Py_INCREF(py_value);
+{indent}return py_value;
 '''
 
 
