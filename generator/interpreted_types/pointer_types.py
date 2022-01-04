@@ -106,7 +106,6 @@ class ReferenceType(PointerType):
         return f'''{indent}// {self}
 {indent}auto *value = &{call};
 {indent}auto py_value = c_void_p(value);
-{indent}Py_INCREF(py_value);
 {indent}return py_value;
 '''
 

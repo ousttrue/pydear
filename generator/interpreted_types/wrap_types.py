@@ -256,6 +256,5 @@ class ReferenceToStructType(ReferenceType):
         if is_wrap_type(self.base.name):
             sio.write(
                 f'{indent}py_value = ctypes_cast(py_value, "{self.base.name}");\n')
-        sio.write(f'{indent}Py_INCREF(py_value);\n')
         sio.write(f'{indent}return py_value;\n')
         return sio.getvalue()

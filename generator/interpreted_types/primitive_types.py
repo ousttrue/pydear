@@ -73,7 +73,7 @@ class BoolType(PrimitiveType):
             return f'{indent}bool p{i} = t{i} == Py_True;\n'
 
     def py_value(self, value: str):
-        return f'({value} ? Py_True : Py_False)'
+        return f'({value} ? (Py_INCREF(Py_True), Py_True) : (Py_INCREF(Py_False), Py_False))'
 
 
 class UInt8Type(PrimitiveType):
