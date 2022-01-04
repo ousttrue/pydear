@@ -28,7 +28,7 @@ class VoidType(BaseType):
 
     def cpp_result(self, indent: str, call: str) -> str:
         return f'''{indent}{call};
-{indent}return nullptr;
+{indent}return Py_None;
 '''
 
 

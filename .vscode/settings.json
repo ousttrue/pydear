@@ -16,5 +16,8 @@
         "imgui",
         "pointee"
     ],
-    "cmake.generator": "Ninja"
+    "cmake.generator": "Ninja",
+    "files.associations": {
+        "iostream": "cpp"
+    }
 }

@@ -26,6 +26,13 @@ def load(font: pathlib.Path, size: float, range: ctypes.Array, *, merge=False, m
     fonts = io.Fonts
 
     config = ImGui.ImFontConfig()
+    # memset(this, 0, sizeof(*this));
+    config.FontDataOwnedByAtlas = True
+    config.OversampleH = 3 # FIXME: 2 may be a better default?
+    config.OversampleV = 1
+    config.GlyphMaxAdvanceX = 9999 #FLT_MAX;
+    config.RasterizerMultiply = 1.0
+    config.EllipsisChar = 65535 # (ImWchar)-1;    
     if merge:
         config.MergeMode = True
     if monospace:

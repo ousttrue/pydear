@@ -45,22 +45,25 @@ P_DELETE_TEXTURE = ctypes.CFUNCTYPE(None, ctypes.c_void_p)(delete_texture)
 
 
 def initialize():
-    ImGui.ImFileDialog_SetTextureCallback(
-        ctypes.cast(P_CREATE_TEXTURE, ctypes.c_void_p).value,
-        ctypes.cast(P_DELETE_TEXTURE, ctypes.c_void_p).value)
+    pass
+    # ImGui.ImFileDialog_SetTextureCallback(
+    #     ctypes.cast(P_CREATE_TEXTURE, ctypes.c_void_p).value,
+    #     ctypes.cast(P_DELETE_TEXTURE, ctypes.c_void_p).value)
 
 
 def open_menu(label: bytes):
-    if ImGui.MenuItem(label, None, False, True):
-        ImGui.ImFileDialog_Open(FILE_DIALOG, b'open file', b'*.txt')
+    pass
+    # if ImGui.MenuItem(label, None, False, True):
+    #     ImGui.ImFileDialog_Open(FILE_DIALOG, b'open file', b'*.txt')
 
 
 def get_result() -> Optional[pathlib.Path]:
-    if DELETE_QUEUE:
-        logger.debug(f'file dialog delete: {DELETE_QUEUE}')
-        GL.glDeleteTextures(DELETE_QUEUE)
-        DELETE_QUEUE.clear()
+    pass
+    # if DELETE_QUEUE:
+    #     logger.debug(f'file dialog delete: {DELETE_QUEUE}')
+    #     GL.glDeleteTextures(DELETE_QUEUE)
+    #     DELETE_QUEUE.clear()
 
-    result = ImGui.ImFileDialog_GetResult(FILE_DIALOG)
-    if result:
-        return pathlib.Path(result.decode('utf-8'))
+    # result = ImGui.ImFileDialog_GetResult(FILE_DIALOG)
+    # if result:
+    #     return pathlib.Path(result.decode('utf-8'))

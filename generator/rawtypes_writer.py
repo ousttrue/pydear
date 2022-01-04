@@ -82,6 +82,27 @@ static PyObject* ctypes_cast(PyObject *src, const char *t)
     auto p = PyObject_CallFunction(cast, "OO", src, ptype);
     return PySequence_GetItem(p, 0);
 }
+
+const char *get_cstring(PyObject *src, const char *default_value)
+{
+    if(src){
+        if(auto p = PyUnicode_AsUTF8(src))
+        {
+            return p;
+        }
+        // clear exception
+        PyErr_Clear();
+
+        if(auto p = PyBytes_AsString(src))
+        {
+            return p;
+        }
+        // clear exception
+        PyErr_Clear();
+    }
+
+    return default_value;
+}
 '''
 
 IMGUI_TYPE = '''
@@ -277,10 +298,10 @@ def write_struct(w: io.IOBase, s: StructDecl, flags: wrap_types.WrapFlags) -> It
             write_ctypes_method(w, cursor, method)
             yield cursor, method
 
-    # for code in flags.custom_methods:
-    #     for l in code.splitlines():
-    #         w.write(f'    {l}\n')
-    #     w.write('\n')
+    for code in flags.custom_methods:
+        for l in code.splitlines():
+            w.write(f'    {l}\n')
+        w.write('\n')
 
     if not fields:  # and not methods and not flags.custom_methods:
         w.write('    pass\n\n')
@@ -288,7 +309,7 @@ def write_struct(w: io.IOBase, s: StructDecl, flags: wrap_types.WrapFlags) -> It
 
 def write_header(w: io.IOBase, parser: Parser, header: Header, ctw: io.IOBase):
     w.write(f'''
-# include <{header.path.name}>
+#include <{header.path.name}>
 
 ''')
     if header.path.name == 'imgui.h':
@@ -338,6 +359,7 @@ def write(package_dir: pathlib.Path, parser: Parser, headers: List[Header]):
   #undef _DEBUG
   #include <Python.h>
   #define _DEBUG
+  #include <iostream>
 #else
   #include <Python.h>
 #endif#include <string>
@@ -372,6 +394,10 @@ static struct PyModuleDef module = {{
 PyMODINIT_FUNC
 PyInit_impl(void)
 {{
+#ifdef _DEBUG
+    std::cout << "sizeof: ImGuiIO: " << sizeof(ImGuiIO) << std::endl;
+#endif
+    
     auto m = PyModule_Create(&module);
     if (!m){{
         return NULL;

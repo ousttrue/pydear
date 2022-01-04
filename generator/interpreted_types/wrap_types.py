@@ -203,6 +203,19 @@ class PointerToStructType(PointerType):
     def result_typing(self, pyi: bool) -> str:
         return f'{self.ctypes_type}'
 
+    def cpp_result(self, indent: str, call: str) -> str:
+        if is_wrap_type(self.base.name):
+            return f'''{indent}// {self}
+{indent}auto value = {call};
+{indent}auto p = c_void_p(value);
+{indent}return ctypes_cast(p, "{self.base.name}");
+'''
+        else:
+            return f'''{indent}// {self}
+{indent}auto value = {call};
+{indent}return c_void_p(value);
+'''
+
 
 class ReferenceToStructType(ReferenceType):
     def __init__(self, base: BaseType, is_const: bool):
@@ -250,12 +263,12 @@ class ReferenceToStructType(ReferenceType):
     def cpp_result(self, indent: str, call: str) -> str:
         if is_wrap_type(self.base.name):
             return f'''{indent}// {self}
-{indent}auto &value = {call};
-{indent}auto p = c_void_p(&value);
+{indent}auto value = &{call};
+{indent}auto p = c_void_p(value);
 {indent}return ctypes_cast(p, "{self.base.name}");
 '''
         else:
             return f'''{indent}// {self}
-{indent}auto &value = {call};
-{indent}return c_void_p(&value);
+{indent}auto value = &{call};
+{indent}return c_void_p(value);
 '''

@@ -126,6 +126,9 @@ class ArrayType(PointerType):
             raise RuntimeError()
         return f'{self.base.ctypes_type} * {self.size}'
 
+    def ctypes_field(self, indent: str, name: str) -> str:
+        return f'{indent}("{name}", {self.ctypes_type}), # {self}\n'
+
     def param(self, name: str, default_value: str, pyi: bool) -> str:
         return f'{name}: ctypes.Array{default_value}'
 
