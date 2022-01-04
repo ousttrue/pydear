@@ -1,6 +1,6 @@
 
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2", "cython", "cmake", "ninja"]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2", "cython", "cmake", "ninja", "pybind11"]
 
 [tool.setuptools_scm]
-write_to = "src/cydeer/_version.py"
+write_to = "src/pydeer/_version.py"

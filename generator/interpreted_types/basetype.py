@@ -57,3 +57,30 @@ class BaseType:
         extract result
         '''
         raise NotImplementedError()
+
+    def cpp_extract_name(self, i: int):
+        return f't{i}'
+
+    def cpp_param_declare(self, indent: str, i: int, name) -> str:
+        return f'''{indent}// {self}
+{indent}PyObject *{self.cpp_extract_name(i)} = NULL;
+'''
+
+    @property
+    def format(self) -> str:
+        return 'O'
+
+    def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
+        raise NotImplementedError()
+
+    def cpp_call_name(self, i: int):
+        return f'p{i}'
+
+    def py_value(self, value: str):
+        raise NotImplementedError()
+
+    def cpp_result(self, indent: str, call: str) -> str:
+        return f'''auto value = {indent}{call};
+{indent}PyObject* py_value = {self.py_value("value")};
+{indent}return py_value;
+'''

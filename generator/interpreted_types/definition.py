@@ -9,7 +9,7 @@ class TypedefType(BaseType):
     @property
     def ctypes_type(self) -> str:
         # TODO:
-        return 'ctypes.c_void_p' # function pointer
+        return 'ctypes.c_void_p'  # function pointer
 
     def param(self, name: str, default_value: str, pyi: bool) -> str:
         return name + default_value
@@ -24,6 +24,12 @@ class TypedefType(BaseType):
         return f'''{indent}# {self}
 {indent}return {call}
 '''
+
+    def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
+        if default_value:
+            return f'{indent}{self.name} p{i} = t{i} ? ctypes_get_pointer<{self.name}>(t{i}) : {default_value};\n'
+        else:
+            return f'{indent}{self.name} p{i} = ctypes_get_pointer<{self.name}>(t{i});\n'
 
 
 class StructType(BaseType):

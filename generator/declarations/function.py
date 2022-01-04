@@ -1,4 +1,5 @@
 from typing import Iterable, List, Tuple, NamedTuple
+import pathlib
 import logging
 import io
 from clang import cindex
@@ -156,6 +157,10 @@ class FunctionDecl(NamedTuple):
     @property
     def cursor(self) -> cindex.Cursor:
         return self.cursors[-1]
+
+    @property
+    def path(self) -> pathlib.Path:
+        return pathlib.Path(self.cursor.location.file.name)
 
     @property
     def spelling(self) -> str:

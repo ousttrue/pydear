@@ -41,7 +41,7 @@ class PointerType(BaseType):
     def cdef_param(self, indent: str, i: int, name: str) -> str:
         base_name = add_impl(self.base)
         return f'''{indent}# {self}
-{indent}cdef {base_name} *p{i} = NULL;
+{indent}cdef {base_name} *p{i};
 {indent}if isinstance({name}, ctypes.c_void_p):
 {indent}    p{i} = <{base_name} *><uintptr_t>({name}.value)
 {indent}if isinstance({name}, (ctypes.Array, ctypes.Structure)):
@@ -54,12 +54,22 @@ class PointerType(BaseType):
 {indent}return ctypes.c_void_p(<uintptr_t>value)
 '''
 
+    def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
+        if default_value:
+            return f'{indent}{self.base.name} *p{i} = t{i} ? ctypes_get_pointer<{self.base.name}*>(t{i}) : {default_value};\n'
+        else:
+            return f'{indent}{self.base.name} *p{i} = ctypes_get_pointer<{self.base.name}*>(t{i});\n'
 
-class ReferenceType(BaseType):
+    def py_value(self, value: str) -> str:
+        return f'c_void_p({value})'
+
+
+class ReferenceType(PointerType):
     base: BaseType
 
     def __init__(self, base: BaseType, is_const=False):
-        super().__init__(base.name + '&', base, is_const)
+        super().__init__(base, is_const)
+        self.name = base.name + '&'
 
     def result_typing(self, pyi: bool) -> str:
         return 'ctypes.c_void_p'
@@ -89,19 +99,33 @@ class ReferenceType(BaseType):
 {indent}return ctypes.c_void_p(<uintptr_t>value)
 '''
 
+    def cpp_call_name(self, i: int):
+        return f'*p{i}'
 
-class ArrayType(BaseType):
+    def cpp_result(self, indent: str, call: str) -> str:
+        return f'''{indent}// {self}
+{indent}auto *value = &{call};
+{indent}auto py_value = c_void_p(value);
+{indent}return py_value;
+'''
+
+
+class ArrayType(PointerType):
     size: int
 
     def __init__(self, base: BaseType, size: int, is_const=False):
-        super().__init__(f'{base.name}[{size}]', base, is_const)
+        super().__init__(base, is_const)
         self.size = size
+        self.name = f'{base.name}[{size}]'
 
     @property
     def ctypes_type(self) -> str:
         if not self.base:
             raise RuntimeError()
         return f'{self.base.ctypes_type} * {self.size}'
+
+    def ctypes_field(self, indent: str, name: str) -> str:
+        return f'{indent}("{name}", {self.ctypes_type}), # {self}\n'
 
     def param(self, name: str, default_value: str, pyi: bool) -> str:
         return f'{name}: ctypes.Array{default_value}'
@@ -145,73 +169,3 @@ class RefenreceToStdArrayType(BaseType):
 
     def result_typing(self, pyi: bool) -> str:
         return 'ctypes.c_void_p'
-
-
-class PointerToStructType(BaseType):
-    def __init__(self, base: BaseType, is_const: bool):
-        super().__init__(base.name + '*', base, is_const)
-
-    @property
-    def ctypes_type(self) -> str:
-        if not self.base:
-            raise RuntimeError()
-        return f'{self.base.name}'
-
-    def ctypes_field(self, indent: str, name: str) -> str:
-        return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
-
-    def param(self, name: str, default_value: str, pyi: bool) -> str:
-        return f'{name}: {self.ctypes_type}{default_value}'
-
-    def cdef_param(self, indent: str, i: int, name: str) -> str:
-        return f'''{indent}# {self}
-{indent}cdef impl.{self.ctypes_type} *p{i} = NULL
-{indent}if {name}:
-{indent}    p{i} = <impl.{self.ctypes_type}*><uintptr_t>ctypes.addressof({name})
-'''
-
-    def cdef_result(self, indent: str, call: str) -> str:
-        return f'''{indent}# {self}
-{indent}cdef impl.{self.ctypes_type} *value = {call}
-{indent}if value:
-{indent}    return ctypes.cast(<uintptr_t>value, ctypes.POINTER({self.ctypes_type}))[0]
-'''
-
-    def result_typing(self, pyi: bool) -> str:
-        return f'{self.ctypes_type}'
-
-
-class ReferenceToStructType(BaseType):
-    def __init__(self, base: BaseType, is_const: bool):
-        super().__init__(base.name + '&', base, is_const)
-
-    @property
-    def ctypes_type(self) -> str:
-        if not self.base:
-            raise RuntimeError()
-        return f'{self.base.name}'
-
-    def ctypes_field(self, indent: str, name: str) -> str:
-        return f'{indent}("{name}", ctypes.c_void_p), # {self}\n'
-
-    def param(self, name: str, default_value: str, pyi: bool) -> str:
-        return f'{name}: {self.ctypes_type}{default_value}'
-
-    def cdef_param(self, indent: str, i: int, name: str) -> str:
-        return f'''{indent}# {self}
-{indent}cdef {self.const_prefix}impl.{self.ctypes_type} *p{i} = NULL
-{indent}if isinstance({name}, ctypes.Structure):
-{indent}    p{i} = <{self.const_prefix}impl.{self.ctypes_type} *><uintptr_t>ctypes.addressof({name})
-'''
-
-    def call_param(self, i: int) -> str:
-        return f'p{i}[0]'
-
-    def cdef_result(self, indent: str, call: str) -> str:
-        return f'''{indent}# {self}
-{indent}cdef {self.const_prefix}impl.{self.ctypes_type} *value = &{call}
-{indent}return ctypes.cast(ctypes.c_void_p(<uintptr_t>value), ctypes.POINTER({self.ctypes_type}))[0]
-'''
-
-    def result_typing(self, pyi: bool) -> str:
-        return f'{self.ctypes_type}'

@@ -4,8 +4,8 @@ import re
 from clang import cindex
 from .basetype import BaseType
 from . import primitive_types
-from .pointer_types import PointerType, ReferenceType, ArrayType, PointerToStructType, ReferenceToStructType, RefenreceToStdArrayType
-from .wrap_types import WRAP_TYPES, ImVector, ImVec2WrapType, ImVec4WrapType, VertexBufferType
+from .pointer_types import PointerType, ReferenceType, ArrayType, RefenreceToStdArrayType
+from .wrap_types import WRAP_TYPES, ImVector, ImVec2WrapType, ImVec4WrapType, VertexBufferType, PointerToStructType, ReferenceToStructType
 from .definition import StructType, TypedefType, EnumType
 from .string import StringType, CStringType
 

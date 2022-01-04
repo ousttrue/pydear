@@ -1,7 +1,7 @@
 from typing import Callable, List, Iterable
 import ctypes
 import dataclasses
-import cydeer as ImGui
+import pydeer as ImGui
 '''
 https://gist.github.com/rmitton/f80cbb028fca4495ab1859a155db4cd8
 '''
