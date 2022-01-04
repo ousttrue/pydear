@@ -120,14 +120,12 @@ const char *get_cstring(PyObject *src, const char *default_value)
         {
             return p;
         }
-        // clear exception
         PyErr_Clear();
 
         if(auto p = PyBytes_AsString(src))
         {
             return p;
         }
-        // clear exception
         PyErr_Clear();
     }
 
@@ -138,6 +136,13 @@ const char *get_cstring(PyObject *src, const char *default_value)
 IMGUI_TYPE = '''
 static ImVec2 get_ImVec2(PyObject *src)
 {
+    float x, y;
+    if(PyArg_ParseTuple(src, "ff", &x, &y))
+    {
+        return {x, y};
+    }
+    PyErr_Clear();
+
     return {};
 }
 '''
