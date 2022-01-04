@@ -31,31 +31,22 @@ static void s_initialize()
     }
     // ctypes
     s_ctypes = PyImport_ImportModule("ctypes");    
-    Py_INCREF(s_ctypes);
 
     s_ctypes_c_void_p = PyObject_GetAttrString(s_ctypes, "c_void_p");
-    Py_INCREF(s_ctypes_c_void_p);
 
     s_ctypes_addressof = PyObject_GetAttrString(s_ctypes, "addressof");
-    Py_INCREF(s_ctypes_addressof);
 
     s_ctypes_Array = PyObject_GetAttrString(s_ctypes, "Array");
-    Py_INCREF(s_ctypes_Array);
 
     s_ctypes_Structure = PyObject_GetAttrString(s_ctypes, "Structure");
-    Py_INCREF(s_ctypes_Structure);
 
     s_ctypes_POINTER = PyObject_GetAttrString(s_ctypes, "POINTER");
-    Py_INCREF(s_ctypes_POINTER);
 
     s_ctypes_cast = PyObject_GetAttrString(s_ctypes, "cast");
-    Py_INCREF(s_ctypes_cast);
     //
     s_value = PyUnicode_FromString("value");
-    Py_INCREF(s_value);
     //
     s_pydeer_ctypes = PyImport_ImportModule("pydeer.ctypes");
-    Py_INCREF(s_pydeer_ctypes);
 }
 
 template<typename T>
@@ -70,6 +61,7 @@ T ctypes_get_pointer(PyObject *src)
         if(PyObject *p = PyObject_GetAttr(src, s_value))
         {
             auto pp = PyLong_AsVoidPtr(p);
+            Py_DECREF(p);
             return (T)pp;
         }
         PyErr_Clear();
@@ -81,6 +73,7 @@ T ctypes_get_pointer(PyObject *src)
         if(PyObject *p = PyObject_CallFunction(s_ctypes_addressof, "O", src))
         {
             auto pp = PyLong_AsVoidPtr(p);
+            Py_DECREF(p);
             return (T)pp;
         }
         PyErr_Clear();
@@ -100,7 +93,6 @@ static PyObject* GetCTypesType(const char *t)
 
     auto T = PyObject_GetAttrString(s_pydeer_ctypes, t);
     auto result = PyObject_CallFunction(s_ctypes_POINTER, "O", T);
-    Py_INCREF(result);
     s_map.insert(std::make_pair(std::string(t), result));
     return result;
 }
@@ -110,7 +102,10 @@ static PyObject* ctypes_cast(PyObject *src, const char *t)
     // ctypes.cast(src, ctypes.POINTER(t))[0]
     auto ptype = GetCTypesType(t);
     auto p = PyObject_CallFunction(s_ctypes_cast, "OO", src, ptype);
-    return PySequence_GetItem(p, 0);
+    Py_DECREF(src);
+    auto py_value = PySequence_GetItem(p, 0);
+    Py_DECREF(p);
+    return py_value;
 }
 
 const char *get_cstring(PyObject *src, const char *default_value)
@@ -149,11 +144,8 @@ static ImVec2 get_ImVec2(PyObject *src)
 
 C_VOID_P = '''
 static PyObject* c_void_p(const void* address)
-{
-    static auto ctypes = PyImport_ImportModule("ctypes");
-    static auto c_void_p = PyObject_GetAttrString(ctypes, "c_void_p");
-    
-    return PyObject_CallFunction(c_void_p, "K", (uintptr_t)address);
+{   
+    return PyObject_CallFunction(s_ctypes_c_void_p, "K", (uintptr_t)address);
 }
 '''
 
