@@ -45,11 +45,12 @@ def generate(EXTERNAL_DIR: pathlib.Path, PACKAGE_DIR: pathlib.Path, EXT_TYPE: Ex
 
     import generator  # noqa
 
-    match EXT_TYPE:
-        case ExtType.RAWTYPES:
-            from generator.rawtypes_writer import write
-        case ExtType.CYTHON:
-            from generator.cython_writer import write
+    if EXT_TYPE == ExtType.RAWTYPES:
+        from generator.rawtypes_writer import write
+    elif EXT_TYPE == ExtType.CYTHON:
+        from generator.cython_writer import write
+    else:
+        raise RuntimeError()
 
     generator.generate(headers, PACKAGE_DIR, write)
 
