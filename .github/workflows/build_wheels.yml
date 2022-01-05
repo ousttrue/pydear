@@ -20,10 +20,10 @@ jobs:
           python-version: "3.10"
 
       - name: Build SDist
-        run: python -m pip build --sdist
+        run: pipx run build --sdist
 
       - name: Check metadata
-        run: python -m pip twine check dist/*
+        run: pipx run twine check dist/*
 
       - uses: actions/upload-artifact@v2
         with:
