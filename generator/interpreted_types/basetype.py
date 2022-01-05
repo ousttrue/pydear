@@ -80,7 +80,7 @@ class BaseType:
         raise NotImplementedError()
 
     def cpp_result(self, indent: str, call: str) -> str:
-        return f'''auto value = {indent}{call};
+        return f'''{indent}auto value = {call};
 {indent}PyObject* py_value = {self.py_value("value")};
 {indent}return py_value;
 '''

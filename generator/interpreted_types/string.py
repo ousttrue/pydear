@@ -34,6 +34,9 @@ class StringType(BaseType):
 {indent}return {call}
 '''
 
+    def py_value(self, value: str):
+        return f'py_string({value})'
+
 
 class CStringType(BaseType):
     def __init__(self):

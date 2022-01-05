@@ -1,3 +1,4 @@
+from generator.header import Header
 from typing import List
 import setuptools
 from enum import Enum
@@ -22,7 +23,6 @@ try:
 except:
     # get clang
     import _external.pycindex.setup
-from generator.header import Header
 headers: List[Header] = [
     # Header(
     #     EXTERNAL_DIR, 'tinygizmo/tinygizmo/tiny-gizmo.hpp',
@@ -30,9 +30,9 @@ headers: List[Header] = [
     Header(
         EXTERNAL_DIR, 'imgui/imgui.h',
         include_dirs=[EXTERNAL_DIR / 'imgui']),
-    # Header(
-    #     EXTERNAL_DIR, 'ImFileDialogWrap.h',
-    #     include_dirs=[EXTERNAL_DIR]),
+    Header(
+        EXTERNAL_DIR, 'ImFileDialogWrap.h',
+        include_dirs=[EXTERNAL_DIR]),
     # Header(
     #     EXTERNAL_DIR, 'ImGuizmo/ImGuizmo.h',
     #     include_dirs=[EXTERNAL_DIR / 'ImGuizmo'], prefix='ImGuizmo_'),
@@ -61,8 +61,11 @@ def rel_path(src: pathlib.Path) -> str:
 
 
 # build imgui to build/Release/lib/imgui.lib
-subprocess.run('cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release')
-subprocess.run('cmake --build build --config Release')
+build_type = "Release"
+if '--debug' in sys.argv:
+    build_type = "Debug"
+subprocess.run(f'cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE={build_type}')
+subprocess.run(f'cmake --build build --config {build_type}')
 
 extensions = []
 match EXT_TYPE:
@@ -80,7 +83,7 @@ match EXT_TYPE:
             # cmake built
             libraries=["imgui", "Advapi32", "Gdi32"],
             library_dirs=[
-                str(CMAKE_BUILD / 'Release/lib')],
+                str(CMAKE_BUILD / f'{build_type}/lib')],
         )]
 
     case ExtType.CYTHON:

@@ -19,6 +19,7 @@ static PyObject* s_ctypes_addressof = nullptr;
 static PyObject* s_ctypes_Array = nullptr;
 static PyObject* s_ctypes_Structure = nullptr;
 static PyObject* s_ctypes_POINTER = nullptr;
+static PyObject* s_ctypes_CFUNCTYPE = nullptr;
 static PyObject* s_ctypes_cast = nullptr;
 static PyObject* s_value = nullptr;
 static PyObject* s_pydeer_ctypes = nullptr;
@@ -31,17 +32,12 @@ static void s_initialize()
     }
     // ctypes
     s_ctypes = PyImport_ImportModule("ctypes");    
-
     s_ctypes_c_void_p = PyObject_GetAttrString(s_ctypes, "c_void_p");
-
     s_ctypes_addressof = PyObject_GetAttrString(s_ctypes, "addressof");
-
     s_ctypes_Array = PyObject_GetAttrString(s_ctypes, "Array");
-
     s_ctypes_Structure = PyObject_GetAttrString(s_ctypes, "Structure");
-
     s_ctypes_POINTER = PyObject_GetAttrString(s_ctypes, "POINTER");
-
+    s_ctypes_CFUNCTYPE = PyObject_GetAttrString(s_ctypes, "CFUNCTYPE");
     s_ctypes_cast = PyObject_GetAttrString(s_ctypes, "cast");
     //
     s_value = PyUnicode_FromString("value");
@@ -69,7 +65,7 @@ T ctypes_get_pointer(PyObject *src)
 
     // ctypes.Array   
     // ctypes.Structure
-    if(PyObject_IsInstance(src, s_ctypes_Array) || PyObject_IsInstance(src, s_ctypes_Structure)){
+    if(PyObject_IsInstance(src, s_ctypes_Array) || PyObject_IsInstance(src, s_ctypes_Structure) || PyObject_IsInstance(src, s_ctypes_CFUNCTYPE)){
         if(PyObject *p = PyObject_CallFunction(s_ctypes_addressof, "O", src))
         {
             auto pp = PyLong_AsVoidPtr(p);
@@ -108,7 +104,7 @@ static PyObject* ctypes_cast(PyObject *src, const char *t)
     return py_value;
 }
 
-const char *get_cstring(PyObject *src, const char *default_value)
+static const char *get_cstring(PyObject *src, const char *default_value)
 {
     if(src){
         if(auto p = PyUnicode_AsUTF8(src))
@@ -125,6 +121,11 @@ const char *get_cstring(PyObject *src, const char *default_value)
     }
 
     return default_value;
+}
+
+static PyObject* py_string(const std::string_view &src)
+{
+    return PyUnicode_FromStringAndSize(src.data(), src.size());
 }
 '''
 
@@ -389,7 +390,10 @@ def write(package_dir: pathlib.Path, parser: Parser, headers: List[Header]):
   #include <iostream>
 #else
   #include <Python.h>
-#endif#include <string>
+#endif
+
+#include <string>
+#include <string_view>
 #include <unordered_map>
 
 ''')
