@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>rawtypes &#8212; pydeer  ドキュメント</title>
+    <title>引き数 &#8212; pydeer  ドキュメント</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
     
@@ -19,8 +19,8 @@
     <script src="../_static/bizstyle.js"></script>
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="検索" href="../search.html" />
-    <link rel="next" title="引き数" href="args.html" />
-    <link rel="prev" title="pydeer 🦌" href="../index.html" />
+    <link rel="next" title="関数の実行と戻り値" href="result.html" />
+    <link rel="prev" title="rawtypes" href="index.html" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
     <script src="_static/css3-mediaqueries.js"></script>
@@ -33,13 +33,14 @@
           <a href="../genindex.html" title="総合索引"
              accesskey="I">索引</a></li>
         <li class="right" >
-          <a href="args.html" title="引き数"
+          <a href="result.html" title="関数の実行と戻り値"
              accesskey="N">次へ</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="pydeer 🦌"
+          <a href="index.html" title="rawtypes"
              accesskey="P">前へ</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">pydeer  ドキュメント</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">rawtypes</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">rawtypes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">引き数</a></li> 
       </ul>
     </div>  
 
@@ -48,19 +49,20 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section class="tex2jax_ignore mathjax_ignore" id="rawtypes">
-<h1>rawtypes<a class="headerlink" href="#rawtypes" title="このヘッドラインへのパーマリンク">¶</a></h1>
-<p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">extension</span></code> のコード生成に関するノート。</p>
-<p><a class="reference external" href="https://docs.python.org/3/extending/extending.html">https://docs.python.org/3/extending/extending.html</a></p>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>引き数<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h1>
 <ul class="simple">
-<li><p>python module(<code class="docutils literal notranslate"><span class="pre">xxx.py</span></code> を import すること)</p></li>
-<li><p>python package(<code class="docutils literal notranslate"><span class="pre">xxx/__init__.py</span></code> を import すること)</p></li>
-<li><p>python extension(ネイティブモジュールを指す。<code class="docutils literal notranslate"><span class="pre">xxx.pyd</span></code>)</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/c-api/index.html">https://docs.python.org/3/c-api/index.html</a></p>
+<ul>
+<li><p><a class="reference external" href="https://docs.python.org/3/c-api/arg.html">https://docs.python.org/3/c-api/arg.html</a></p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/extending/extending.html#extracting-parameters-in-extension-functions">https://docs.python.org/3/extending/extending.html#extracting-parameters-in-extension-functions</a></p></li>
 </ul>
-<p>extension に登録する関数のシグネチャーは以下の通り。</p>
+</li>
+</ul>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span><span class="nf">EXPORT_FUNC</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">args</span><span class="p">);</span>
 </pre></div>
 </div>
+<p>の args を C++ の変数に展開する。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// 例</span>
 <span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span><span class="nf">imgui_Begin</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">args</span><span class="p">){</span>
   <span class="c1">// CStringType: const char *</span>
@@ -73,29 +75,35 @@
   <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">p0</span> <span class="o">=</span> <span class="n">get_cstring</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
   <span class="kt">bool</span> <span class="o">*</span><span class="n">p1</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">?</span> <span class="n">ctypes_get_pointer</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span> <span class="o">:</span>  <span class="nb">NULL</span><span class="p">;</span>
   <span class="kt">int</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">t2</span> <span class="o">?</span> <span class="n">PyLong_AsLong</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span> <span class="o">:</span>  <span class="mi">0</span><span class="p">;</span>
-  <span class="k">auto</span> <span class="n">value</span> <span class="o">=</span> <span class="n">ImGui</span><span class="o">::</span><span class="n">Begin</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">);</span>
-  <span class="n">PyObject</span><span class="o">*</span> <span class="n">py_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="o">?</span> <span class="p">(</span><span class="n">Py_INCREF</span><span class="p">(</span><span class="n">Py_True</span><span class="p">),</span> <span class="n">Py_True</span><span class="p">)</span> <span class="o">:</span> <span class="p">(</span><span class="n">Py_INCREF</span><span class="p">(</span><span class="n">Py_False</span><span class="p">),</span> <span class="n">Py_False</span><span class="p">));</span>
-  <span class="k">return</span> <span class="n">py_value</span><span class="p">;</span>
-<span class="p">}</span>
 </pre></div>
 </div>
-<div class="toctree-wrapper compound">
+<section id="n-pyobject">
+<h2>N 個の引数を <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> に展開する。<a class="headerlink" href="#n-pyobject" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PyArg_ParseTuple</span></code> を使って <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> 型の変数 <code class="docutils literal notranslate"><span class="pre">p0</span></code>, <code class="docutils literal notranslate"><span class="pre">p1</span></code>, <code class="docutils literal notranslate"><span class="pre">p2</span></code> に展開する</p></li>
+<li><p>&quot;O|OO&quot;: 3つの引き数</p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="args.html">引き数</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="args.html#n-pyobject">N 個の引数を <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> に展開する。</a></li>
-<li class="toctree-l2"><a class="reference internal" href="args.html#n-pyobject-c">N 個の <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> を <code class="docutils literal notranslate"><span class="pre">C++</span></code> の変数に取り出す(引き数のデフォルト値を考慮)</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="result.html">関数の実行と戻り値</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="result.html#id2">関数の実行</a></li>
-<li class="toctree-l2"><a class="reference internal" href="result.html#void">void</a></li>
-<li class="toctree-l2"><a class="reference internal" href="result.html#id3">戻り値 (void以外)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="result.html#py-incref">Py_INCREF</a></li>
-<li class="toctree-l2"><a class="reference internal" href="result.html#py-decref">Py_DECREF</a></li>
+<li><p>O: <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> 型</p></li>
+<li><p>|: より後ろはデフォルト値を持つ省略可能な引き数</p></li>
+<li><p>省略された引数は <code class="docutils literal notranslate"><span class="pre">NULL</span></code> になるのでデフォルト値を適用すること</p></li>
 </ul>
 </li>
 </ul>
-</div>
+<p>p2 は、<code class="docutils literal notranslate"><span class="pre">O</span></code> を <code class="docutils literal notranslate"><span class="pre">i</span></code> にかえることで <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> を経由せずに直接 <code class="docutils literal notranslate"><span class="pre">int</span></code> 型に取り出すことができるが、コード生成の手抜き。</p>
+</section>
+<section id="n-pyobject-c">
+<h2>N 個の <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> を <code class="docutils literal notranslate"><span class="pre">C++</span></code> の変数に取り出す(引き数のデフォルト値を考慮)<a class="headerlink" href="#n-pyobject-c" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<ul class="simple">
+<li><p>p1 のデフォルト値は <code class="docutils literal notranslate"><span class="pre">NULL</span></code></p></li>
+<li><p>p2 のデフォルト値は <code class="docutils literal notranslate"><span class="pre">0</span></code></p></li>
+</ul>
+<p>この段階で、各引数の複数の型への対応を実装できる。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code> と <code class="docutils literal notranslate"><span class="pre">bytes</span></code> の両対応</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ctypes.Array</span></code> と <code class="docutils literal notranslate"><span class="pre">ctypes.Structure</span></code> の両対応</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Tuple[float,</span> <span class="pre">float]</span></code> を <code class="docutils literal notranslate"><span class="pre">ImVec2</span></code> に展開する</p></li>
+</ul>
+</section>
 </section>
 
 
@@ -105,16 +113,25 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">目次</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">引き数</a><ul>
+<li><a class="reference internal" href="#n-pyobject">N 個の引数を <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> に展開する。</a></li>
+<li><a class="reference internal" href="#n-pyobject-c">N 個の <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> を <code class="docutils literal notranslate"><span class="pre">C++</span></code> の変数に取り出す(引き数のデフォルト値を考慮)</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>前のトピックへ</h4>
-  <p class="topless"><a href="../index.html"
-                        title="前の章へ">pydeer 🦌</a></p>
+  <p class="topless"><a href="index.html"
+                        title="前の章へ">rawtypes</a></p>
   <h4>次のトピックへ</h4>
-  <p class="topless"><a href="args.html"
-                        title="次の章へ">引き数</a></p>
+  <p class="topless"><a href="result.html"
+                        title="次の章へ">関数の実行と戻り値</a></p>
   <div role="note" aria-label="source link">
     <h3>このページ</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/rawtypes/index.md.txt"
+      <li><a href="../_sources/rawtypes/args.md.txt"
             rel="nofollow">ソースコードを表示</a></li>
     </ul>
    </div>
@@ -139,13 +156,14 @@
           <a href="../genindex.html" title="総合索引"
              >索引</a></li>
         <li class="right" >
-          <a href="args.html" title="引き数"
+          <a href="result.html" title="関数の実行と戻り値"
              >次へ</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="pydeer 🦌"
+          <a href="index.html" title="rawtypes"
              >前へ</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">pydeer  ドキュメント</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">rawtypes</a></li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >rawtypes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">引き数</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

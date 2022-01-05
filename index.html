@@ -19,7 +19,7 @@
     <script src="_static/bizstyle.js"></script>
     <link rel="index" title="索引" href="genindex.html" />
     <link rel="search" title="検索" href="search.html" />
-    <link rel="next" title="cython" href="cython/index.html" />
+    <link rel="next" title="rawtypes" href="rawtypes/index.html" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
     <script src="_static/css3-mediaqueries.js"></script>
@@ -32,7 +32,7 @@
           <a href="genindex.html" title="総合索引"
              accesskey="I">索引</a></li>
         <li class="right" >
-          <a href="cython/index.html" title="cython"
+          <a href="rawtypes/index.html" title="rawtypes"
              accesskey="N">次へ</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">pydeer  ドキュメント</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">pydeer 🦌</a></li> 
@@ -46,49 +46,41 @@
             
   <section class="tex2jax_ignore mathjax_ignore" id="pydeer">
 <h1>pydeer 🦌<a class="headerlink" href="#pydeer" title="このヘッドラインへのパーマリンク">¶</a></h1>
-<p>実装メモ。
-<code class="docutils literal notranslate"><span class="pre">cython</span></code> である程度動くところまで作ったのだけど、
-<code class="docutils literal notranslate"><span class="pre">namespace</span></code> に入った型の取り扱いなど <code class="docutils literal notranslate"><span class="pre">c++</span></code> 要素が手に負えなくなってきた。
-(<code class="docutils literal notranslate"><span class="pre">im3d</span></code> のラップを試みて失敗した)</p>
+<p><code class="docutils literal notranslate"><span class="pre">clang.cindex</span></code> で読み取ったヘッダ情報から <code class="docutils literal notranslate"><span class="pre">c++</span></code> コードを生成して作った <code class="docutils literal notranslate"><span class="pre">imgui</span></code> バインディング。</p>
+<p>はじめ <code class="docutils literal notranslate"><span class="pre">clang.cindex</span></code> を使った <code class="docutils literal notranslate"><span class="pre">cython</span></code> のコード生成である程度動くところまで作ったのだけど、
+<code class="docutils literal notranslate"><span class="pre">namespace</span></code> に入った型の取り扱いなど <code class="docutils literal notranslate"><span class="pre">c++</span></code> 要素が手に負えなくなってきたのを機に、
+<code class="docutils literal notranslate"><span class="pre">cython</span></code> じゃなくて <code class="docutils literal notranslate"><span class="pre">c++</span></code> を生成する方向に路線を変更した。</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="cython/index.html">cython</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cython/index.html#cython-ctypes">cython + ctypes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cython/index.html#id1">個別の型変換</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="cython/in/index.html">in</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="cython/in/index.html#primitive">primitive</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cython/in/index.html#pointer">pointer</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cython/in/index.html#const-char">const char *</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cython/in/index.html#const-imvec2">const ImVec2&amp;</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="cython/out/index.html">out</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="cython/out/index.html#struct">Struct &amp;</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="rawtypes/index.html">rawtypes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="rawtypes/index.html#id1">関数</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rawtypes/index.html#id2">引数の取り出し</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#int-float-bool">int, float, bool</a></li>
-<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#object">object</a></li>
-<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#ctypes-c-void-p">ctypes.c_void_p</a></li>
-<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#ctypes-array">ctypes.Array</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rawtypes/args.html">引き数</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/args.html#n-pyobject">N 個の引数を <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> に展開する。</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/args.html#n-pyobject-c">N 個の <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> を <code class="docutils literal notranslate"><span class="pre">C++</span></code> の変数に取り出す(引き数のデフォルト値を考慮)</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="rawtypes/index.html#id3">返り値</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#id4">int, float, bool</a></li>
-<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#id5">ctypes.c_void_p</a></li>
-<li class="toctree-l3"><a class="reference internal" href="rawtypes/index.html#id6">ctypes.Array</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rawtypes/result.html">関数の実行と戻り値</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/result.html#id2">関数の実行</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/result.html#void">void</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/result.html#id3">戻り値 (void以外)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/result.html#py-incref">Py_INCREF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rawtypes/result.html#py-decref">Py_DECREF</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">pybind11</span></code> の利用を検討したのだけど見送った。
+不完全型のポインタを <code class="docutils literal notranslate"><span class="pre">ctypes.c_void_p</span></code> で返したかったのだけど方法がわからず。
+<code class="docutils literal notranslate"><span class="pre">template</span></code> が手に負えなかったのである。</p>
+<section id="id1">
+<h2>参考<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/pyimgui/pyimgui">https://github.com/pyimgui/pyimgui</a></p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">cython</span></code> による <code class="docutils literal notranslate"><span class="pre">imgui</span></code> バインディング。
+このライブラリを改造して使っていて、自作してみようと思った。</p>
+</section>
 <section id="indices-and-tables">
 <h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="このヘッドラインへのパーマリンク">¶</a></h2>
 <ul class="simple">
@@ -109,14 +101,15 @@
   <h3><a href="#">目次</a></h3>
   <ul>
 <li><a class="reference internal" href="#">pydeer 🦌</a><ul>
+<li><a class="reference internal" href="#id1">参考</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>次のトピックへ</h4>
-  <p class="topless"><a href="cython/index.html"
-                        title="次の章へ">cython</a></p>
+  <p class="topless"><a href="rawtypes/index.html"
+                        title="次の章へ">rawtypes</a></p>
   <div role="note" aria-label="source link">
     <h3>このページ</h3>
     <ul class="this-page-menu">
@@ -145,7 +138,7 @@
           <a href="genindex.html" title="総合索引"
              >索引</a></li>
         <li class="right" >
-          <a href="cython/index.html" title="cython"
+          <a href="rawtypes/index.html" title="rawtypes"
              >次へ</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">pydeer  ドキュメント</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">pydeer 🦌</a></li> 

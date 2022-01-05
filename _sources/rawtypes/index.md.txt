@@ -1,48 +1,39 @@
 # rawtypes
 
-自前でコード生成する。
+`python extension` のコード生成に関するノート。
 
 <https://docs.python.org/3/extending/extending.html>
 
-## 関数
+* python module(`xxx.py` を import すること)
+* python package(`xxx/__init__.py` を import すること)
+* python extension(ネイティブモジュールを指す。`xxx.pyd`)
 
-登録する関数のシグネチャーは以下の通り。
+extension に登録する関数のシグネチャーは以下の通り。
 
 ```c++
 static PyObject *EXPORT_FUNC(PyObject *self, PyObject *args);
 ```
 
-## 引数の取り出し
+```c++
+// 例
+static PyObject *imgui_Begin(PyObject *self, PyObject *args){
+  // CStringType: const char *
+  PyObject *t0 = NULL;
+  // PointerType: bool*
+  PyObject *t1 = NULL;
+  // Int32Type: int
+  PyObject *t2 = NULL;
+  if(!PyArg_ParseTuple(args, "O|OO", &t0, &t1, &t2)) return NULL;
+  const char *p0 = get_cstring(t0, nullptr);
+  bool *p1 = t1 ? ctypes_get_pointer<bool*>(t1) :  NULL;
+  int p2 = t2 ? PyLong_AsLong(t2) :  0;
+  auto value = ImGui::Begin(p0, p1, p2);
+  PyObject* py_value = (value ? (Py_INCREF(Py_True), Py_True) : (Py_INCREF(Py_False), Py_False));
+  return py_value;
+}
+```
 
-<https://docs.python.org/3/c-api/arg.html>
-
-`PyObject *args` から値を取り出す。
-
--   <https://docs.python.org/3/extending/extending.html#extracting-parameters-in-extension-functions>
--   <https://docs.python.org/3/c-api/index.html>
-
-### int, float, bool
-
-* <https://docs.python.org/3/c-api/number.html>
-* <https://docs.python.org/3/c-api/long.html>
-
-### object
-
-<https://docs.python.org/3/c-api/object.html>
-
-### ctypes.c_void_p
-
--   <https://github.com/python/cpython/blob/main/Modules/_ctypes/ctypes.h>
--   <https://github.com/python/cpython/blob/main/Modules/_ctypes/_ctypes.c>
-
-### ctypes.Array
-
-## 返り値
-
-`PyObject*` を返す。
-
-### int, float, bool
-
-### ctypes.c_void_p
-
-### ctypes.Array
+```{toctree}
+args
+result
+```

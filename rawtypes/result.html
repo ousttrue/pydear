@@ -1,0 +1,168 @@
+
+
+<!doctype html>
+
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>関数の実行と戻り値 &#8212; pydeer  ドキュメント</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/translations.js"></script>
+    <script src="../_static/bizstyle.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="prev" title="引き数" href="args.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="総合索引"
+             accesskey="I">索引</a></li>
+        <li class="right" >
+          <a href="args.html" title="引き数"
+             accesskey="P">前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pydeer  ドキュメント</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">rawtypes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">関数の実行と戻り値</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>関数の実行と戻り値<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h1>
+<section id="id2">
+<h2>関数の実行<a class="headerlink" href="#id2" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>ローカル変数に展開した引数で関数を呼び出す。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span>  <span class="k">auto</span> <span class="n">value</span> <span class="o">=</span> <span class="n">ImGui</span><span class="o">::</span><span class="n">Begin</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="void">
+<h2>void<a class="headerlink" href="#void" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>戻り値が無い関数は、 <code class="docutils literal notranslate"><span class="pre">Py_None</span></code> を返す。
+<code class="docutils literal notranslate"><span class="pre">NULL</span></code> を返すと例外が起こったことを意味する。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span><span class="nf">imgui_End</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">args</span><span class="p">){</span>
+  <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">PyArg_ParseTuple</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">))</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+  <span class="n">ImGui</span><span class="o">::</span><span class="n">End</span><span class="p">();</span>
+  <span class="n">Py_INCREF</span><span class="p">(</span><span class="n">Py_None</span><span class="p">);</span>        
+  <span class="k">return</span> <span class="n">Py_None</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>戻り値 (void以外)<a class="headerlink" href="#id3" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>c++ の値を <code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> に変換して返す。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span>  <span class="n">PyObject</span><span class="o">*</span> <span class="n">py_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="o">?</span> <span class="p">(</span><span class="n">Py_INCREF</span><span class="p">(</span><span class="n">Py_True</span><span class="p">),</span> <span class="n">Py_True</span><span class="p">)</span> <span class="o">:</span> <span class="p">(</span><span class="n">Py_INCREF</span><span class="p">(</span><span class="n">Py_False</span><span class="p">),</span> <span class="n">Py_False</span><span class="p">));</span>
+  <span class="k">return</span> <span class="n">py_value</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="py-incref">
+<h2>Py_INCREF<a class="headerlink" href="#py-incref" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">PyObject*</span></code> の参照カウントをインクリメントする。
+<code class="docutils literal notranslate"><span class="pre">Py_None</span></code>, <code class="docutils literal notranslate"><span class="pre">Py_True</span></code>, <code class="docutils literal notranslate"><span class="pre">Py_False</span></code> だけ特殊で自前でインクリメントする。
+それ以外(おそらく関数の返り値として入手する)は、手に入った時点で <code class="docutils literal notranslate"><span class="pre">Py_INCREF</span></code> されているようなので、自分でやる必要は無い。
+逆に、使い終わったら <code class="docutils literal notranslate"><span class="pre">Py_DECREF</span></code> で参照を減らしてやる必要がある。</p>
+</section>
+<section id="py-decref">
+<h2>Py_DECREF<a class="headerlink" href="#py-decref" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Py_DECREF</span></code> の要不要は関数によって違うので逐一調べるしかない。
+必要ない感数は <code class="docutils literal notranslate"><span class="pre">borrow(借用)</span></code> と呼称しているようで、<code class="docutils literal notranslate"><span class="pre">PyArg_ParseTuple</span></code> は <code class="docutils literal notranslate"><span class="pre">借用</span></code> らしい。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// 例</span>
+    <span class="c1">// ctypes.c_void_p</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">PyObject_IsInstance</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">s_ctypes_c_void_p</span><span class="p">)){</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">PyObject_GetAttr</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">s_value</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="k">auto</span> <span class="n">pp</span> <span class="o">=</span> <span class="n">PyLong_AsVoidPtr</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+            <span class="n">Py_DECREF</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">T</span><span class="p">)</span><span class="n">pp</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">PyErr_Clear</span><span class="p">();</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p>実行時に タスクマネージャーでメモリリークが無いことを確認するとよい。</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">目次</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">関数の実行と戻り値</a><ul>
+<li><a class="reference internal" href="#id2">関数の実行</a></li>
+<li><a class="reference internal" href="#void">void</a></li>
+<li><a class="reference internal" href="#id3">戻り値 (void以外)</a></li>
+<li><a class="reference internal" href="#py-incref">Py_INCREF</a></li>
+<li><a class="reference internal" href="#py-decref">Py_DECREF</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>前のトピックへ</h4>
+  <p class="topless"><a href="args.html"
+                        title="前の章へ">引き数</a></p>
+  <div role="note" aria-label="source link">
+    <h3>このページ</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/rawtypes/result.md.txt"
+            rel="nofollow">ソースコードを表示</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">クイック検索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="検索" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="総合索引"
+             >索引</a></li>
+        <li class="right" >
+          <a href="args.html" title="引き数"
+             >前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pydeer  ドキュメント</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >rawtypes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">関数の実行と戻り値</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, ousttrue.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    </div>
+  </body>
+</html>
