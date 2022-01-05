@@ -16,7 +16,7 @@ jobs:
           submodules: true
 
       - name: python-3.10
-        run: sudo apt install python-3.10
+        run: sudo apt install python3.10
 
       - name: Build SDist
         run: python-3.10 -m pip build --sdist
