@@ -1,28 +1,32 @@
-from generator.header import Header
+import vcenv  # search setup vc path
 from typing import List
 import setuptools
 from enum import Enum
-import sys
 import logging
-import pathlib
 import subprocess
 #
-import vcenv  # search setup vc path
+# init clang.cindex
+#
+import pathlib
+import sys
 HERE = pathlib.Path(__file__).parent
 sys.path.append(str(HERE / '_external/pycindex/src'))
 print(sys.path)
-PACKAGE_DIR = HERE / 'src/pydeer'
-EXTERNAL_DIR = HERE / '_external'
-CMAKE_BUILD = HERE / 'build'
-logging.basicConfig(level=logging.DEBUG,
-                    format='[%(levelname)s]%(name)s:%(lineno)s:%(message)s')
-
 # generate pyd, pyx, pyi from imgui.h
 try:
     from clang import cindex
 except:
     # get clang
     import _external.pycindex.setup
+
+from generator.header import Header  # nopep8
+#
+PACKAGE_DIR = HERE / 'src/pydeer'
+EXTERNAL_DIR = HERE / '_external'
+CMAKE_BUILD = HERE / 'build'
+logging.basicConfig(level=logging.DEBUG,
+                    format='[%(levelname)s]%(name)s:%(lineno)s:%(message)s')
+
 headers: List[Header] = [
     # Header(
     #     EXTERNAL_DIR, 'tinygizmo/tinygizmo/tiny-gizmo.hpp',
