@@ -44,8 +44,16 @@ P_CREATE_TEXTURE = ctypes.CFUNCTYPE(
 P_DELETE_TEXTURE = ctypes.CFUNCTYPE(None, ctypes.c_void_p)(delete_texture)
 
 
+# 違う !
+# print(
+#     ctypes.addressof(P_CREATE_TEXTURE), 
+#     ctypes.cast(P_CREATE_TEXTURE, ctypes.c_void_p).value)
+
+
 def initialize():
-    ImGui.ImFileDialog_SetTextureCallback(P_CREATE_TEXTURE, P_DELETE_TEXTURE)
+    ImGui.ImFileDialog_SetTextureCallback(
+        ctypes.cast(P_CREATE_TEXTURE, ctypes.c_void_p),
+        ctypes.cast(P_DELETE_TEXTURE, ctypes.c_void_p))
 
 
 def open_menu(label: bytes):

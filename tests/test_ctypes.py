@@ -2,7 +2,7 @@ import unittest
 import ctypes
 
 
-class TestStringMethods(unittest.TestCase):
+class TestCTypesTests(unittest.TestCase):
 
     def test_cast(self):
         class Num(ctypes.Structure):
@@ -45,6 +45,14 @@ class TestStringMethods(unittest.TestCase):
         self.assertIsInstance(a, ctypes.Array)
         ctypes.addressof(a)
         # ctypes.addressof(a[0])
+
+    def test_function_type(self):
+        def func(p):
+            pass
+        fp = ctypes.CFUNCTYPE(None, ctypes.c_void_p)(func)
+        print(type(fp))
+        print(type(fp.__class__))
+        self.assertIsInstance(fp, ctypes._CFuncPtr)
 
 
 if __name__ == '__main__':

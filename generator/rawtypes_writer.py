@@ -19,7 +19,7 @@ static PyObject* s_ctypes_addressof = nullptr;
 static PyObject* s_ctypes_Array = nullptr;
 static PyObject* s_ctypes_Structure = nullptr;
 static PyObject* s_ctypes_POINTER = nullptr;
-static PyObject* s_ctypes_CFUNCTYPE = nullptr;
+static PyObject* s_ctypes__CFuncPtr = nullptr;
 static PyObject* s_ctypes_cast = nullptr;
 static PyObject* s_value = nullptr;
 static PyObject* s_pydeer_ctypes = nullptr;
@@ -37,7 +37,7 @@ static void s_initialize()
     s_ctypes_Array = PyObject_GetAttrString(s_ctypes, "Array");
     s_ctypes_Structure = PyObject_GetAttrString(s_ctypes, "Structure");
     s_ctypes_POINTER = PyObject_GetAttrString(s_ctypes, "POINTER");
-    s_ctypes_CFUNCTYPE = PyObject_GetAttrString(s_ctypes, "CFUNCTYPE");
+    s_ctypes__CFuncPtr = PyObject_GetAttrString(s_ctypes, "_CFuncPtr");
     s_ctypes_cast = PyObject_GetAttrString(s_ctypes, "cast");
     //
     s_value = PyUnicode_FromString("value");
@@ -65,13 +65,14 @@ T ctypes_get_pointer(PyObject *src)
 
     // ctypes.Array   
     // ctypes.Structure
-    if(PyObject_IsInstance(src, s_ctypes_Array) || PyObject_IsInstance(src, s_ctypes_Structure) || PyObject_IsInstance(src, s_ctypes_CFUNCTYPE)){
+    if(PyObject_IsInstance(src, s_ctypes_Array) || PyObject_IsInstance(src, s_ctypes_Structure) || PyObject_IsInstance(src, s_ctypes__CFuncPtr)){
         if(PyObject *p = PyObject_CallFunction(s_ctypes_addressof, "O", src))
         {
             auto pp = PyLong_AsVoidPtr(p);
             Py_DECREF(p);
             return (T)pp;
         }
+PyErr_Print();        
         PyErr_Clear();
     }
 
