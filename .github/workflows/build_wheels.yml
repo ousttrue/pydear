@@ -7,28 +7,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_sdist:
-    name: Build SDist
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: "3.10"
-
-      - name: Build SDist
-        run: python -m pip build --sdist
-
-      - name: Check metadata
-        run: python -m pip twine check dist/*
-
-      - uses: actions/upload-artifact@v2
-        with:
-          path: dist/*.tar.gz
-
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -53,7 +31,7 @@ jobs:
 
   upload_all:
     name: Upload if release
-    needs: [build_wheels, build_sdist]
+    needs: [build_wheels]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
 
