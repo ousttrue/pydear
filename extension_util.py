@@ -45,12 +45,11 @@ def generate(EXTERNAL_DIR: pathlib.Path, PACKAGE_DIR: pathlib.Path, EXT_TYPE: Ex
 
     import generator  # noqa
 
-    if EXT_TYPE == ExtType.RAWTYPES:
-        from generator.rawtypes_writer import write
-    elif EXT_TYPE == ExtType.CYTHON:
-        from generator.cython_writer import write
-    else:
-        raise RuntimeError()
+    match EXT_TYPE:
+        case ExtType.RAWTYPES:
+            from generator.rawtypes_writer import write
+        case ExtType.CYTHON:
+            from generator.cython_writer import write
 
     generator.generate(headers, PACKAGE_DIR, write)
 
@@ -87,44 +86,41 @@ def get_extensions(
         pass
 
     extensions: List[setuptools.Extension] = []
-    if EXT_TYPE == ExtType.RAWTYPES:
-        extensions = [setuptools.Extension(
-            'pydeer.impl',
-            sources=[
-                # generated
-                rel_path(PACKAGE_DIR / 'rawtypes/implmodule.cpp'),
-            ],
-            include_dirs=[
-                str(include_dir) for header in headers for include_dir in header.include_dirs],
-            language='c++',
-            extra_compile_args=['/wd4244', '/std:c++17'],
-            # cmake built
-            libraries=["imgui", "Advapi32", "Gdi32"],
-            library_dirs=[
-                str(CMAKE_BUILD / f'{build_type}/lib')],
-        )]
+    match EXT_TYPE:
+        case ExtType.RAWTYPES:
+            extensions = [setuptools.Extension(
+                'pydeer.impl',
+                sources=[
+                    # generated
+                    rel_path(PACKAGE_DIR / 'rawtypes/implmodule.cpp'),
+                ],
+                include_dirs=[
+                    str(include_dir) for header in headers for include_dir in header.include_dirs],
+                language='c++',
+                extra_compile_args=['/wd4244', '/std:c++17'],
+                # cmake built
+                libraries=["imgui", "Advapi32", "Gdi32"],
+                library_dirs=[
+                    str(CMAKE_BUILD / f'{build_type}/lib')],
+            )]
 
-    elif EXT_TYPE == ExtType.CYTHON:
-        extensions = [setuptools.Extension(
-            'pydeer.impl',
-            sources=[
-                # generated
-                rel_path(PACKAGE_DIR / 'impl/impl.pyx'),
-            ],
-            include_dirs=[
-                str(include_dir) for header in headers for include_dir in header.include_dirs],
-            language='c++',
-            extra_compile_args=['/wd4244', '/std:c++17'],
-            # cmake built
-            libraries=["imgui", "Advapi32", "Gdi32"],
-            library_dirs=[
-                str(CMAKE_BUILD / 'Release/lib')],
-        )]
-        from Cython.Build import cythonize
-        extensions = cythonize(extensions, compiler_directives={
-            'language_level': '3'})
-
-    else:
-        raise RuntimeError()
-
+        case ExtType.CYTHON:
+            extensions = [setuptools.Extension(
+                'pydeer.impl',
+                sources=[
+                    # generated
+                    rel_path(PACKAGE_DIR / 'impl/impl.pyx'),
+                ],
+                include_dirs=[
+                    str(include_dir) for header in headers for include_dir in header.include_dirs],
+                language='c++',
+                extra_compile_args=['/wd4244', '/std:c++17'],
+                # cmake built
+                libraries=["imgui", "Advapi32", "Gdi32"],
+                library_dirs=[
+                    str(CMAKE_BUILD / 'Release/lib')],
+            )]
+            from Cython.Build import cythonize
+            extensions = cythonize(extensions, compiler_directives={
+                'language_level': '3'})
     return extensions
