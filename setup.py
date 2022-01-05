@@ -11,7 +11,7 @@ CMAKE_BUILD = HERE / 'build'
 
 import extension_util  # nopep8
 extensions = extension_util.get_extensions(
-    HERE, PACKAGE_DIR, EXTERNAL_DIR, CMAKE_BUILD,
+    HERE, EXTERNAL_DIR, PACKAGE_DIR, CMAKE_BUILD,
     extension_util.ExtType.RAWTYPES
 )
 
