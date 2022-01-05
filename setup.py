@@ -2,7 +2,8 @@
 import pathlib
 import sys
 import setuptools
-HERE = pathlib.Path(__file__).parent
+HERE = pathlib.Path(__file__).absolute().parent
+sys.path.append(str(HERE))
 sys.path.append(str(HERE / '_external/pycindex/src'))
 PACKAGE_DIR = HERE / 'src/pydeer'
 EXTERNAL_DIR = HERE / '_external'
