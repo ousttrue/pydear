@@ -89,7 +89,7 @@ def get_extensions(
     match EXT_TYPE:
         case ExtType.RAWTYPES:
             extensions = [setuptools.Extension(
-                'pydeer.impl',
+                'pydear.impl',
                 sources=[
                     # generated
                     rel_path(PACKAGE_DIR / 'rawtypes/implmodule.cpp'),
@@ -106,7 +106,7 @@ def get_extensions(
 
         case ExtType.CYTHON:
             extensions = [setuptools.Extension(
-                'pydeer.impl',
+                'pydear.impl',
                 sources=[
                     # generated
                     rel_path(PACKAGE_DIR / 'impl/impl.pyx'),

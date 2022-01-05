@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'pydeer'
+project = 'pydear'
 copyright = '2021, ousttrue'
 author = 'ousttrue'
 

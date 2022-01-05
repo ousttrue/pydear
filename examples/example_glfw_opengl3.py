@@ -3,8 +3,8 @@ import pathlib
 import ctypes
 import glfw
 from OpenGL import GL
-import pydeer as ImGui
-from pydeer.utils import filedialog
+import pydear as ImGui
+from pydear.utils import filedialog
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def main():
 
     # Create window with graphics context
     window = glfw.create_window(
-        1280, 720, "pydeer GLFW+OpenGL3 example", None, None)
+        1280, 720, "pydear GLFW+OpenGL3 example", None, None)
     if not window:
         logger.error('fail to glfw.create_window')
         return
@@ -60,7 +60,7 @@ def main():
 
     font_size = 20.0
 
-    from pydeer.utils import fontloader
+    from pydear.utils import fontloader
     fontloader.load(pathlib.Path("C:/Windows/Fonts/MSGothic.ttc"), font_size,
                     io.Fonts.GetGlyphRangesJapanese())
 
@@ -74,9 +74,9 @@ def main():
     # Setup Platform/Renderer backends
     # ImGui_ImplGlfw_InitForOpenGL(window, True)
     # ImGui_ImplOpenGL3_Init(glsl_version)
-    from pydeer.backends.glfw import GlfwRenderer
+    from pydear.backends.glfw import GlfwRenderer
     impl_glfw = GlfwRenderer(window)
-    from pydeer.backends.opengl import Renderer
+    from pydear.backends.opengl import Renderer
     impl_opengl = Renderer()
 
     # Our state
@@ -86,7 +86,7 @@ def main():
     counter = [0]
     f = (ctypes.c_float * 1)(0.0)
 
-    from pydeer.utils.dockspace import dockspace, DockView
+    from pydear.utils.dockspace import dockspace, DockView
     show_another_window = (ctypes.c_bool * 1)(True)
     show_demo_window = (ctypes.c_bool * 1)(True)
 
@@ -153,7 +153,7 @@ def main():
                        (ctypes.c_bool * 1)(True), ImGui.ShowMetricsWindow)
 
     # 5.
-    from pydeer.utils.loghandler import ImGuiLogHandler
+    from pydear.utils.loghandler import ImGuiLogHandler
     log_handler = ImGuiLogHandler()
     log_handler.setFormatter(logging.Formatter(
         '%(name)s:%(lineno)s[%(levelname)s]%(message)s'))

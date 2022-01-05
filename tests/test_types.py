@@ -1,5 +1,5 @@
 import unittest
-import pydeer as ImGui
+import pydear as ImGui
 
 
 class TestTypes(unittest.TestCase):

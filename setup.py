@@ -5,7 +5,7 @@ import setuptools
 HERE = pathlib.Path(__file__).absolute().parent
 sys.path.append(str(HERE))
 sys.path.append(str(HERE / '_external/pycindex/src'))
-PACKAGE_DIR = HERE / 'src/pydeer'
+PACKAGE_DIR = HERE / 'src/pydear'
 EXTERNAL_DIR = HERE / '_external'
 CMAKE_BUILD = HERE / 'build'
 
@@ -16,24 +16,24 @@ extensions = extension_util.get_extensions(
 )
 
 setuptools.setup(
-    name='pydeer',
+    name='pydear',
     description='Dear imgui binding using cython',
     author='ousttrue',
     author_email='ousttrue@gmail.com',
-    url='https://github.com/ousttrue/pydeer',
+    url='https://github.com/ousttrue/pydear',
     package_dir={'': 'src'},
     include_package_data=True,
     packages=[
-        'pydeer',
-        'pydeer.backends',
-        'pydeer.utils',
+        'pydear',
+        'pydear.backends',
+        'pydear.utils',
     ],
     package_data={
-        'pydeer': ['py.typed', '*.pyi']
+        'pydear': ['py.typed', '*.pyi']
     },
     ext_modules=extensions,  # type: ignore
     use_scm_version={
-        'write_to': 'src/pydeer/_version.py',
+        'write_to': 'src/pydear/_version.py',
     },
     setup_requires=['setuptools_scm'],
 )

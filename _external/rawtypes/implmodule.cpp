@@ -23,7 +23,7 @@ static PyObject* s_ctypes_POINTER = nullptr;
 static PyObject* s_ctypes__CFuncPtr = nullptr;
 static PyObject* s_ctypes_cast = nullptr;
 static PyObject* s_value = nullptr;
-static PyObject* s_pydeer_ctypes = nullptr;
+static PyObject* s_pydear_ctypes = nullptr;
 
 static void s_initialize()
 {
@@ -43,7 +43,7 @@ static void s_initialize()
     //
     s_value = PyUnicode_FromString("value");
     //
-    s_pydeer_ctypes = PyImport_ImportModule("pydeer.ctypes");
+    s_pydear_ctypes = PyImport_ImportModule("pydear.ctypes");
 }
 
 template<typename T>
@@ -89,7 +89,7 @@ static PyObject* GetCTypesType(const char *t)
         return found->second;
     }
 
-    auto T = PyObject_GetAttrString(s_pydeer_ctypes, t);
+    auto T = PyObject_GetAttrString(s_pydear_ctypes, t);
     auto result = PyObject_CallFunction(s_ctypes_POINTER, "O", T);
     s_map.insert(std::make_pair(std::string(t), result));
     return result;

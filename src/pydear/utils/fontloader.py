@@ -1,6 +1,6 @@
 import ctypes
 import pathlib
-import pydeer as ImGui
+import pydear as ImGui
 
 
 def load(font: pathlib.Path, size: float, range: ctypes.Array, *, merge=False, monospace=False):

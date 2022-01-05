@@ -3,4 +3,4 @@
 requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2", "cython", "cmake", "ninja", "pybind11"]
 
 [tool.setuptools_scm]
-write_to = "src/pydeer/_version.py"
+write_to = "src/pydear/_version.py"

@@ -4,7 +4,7 @@ import logging
 import ctypes
 import pathlib
 from OpenGL import GL
-import pydeer as ImGui
+import pydear as ImGui
 logger = logging.getLogger(__name__)
 
 # FileDialog
