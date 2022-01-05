@@ -268,7 +268,7 @@ def write_ctypes_method(w: io.IOBase, cursor: cindex.Cursor, method: cindex.Curs
 
     # signature
     w.write(
-        f'    def {method.spelling}{self_cj(param.name for param in params)}')
+        f'    def {method.spelling}(self, *args)')
     w.write(f'->{result_t.result_typing(pyi=pyi)}:')
 
     if pyi:
@@ -280,7 +280,7 @@ def write_ctypes_method(w: io.IOBase, cursor: cindex.Cursor, method: cindex.Curs
     indent = '        '
 
     w.write(f'{indent}from . import impl\n')
-    w.write(f'{indent}return impl.{cursor.spelling}_{method.spelling}{self_cj(param.name for param in params)}\n')
+    w.write(f'{indent}return impl.{cursor.spelling}_{method.spelling}(self, *args)\n')
 
 
 def write_struct(w: io.IOBase, s: StructDecl, flags: wrap_types.WrapFlags) -> Iterable[Tuple[cindex.Cursor, cindex.Cursor]]:
