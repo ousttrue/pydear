@@ -15,14 +15,15 @@ jobs:
         with:
           submodules: true
 
-      - name: python-3.10
-        run: sudo apt install python3.10
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
 
       - name: Build SDist
-        run: python-3.10 -m pip build --sdist
+        run: python -m pip build --sdist
 
       - name: Check metadata
-        run: python-3.10 -m pip twine check dist/*
+        run: python -m pip twine check dist/*
 
       - uses: actions/upload-artifact@v2
         with:
