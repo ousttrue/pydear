@@ -1,4 +1,4 @@
-# pydeer 🦌
+# pydear 🦌
 
 `clang.cindex` で読み取ったヘッダ情報から `c++` コードを生成して作った `imgui` バインディング。
 
