@@ -1,5 +1,8 @@
 # pydear 🦌
 
+* <https://github.com/ousttrue/pydear>
+  * <https://pypi.org/project/pydear/>
+
 `clang.cindex` で読み取ったヘッダ情報から `c++` コードを生成して作った `imgui` バインディング。
 
 はじめ `clang.cindex` を使った `cython` のコード生成である程度動くところまで作ったのだけど、

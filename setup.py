@@ -17,7 +17,7 @@ extensions = extension_util.get_extensions(
 
 setuptools.setup(
     name='pydear',
-    description='Dear imgui binding using cython',
+    description='Dear imgui binding',
     author='ousttrue',
     author_email='ousttrue@gmail.com',
     url='https://github.com/ousttrue/pydear',
@@ -31,7 +31,7 @@ setuptools.setup(
     package_data={
         'pydear': ['py.typed', '*.pyi']
     },
-    ext_modules=extensions,  # type: ignore
+    ext_modules=extensions,
     use_scm_version={
         'write_to': 'src/pydear/_version.py',
     },
