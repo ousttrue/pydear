@@ -7,9 +7,10 @@ from clang import cindex
 from .parser import Parser
 from .header import Header
 from .declarations.typewrap import TypeWrap
-from .declarations.function import FunctionDecl, self_cj
+from .declarations.function import FunctionDecl
 from .declarations.struct import StructDecl
 from .interpreted_types import wrap_types
+from .pyi_writer import write_pyi
 from . import interpreted_types
 
 CTYPS_CAST = '''
@@ -280,7 +281,8 @@ def write_ctypes_method(w: io.IOBase, cursor: cindex.Cursor, method: cindex.Curs
     indent = '        '
 
     w.write(f'{indent}from . import impl\n')
-    w.write(f'{indent}return impl.{cursor.spelling}_{method.spelling}(self, *args)\n')
+    w.write(
+        f'{indent}return impl.{cursor.spelling}_{method.spelling}(self, *args)\n')
 
 
 def write_struct(w: io.IOBase, s: StructDecl, flags: wrap_types.WrapFlags) -> Iterable[Tuple[cindex.Cursor, cindex.Cursor]]:
@@ -427,9 +429,9 @@ PyMODINIT_FUNC
 PyInit_impl(void)
 {{
 #ifdef _DEBUG
-    std::cout << "sizeof: ImGuiIO: " << sizeof(ImGuiIO) << std::endl;
+    std::cout << "DEBUG_BUILD sizeof: ImGuiIO: " << sizeof(ImGuiIO) << std::endl;
 #endif
-    
+
     auto m = PyModule_Create(&module);
     if (!m){{
         return NULL;
@@ -449,3 +451,17 @@ PyInit_impl(void)
     return m;
 }}
 ''')
+
+    #
+    # pyi
+    #
+    pyi_path = package_dir / '__init__.pyi'
+    with pyi_path.open('w') as pyi:
+        pyi.write('''import ctypes
+from . imgui_enum import *
+from typing import Any, Union, Tuple
+''')
+
+        pyi.write(wrap_types.IMVECTOR)
+        for header in headers:
+            write_pyi(header, pyi, parser)
