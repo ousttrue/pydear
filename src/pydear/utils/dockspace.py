@@ -124,5 +124,5 @@ def dockspace(views: Iterable[DockView],
 
     if views:
         for v in views:
-            if v.p_open[0]:
+            if not v.p_open or v.p_open[0]:
                 v.draw()
