@@ -6,7 +6,7 @@
         {
             "label": "sphinx-autobuild",
             "type": "shell",
-            "command": "sphinx-autobuild docs html --open-browser",
+            "command": "sphinx-autobuild docs _build --open-browser",
             "problemMatcher": [],
             "isBackground": true
         }
