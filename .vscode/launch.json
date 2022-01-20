@@ -18,14 +18,6 @@
             "justMyCode": false
         },
         {
-            "name": "generate clang.cindex stub",
-            "type": "python",
-            "request": "launch",
-            "module": "pycindex.generate_cindex_stub",
-            "console": "integratedTerminal",
-            "justMyCode": false
-        },
-        {
             "name": "example_glfw_opengl3",
             "type": "python",
             "request": "launch",
