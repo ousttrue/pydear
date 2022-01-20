@@ -1,6 +1,6 @@
 
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2", "cython", "cmake", "ninja", "pybind11"]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2", "cmake", "ninja", "rawtypes"]
 
 [tool.setuptools_scm]
 write_to = "src/pydear/_version.py"

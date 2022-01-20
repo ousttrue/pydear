@@ -16,6 +16,10 @@ print(ctypes.sizeof(ImGui.ImGuiIO))
 # Read online: https://github.com/ocornut/imgui/tree/master/docs
 
 
+def color_32(r, g, b, a):
+    return r + (g << 8) + (b << 16) + (a << 24)
+
+
 def glfw_error_callback(error: int, description: str):
     logger.error(f"Glfw Error {error}: {description}")
 
@@ -113,7 +117,10 @@ def main():
             if ImGui.Button(b"Button"):
                 counter[0] += 1
             ImGui.SameLine()
+            ImGui.PushStyleColor(
+                ImGui.ImGuiCol_.Text, color_32(255, 0, 0, 255))
             ImGui.Text(f"counter = {counter[0]}".encode('utf-8'))
+            ImGui.PopStyleColor()
 
             ImGui.Text(
                 f"Application average {1000.0 / ImGui.GetIO().Framerate:.3f} ms/frame ({ImGui.GetIO().Framerate:.1f} FPS)".encode('utf-8'))

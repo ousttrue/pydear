@@ -5,6 +5,7 @@ import setuptools
 from enum import Enum
 import logging
 import subprocess
+from rawtypes.header import Header
 
 
 class ExtType(Enum):
@@ -13,17 +14,6 @@ class ExtType(Enum):
 
 
 def generate(EXTERNAL_DIR: pathlib.Path, PACKAGE_DIR: pathlib.Path, EXT_TYPE: ExtType):
-    #
-    # init clang.cindex
-    #
-    # generate pyd, pyx, pyi from imgui.h
-    try:
-        from clang import cindex
-    except:
-        # get clang
-        import _external.pycindex.setup
-
-    from generator.header import Header  # nopep8
     #
     logging.basicConfig(level=logging.DEBUG,
                         format='[%(levelname)s]%(name)s:%(lineno)s:%(message)s')
@@ -43,13 +33,13 @@ def generate(EXTERNAL_DIR: pathlib.Path, PACKAGE_DIR: pathlib.Path, EXT_TYPE: Ex
         #     include_dirs=[EXTERNAL_DIR / 'ImGuizmo'], prefix='ImGuizmo_'),
     ]
 
-    import generator  # noqa
+    from rawtypes import generator  # noqa
 
     match EXT_TYPE:
         case ExtType.RAWTYPES:
-            from generator.rawtypes_writer import write
+            from rawtypes.rawtypes_writer import write
         case ExtType.CYTHON:
-            from generator.cython_writer import write
+            from rawtypes.cython_writer import write
 
     generator.generate(headers, PACKAGE_DIR, write)
 
