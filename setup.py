@@ -1,15 +1,13 @@
 
+from rawtypes import extension_util
 import pathlib
 import sys
 import setuptools
 HERE = pathlib.Path(__file__).absolute().parent
-sys.path.append(str(HERE))
-sys.path.append(str(HERE / '_external/pycindex/src'))
 PACKAGE_DIR = HERE / 'src/pydear'
 EXTERNAL_DIR = HERE / '_external'
 CMAKE_BUILD = HERE / 'build'
 
-import extension_util  # nopep8
 extensions = extension_util.get_extensions(
     HERE, EXTERNAL_DIR, PACKAGE_DIR, CMAKE_BUILD,
     extension_util.ExtType.RAWTYPES
