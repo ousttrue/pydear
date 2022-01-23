@@ -1,4 +1,4 @@
 # docking
 
-```{gitinclude} HEAD examples/hello_docking.py
+```{gitinclude} HEAD examples/basic/docking.py
 ```

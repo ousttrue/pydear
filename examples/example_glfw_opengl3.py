@@ -90,12 +90,12 @@ def main():
     counter = [0]
     f = (ctypes.c_float * 1)(0.0)
 
-    from pydear.utils.dockspace import dockspace, DockView
+    from pydear.utils.dockspace import show_docks, Dock
     show_another_window = (ctypes.c_bool * 1)(True)
     show_demo_window = (ctypes.c_bool * 1)(True)
 
     # 1. Show the big demo window (Most of the sample code is in ImGui.ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    demo = DockView('demo', show_demo_window, ImGui.ShowDemoWindow)
+    demo = Dock('demo', show_demo_window, ImGui.ShowDemoWindow)
 
     # 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     def draw_hello(p_open: ctypes.Array):
@@ -126,7 +126,7 @@ def main():
                 f"Application average {1000.0 / ImGui.GetIO().Framerate:.3f} ms/frame ({ImGui.GetIO().Framerate:.1f} FPS)".encode('utf-8'))
 
         ImGui.End()
-    window2 = DockView('hello', (ctypes.c_bool * 1)(True), draw_hello)
+    window2 = Dock('hello', (ctypes.c_bool * 1)(True), draw_hello)
 
     # 3. Show another simple window.
     def draw_another_window(p_open: ctypes.Array):
@@ -152,11 +152,11 @@ def main():
                 logger.exception("exception")
 
         ImGui.End()
-    another_window = DockView(
+    another_window = Dock(
         'another_window', show_another_window, draw_another_window)
 
     # 4.
-    metrics = DockView('metrics',
+    metrics = Dock('metrics',
                        (ctypes.c_bool * 1)(True), ImGui.ShowMetricsWindow)
 
     # 5.
@@ -165,7 +165,7 @@ def main():
     log_handler.setFormatter(logging.Formatter(
         '%(name)s:%(lineno)s[%(levelname)s]%(message)s'))
     log_handler.register_root()
-    log = DockView('log', (ctypes.c_bool * 1)(True), log_handler.draw)
+    log = Dock('log', (ctypes.c_bool * 1)(True), log_handler.draw)
 
     views = [
         demo, another_window, window2, metrics, log
@@ -213,7 +213,7 @@ def main():
 
         # update ImGui
         ImGui.NewFrame()
-        dockspace(views, menu=menu, toolbar=toolbar)
+        show_docks(views, menu=menu, toolbar=toolbar)
 
         # file = filedialog.fileopendialog()
         # if file:

@@ -1,4 +1,4 @@
 # FrameBufferObject
 
-```{gitinclude} HEAD examples/fbo.py
+```{gitinclude} HEAD examples/basic/fbo.py
 ```

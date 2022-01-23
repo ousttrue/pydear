@@ -1,8 +1,5 @@
 from typing import Optional
-import gui_app
 import logging
-import pydear as ImGui
-from pydear.utils import dockspace
 import ctypes
 from OpenGL import GL
 logger = logging.getLogger(__name__)
@@ -70,69 +67,49 @@ class FboRenderer:
         return ctypes.c_void_p(int(self.fbo.texture))
 
 
-class DockingFboGui(gui_app.Gui):
-    def __init__(self, glfw_window) -> None:
-        super().__init__(glfw_window)
-
-        io = ImGui.GetIO()
-        io.ConfigFlags |= ImGui.ImGuiConfigFlags_.DockingEnable
-
-        self.clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
-        self.fbo_manager = FboRenderer()
-
-        def show_hello(p_open):
-            if ImGui.Begin('hello', p_open):
-                ImGui.TextUnformatted('hello text')
-                ImGui.SliderFloat4('clear color', self.clear_color, 0, 1)
-                ImGui.ColorPicker4('color', self.clear_color)
-            ImGui.End()
-
-        def show_view(p_open):
-            ImGui.PushStyleVar_2(ImGui.ImGuiStyleVar_.WindowPadding, (0, 0))
-            if ImGui.Begin("render target", p_open,
-                           ImGui.ImGuiWindowFlags_.NoScrollbar |
-                           ImGui.ImGuiWindowFlags_.NoScrollWithMouse):
-                w, h = ImGui.GetContentRegionAvail()
-                texture = self.fbo_manager.clear(
-                    int(w), int(h), self.clear_color)
-                if texture:
-                    ImGui.BeginChild("cameraview")
-                    ImGui.Image(texture, (w, h))
-
-                    # # update
-                    # x, y = ImGui.GetWindowPos()
-                    # y += ImGui.GetFrameHeight()
-                    # io = ImGui.GetIO()
-                    # if ImGui.IsWindowFocused(ImGui.ImGuiFocusedFlags_.RootAndChildWindows):
-                    #     # camera.update(io.MouseDelta.x, io.MouseDelta.y, size.x, size.y, io.MouseDown[0], io.MouseDown[1], io.MouseDown[2], io.MouseWheel);}
-                    #     pass
-                    # if ImGui.IsItemClicked(0) or ImGui.IsItemClicked(1) or ImGui.IsItemClicked(2):
-                    #     logger.debug("click")
-                    #     ImGui.SetWindowFocus()
-                    # # rt.hovered = ImGui.IsItemHovered();
-                    ImGui.EndChild()
-            ImGui.End()
-            ImGui.PopStyleVar()
-
-        self.views = [
-            dockspace.DockView('demo', (ctypes.c_bool * 1)
-                               (True), ImGui.ShowDemoWindow),
-            dockspace.DockView('metrics', (ctypes.c_bool * 1)
-                               (True), ImGui.ShowMetricsWindow),
-            dockspace.DockView('hello', (ctypes.c_bool * 1)(True), show_hello),
-            dockspace.DockView('view', (ctypes.c_bool * 1)(True), show_view),
-        ]
-
-    def _widgets(self):
-        dockspace.dockspace(self.views)
-
-
 def main():
     logging.basicConfig(level=logging.DEBUG)
 
-    import glfw_app
+    from pydear.utils import glfw_app
     app = glfw_app.GlfwApp('fbo')
-    gui = DockingFboGui(app.window)
+
+    import pydear as ImGui
+    from pydear.utils import dockspace
+    clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
+    fbo_manager = FboRenderer()
+
+    def show_hello(p_open):
+        if ImGui.Begin('hello', p_open):
+            ImGui.TextUnformatted('hello text')
+            ImGui.SliderFloat4('clear color', clear_color, 0, 1)
+            ImGui.ColorPicker4('color', clear_color)
+        ImGui.End()
+
+    def show_view(p_open):
+        ImGui.PushStyleVar_2(ImGui.ImGuiStyleVar_.WindowPadding, (0, 0))
+        if ImGui.Begin("render target", p_open,
+                       ImGui.ImGuiWindowFlags_.NoScrollbar |
+                       ImGui.ImGuiWindowFlags_.NoScrollWithMouse):
+            w, h = ImGui.GetContentRegionAvail()
+            texture = fbo_manager.clear(
+                int(w), int(h), clear_color)
+            if texture:
+                ImGui.BeginChild("_image_")
+                ImGui.Image(texture, (w, h))
+                ImGui.EndChild()
+        ImGui.End()
+        ImGui.PopStyleVar()
+
+    views = [
+        dockspace.Dock('demo', (ctypes.c_bool * 1)
+                       (True), ImGui.ShowDemoWindow),
+        dockspace.Dock('metrics', (ctypes.c_bool * 1)
+                       (True), ImGui.ShowMetricsWindow),
+        dockspace.Dock('hello', (ctypes.c_bool * 1)(True), show_hello),
+        dockspace.Dock('view', (ctypes.c_bool * 1)(True), show_view),
+    ]
+
+    gui = dockspace.DockingGui(app.window, views)
     while app.clear():
         gui.render()
     del gui

@@ -1,3 +1,4 @@
+from typing import Callable, Optional
 import logging
 import pydear as ImGui
 from OpenGL import GL
@@ -5,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class Gui:
-    def __init__(self, glfw_window) -> None:
+    def __init__(self, glfw_window, widgets: Optional[Callable[[], None]] = None) -> None:
         ImGui.CreateContext()
 
         io = ImGui.GetIO()
@@ -17,14 +18,17 @@ class Gui:
         from pydear.backends.opengl import Renderer
         self.impl_opengl = Renderer()
 
+        if not widgets:
+            def empty():
+                pass
+            widgets = empty
+        self._widgets: Callable[[], None] = widgets
+
     def __del__(self):
         logging.debug('ImGui.DestroyContext')
         del self.impl_opengl
         del self.impl_glfw
         ImGui.DestroyContext()
-
-    def _widgets(self):
-        pass
 
     def render(self):
         self.impl_glfw.process_inputs()

@@ -1,3 +1,4 @@
+from . import gui_app
 from typing import Callable, List, Iterable
 import ctypes
 import dataclasses
@@ -67,7 +68,7 @@ def _dockspace(name: str, toolbar_size=0):
 
 
 @dataclasses.dataclass
-class DockView:
+class Dock:
     name: str
     p_open: ctypes.Array
     drawable: Callable[[ctypes.Array], None]
@@ -79,7 +80,7 @@ class DockView:
 TOOLBAR_SIZE = 50
 
 
-def dockspace(views: Iterable[DockView],
+def show_docks(views: Iterable[Dock],
               menu: Callable[[], None] = None,
               toolbar: Callable[[], None] = None,
               ):
@@ -126,3 +127,16 @@ def dockspace(views: Iterable[DockView],
         for v in views:
             if not v.p_open or v.p_open[0]:
                 v.draw()
+
+
+class DockingGui(gui_app.Gui):
+    def __init__(self, glfw_window, docks: List[Dock]) -> None:
+        def draw():
+            show_docks(self.views)
+
+        super().__init__(glfw_window, draw)
+
+        io = ImGui.GetIO()
+        io.ConfigFlags |= ImGui.ImGuiConfigFlags_.DockingEnable
+
+        self.views = docks

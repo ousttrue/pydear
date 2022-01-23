@@ -1,4 +1,4 @@
 # hello
 
-```{gitinclude} HEAD examples/hello.py
+```{gitinclude} HEAD examples/basic/hello.py
 ```
