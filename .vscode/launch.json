@@ -14,6 +14,15 @@
             "justMyCode": false
         },
         {
+            "name": "hello_docking",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/hello_docking.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "example_glfw_opengl3",
             "type": "python",
             "request": "launch",
