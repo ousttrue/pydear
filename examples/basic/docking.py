@@ -11,6 +11,9 @@ class DockingGui(gui_app.Gui):
         super().__init__(glfw_window)
         self.clear_color = clear_color
 
+        io = ImGui.GetIO()
+        io.ConfigFlags |= ImGui.ImGuiConfigFlags_.DockingEnable
+
         def show_hello(p_open):
             if ImGui.Begin('hello', p_open):
                 ImGui.TextUnformatted('hello text')

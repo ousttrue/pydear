@@ -8,16 +8,25 @@
             "name": "hello",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/hello.py",
+            "program": "${workspaceFolder}/examples/basic/hello.py",
             "args": [],
             "console": "integratedTerminal",
             "justMyCode": false
         },
         {
-            "name": "hello_docking",
+            "name": "docking",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/hello_docking.py",
+            "program": "${workspaceFolder}/examples/basic/docking.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "fbo",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/basic/fbo.py",
             "args": [],
             "console": "integratedTerminal",
             "justMyCode": false
@@ -37,7 +46,7 @@
             "request": "launch",
             "program": "C:/Python310/Python.exe",
             "args": [
-                "${workspaceFolder}/examples/example_glfw_opengl3.py"
+                "${workspaceFolder}/examples/basic/fbo.py"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

@@ -3,4 +3,5 @@
 ```{toctree}
 hello
 docking
+fbo
 ```

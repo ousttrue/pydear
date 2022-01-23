@@ -35,6 +35,7 @@ class GlfwApp:
             return False
 
         width, height = glfw.get_framebuffer_size(self.window)
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0)
         GL.glViewport(0, 0, width, height)
         GL.glScissor(0, 0, width, height)
         GL.glClearColor(self.clear_color[0] * self.clear_color[3],

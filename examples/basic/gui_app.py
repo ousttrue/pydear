@@ -1,5 +1,6 @@
 import logging
 import pydear as ImGui
+from OpenGL import GL
 logger = logging.getLogger(__name__)
 
 
@@ -32,4 +33,5 @@ class Gui:
         self._widgets()
 
         ImGui.Render()
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0)
         self.impl_opengl.render(ImGui.GetDrawData())
