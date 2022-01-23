@@ -3,6 +3,7 @@
 
 ```{toctree}
 basic/index
+nodes/index
 ```
 
 ```{toctree}

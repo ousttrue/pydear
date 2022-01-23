@@ -32,6 +32,15 @@
             "justMyCode": false
         },
         {
+            "name": "imnodes",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/nodes/imnodes.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "example_glfw_opengl3",
             "type": "python",
             "request": "launch",
@@ -41,12 +50,12 @@
             "justMyCode": false
         },
         {
-            "name": "example_glfw_opengl3(dbg)",
+            "name": "dbg",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "C:/Python310/Python.exe",
             "args": [
-                "${workspaceFolder}/examples/basic/fbo.py"
+                "${file}"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
