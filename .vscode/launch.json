@@ -41,6 +41,15 @@
             "justMyCode": false
         },
         {
+            "name": "triangle",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/two_dimension/triangle.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "example_glfw_opengl3",
             "type": "python",
             "request": "launch",
@@ -55,7 +64,8 @@
             "request": "launch",
             "program": "C:/Python310/Python.exe",
             "args": [
-                "-m", "pydear.impl",
+                "-m",
+                "pydear.impl",
                 "${file}"
             ],
             "stopAtEntry": false,
