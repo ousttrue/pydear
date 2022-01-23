@@ -1,6 +1,6 @@
 from typing import Callable, Optional
 import logging
-import pydear as ImGui
+from pydear import imgui as ImGui
 from OpenGL import GL
 logger = logging.getLogger(__name__)
 

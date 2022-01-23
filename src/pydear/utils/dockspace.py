@@ -2,7 +2,7 @@ from . import gui_app
 from typing import Callable, List, Iterable
 import ctypes
 import dataclasses
-import pydear as ImGui
+from pydear import imgui as ImGui
 '''
 https://gist.github.com/rmitton/f80cbb028fca4495ab1859a155db4cd8
 '''

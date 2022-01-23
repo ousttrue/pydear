@@ -7,9 +7,8 @@
 *.pyx
 *.pxd
 /src/pydear/_version.py
-/src/pydear/imgui
-/src/pydear/imgui_enum.py
-/src/pydear/ctypes.py
+/src/pydear/*.py
+/src/pydear/*.pyi
 /src/pydear/bind/
 /src/pydear/rawtypes/
 /typings/

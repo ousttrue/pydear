@@ -73,7 +73,7 @@ def main():
     from pydear.utils import glfw_app
     app = glfw_app.GlfwApp('fbo')
 
-    import pydear as ImGui
+    from pydear import imgui as ImGui
     from pydear.utils import dockspace
     clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
     fbo_manager = FboRenderer()

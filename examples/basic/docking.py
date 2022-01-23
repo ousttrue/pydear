@@ -9,7 +9,7 @@ def main():
     app = glfw_app.GlfwApp('hello_docking')
 
     from pydear.utils import dockspace
-    import pydear as ImGui
+    from pydear import imgui as ImGui
     import ctypes
 
     def show_hello(p_open):

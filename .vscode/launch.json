@@ -55,10 +55,11 @@
             "request": "launch",
             "program": "C:/Python310/Python.exe",
             "args": [
+                "-m", "pydear.impl",
                 "${file}"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/src",
             "environment": [],
             "console": "integratedTerminal"
         },

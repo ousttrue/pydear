@@ -3,7 +3,7 @@ import ctypes
 import logging
 import contextlib
 from OpenGL import GL
-import pydear as ImGui
+from pydear import imgui as ImGui
 
 logger = logging.getLogger(__name__)
 

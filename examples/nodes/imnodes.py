@@ -1,5 +1,5 @@
 import logging
-import pydear as ImGui
+from pydear import imgui as ImGui
 from pydear.impl import imnodes as ImNodes
 logger = logging.getLogger(__name__)
 

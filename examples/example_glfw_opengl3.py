@@ -3,7 +3,7 @@ import pathlib
 import ctypes
 import glfw
 from OpenGL import GL
-import pydear as ImGui
+from pydear import imgui as ImGui
 from pydear.utils import filedialog
 
 

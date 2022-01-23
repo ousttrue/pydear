@@ -1,5 +1,5 @@
 import glfw
-import pydear as ImGui
+from pydear import imgui as ImGui
 
 
 def compute_fb_scale(window_size: ImGui.ImVec2, frame_buffer_size: ImGui.ImVec2) -> ImGui.ImVec2:
