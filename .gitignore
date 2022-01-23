@@ -19,3 +19,5 @@
 /imgui.ini
 /html/
 *.pdb
+/.venv/
+/_build/
