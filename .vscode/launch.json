@@ -5,15 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "setup.py",
+            "name": "hello",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/setup.py",
-            "args": [
-                "build_ext",
-                "-i",
-                "--debug"
-            ],
+            "program": "${workspaceFolder}/examples/hello.py",
+            "args": [],
             "console": "integratedTerminal",
             "justMyCode": false
         },
@@ -38,6 +34,19 @@
             "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "setup.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/setup.py",
+            "args": [
+                "build_ext",
+                "-i",
+                "--debug"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
         },
     ]
 }
