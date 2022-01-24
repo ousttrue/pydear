@@ -8,8 +8,8 @@ from pydear import glo
 logger = logging.getLogger(__name__)
 
 vs = '''#version 330
-in vec3 vCol;
 in vec2 vPos;
+in vec3 vCol;
 out vec3 color;
 void main()
 {
@@ -60,14 +60,7 @@ class Triangle:
         vbo = glo.Vbo()
         vbo.set_vertices(vertices)
 
-        # glo.AttributeLocation.create_list(self.shader.program)
-
-        self.vao = glo.Vao(vbo, [
-            glo.VertexLayout(glo.AttributeLocation.create(
-                self.shader.program, 'vPos'), 2, ctypes.sizeof(Vertex), 0),
-            glo.VertexLayout(glo.AttributeLocation.create(
-                self.shader.program, 'vCol'), 3, ctypes.sizeof(Vertex), 8),
-        ])
+        self.vao = glo.Vao(vbo, glo.VertexLayout.create_list(self.shader.program))
 
     def draw(self):
         if not self.shader:

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Iterable
 from OpenGL import GL
 from .vbo import Vbo
 from .vertex_layout import VertexLayout
@@ -6,7 +6,7 @@ import ctypes
 
 
 class Vao:
-    def __init__(self, vbo: Vbo, layouts: List[VertexLayout]) -> None:
+    def __init__(self, vbo: Vbo, layouts: Iterable[VertexLayout]) -> None:
         self.vao = GL.glGenVertexArrays(1)
         self.bind()
         vbo.bind()
