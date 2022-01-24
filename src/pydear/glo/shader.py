@@ -1,6 +1,8 @@
+from typing import NamedTuple
 from OpenGL import GL
 import logging
 logger = logging.getLogger(__name__)
+
 
 class Shader:
     def __init__(self, vs, fs) -> None:
@@ -22,11 +24,10 @@ class Shader:
         return Shader(vertex_shader, fragment_shader)
 
 
-class UniformVariable:
-    def __init__(self, program,  name: str) -> None:
-        self.locatin = GL.glGetUniformLocation(program, name)
+class UniformLocation(NamedTuple):
+    name: str
+    location: int
 
-
-class VertexAttribute:
-    def __init__(self, program,  name: str) -> None:
-        self.locatin = GL.glGetAttribLocation(program, name)
+    @staticmethod
+    def create(program,  name: str) -> 'UniformLocation':
+        return UniformLocation(name, GL.glGetUniformLocation(program, name))

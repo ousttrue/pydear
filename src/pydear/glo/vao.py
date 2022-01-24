@@ -1,0 +1,31 @@
+from typing import List
+from OpenGL import GL
+from .vbo import Vbo
+from .vertex_layout import VertexLayout
+import ctypes
+
+
+class Vao:
+    def __init__(self, vbo: Vbo, layouts: List[VertexLayout]) -> None:
+        self.vao = GL.glGenVertexArrays(1)
+        self.bind()
+        vbo.bind()
+        for layout in layouts:
+            GL.glEnableVertexAttribArray(layout.attribute.location)
+            GL.glVertexAttribPointer(layout.attribute.location, layout.item_count, GL.GL_FLOAT, GL.GL_FALSE,
+                                     layout.stride, ctypes.c_void_p(layout.byte_offset))
+        self.unbind()
+
+    def __del__(self) -> None:
+        GL.glDeleteVertexArrays(1, [self.vao])
+
+    def bind(self):
+        GL.glBindVertexArray(self.vao)
+
+    def unbind(self):
+        GL.glBindVertexArray(0)
+
+    def draw(self, count: int, offset: int = 0):
+        self.bind()
+        GL.glDrawArrays(GL.GL_TRIANGLES, offset, count)
+        self.unbind()

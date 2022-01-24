@@ -9,7 +9,7 @@ class Vbo:
         self.vbo = GL.glGenBuffers(1)
 
     def __del__(self):
-        logger.debug(f'GL.glDeleteBuffers: {self.vbo}')
+        logger.debug(f'delete vbo: {self.vbo}')
         GL.glDeleteBuffers(1, [self.vbo])
 
     def bind(self):
@@ -22,3 +22,4 @@ class Vbo:
         self.bind()
         GL.glBufferData(GL.GL_ARRAY_BUFFER, ctypes.sizeof(vertices),
                         vertices, GL.GL_STATIC_DRAW)
+        self.unbind()

@@ -1,6 +1,5 @@
 import logging
 import ctypes
-from OpenGL import GL
 from pydear import glo
 
 logger = logging.getLogger(__name__)
@@ -31,9 +30,7 @@ void main()
 class Pipeline:
     def __init__(self, shader: glo.Shader) -> None:
         self.shader = shader
-        self.MVP = glo.UniformVariable(shader.program, "MVP")
-        self.vPos = glo.VertexAttribute(shader.program, "vPos")
-        self.vCol = glo.VertexAttribute(shader.program, "vCol")
+        self.MVP = glo.UniformLocation.create(shader.program, "MVP")
 
 
 class Vertex(ctypes.Structure):
@@ -57,17 +54,14 @@ class Triangle:
     def __init__(self) -> None:
         self.shader = glo.Shader.load(vs, fs)
         self.pipeline = Pipeline(self.shader)
-        self.vbo = glo.Vbo()
-        self.vbo.set_vertices(vertices)
+        vbo = glo.Vbo()
+        vbo.set_vertices(vertices)
+        self.vao = glo.Vao(vbo, [
+            glo.VertexLayout(glo.AttributeLocation.create(
+                self.shader.program, 'vCol'), 3, ctypes.sizeof(Vertex), 0),
+            glo.VertexLayout(glo.AttributeLocation.create(
+                self.shader.program, 'vPos'), 2, ctypes.sizeof(Vertex), 12),
+        ])
 
     def draw(self):
-        self.vbo.bind()
-        GL.glEnableVertexAttribArray(self.pipeline.vPos.locatin)
-        GL.glVertexAttribPointer(self.pipeline.vPos.locatin, 2, GL.GL_FLOAT, GL.GL_FALSE,
-                                 ctypes.sizeof(Vertex), ctypes.c_void_p(12))
-
-        GL.glEnableVertexAttribArray(self.pipeline.vCol.locatin)
-        GL.glVertexAttribPointer(self.pipeline.vCol.locatin, 3, GL.GL_FLOAT, GL.GL_FALSE,
-                                 ctypes.sizeof(Vertex), ctypes.c_void_p(0))
-
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, 3)
+        self.vao.draw(3)
