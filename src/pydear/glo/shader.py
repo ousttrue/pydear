@@ -1,5 +1,6 @@
 from OpenGL import GL
-
+import logging
+logger = logging.getLogger(__name__)
 
 class Shader:
     def __init__(self, vs, fs) -> None:

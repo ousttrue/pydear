@@ -15,6 +15,9 @@ class Vbo:
     def bind(self):
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo)
 
+    def unbind(self):
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
+
     def set_vertices(self, vertices):
         self.bind()
         GL.glBufferData(GL.GL_ARRAY_BUFFER, ctypes.sizeof(vertices),

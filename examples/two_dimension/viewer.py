@@ -1,7 +1,39 @@
+from typing import Optional
 import logging
 import ctypes
-from pydear import glo
+from OpenGL import GL
 logger = logging.getLogger(__name__)
+
+
+
+
+
+class FboRenderer:
+    def __init__(self) -> None:
+        self.fbo: Optional[Fbo] = None
+
+    def clear(self, width, height, color):
+        if width == 0 or height == 0:
+            return 0
+
+        if self.fbo:
+            if self.fbo.width != width or self.fbo.height != height:
+                del self.fbo
+                self.fbo = None
+        if not self.fbo:
+            self.fbo = Fbo(width, height)
+
+        self.fbo.bind()
+        GL.glViewport(0, 0, width, height)
+        GL.glScissor(0, 0, width, height)
+        GL.glClearColor(color[0] * color[3],
+                        color[1] * color[3],
+                        color[2] * color[3],
+                        color[3])
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+        self.fbo.unbind()
+
+        return ctypes.c_void_p(int(self.fbo.texture))
 
 
 def main():
@@ -13,7 +45,7 @@ def main():
     from pydear import imgui as ImGui
     from pydear.utils import dockspace
     clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
-    fbo_manager = glo.FboRenderer()
+    fbo_manager = FboRenderer()
 
     def show_hello(p_open):
         if ImGui.Begin('hello', p_open):
