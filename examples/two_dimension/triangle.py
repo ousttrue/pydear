@@ -56,6 +56,9 @@ class Triangle:
         self.pipeline = Pipeline(self.shader)
         vbo = glo.Vbo()
         vbo.set_vertices(vertices)
+
+        glo.AttributeLocation.create_list(self.shader.program)
+
         self.vao = glo.Vao(vbo, [
             glo.VertexLayout(glo.AttributeLocation.create(
                 self.shader.program, 'vCol'), 3, ctypes.sizeof(Vertex), 0),
