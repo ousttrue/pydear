@@ -81,3 +81,7 @@ class UniformLocation(NamedTuple):
     @staticmethod
     def create(program,  name: str) -> 'UniformLocation':
         return UniformLocation(name, GL.glGetUniformLocation(program, name))
+
+    def set_mat4(self, value, transpose: bool = False):
+        GL.glUniformMatrix4fv(
+            self.location, 1, GL.GL_TRUE if transpose else GL.GL_FALSE, value)
