@@ -51,6 +51,5 @@ class FboRenderer:
                         color[2] * color[3],
                         color[3])
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-        self.fbo.unbind()
 
         return ctypes.c_void_p(int(self.fbo.texture.handle))

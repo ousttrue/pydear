@@ -41,10 +41,10 @@
             "justMyCode": false
         },
         {
-            "name": "triangle",
+            "name": "viewer(2d)",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/two_dimension/triangle.py",
+            "program": "${workspaceFolder}/examples/two_dimension/viewer.py",
             "args": [],
             "console": "integratedTerminal",
             "justMyCode": false
