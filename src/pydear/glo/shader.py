@@ -34,6 +34,14 @@ class Shader:
     def __del__(self):
         GL.glDeleteProgram(self.program)
 
+    def __enter__(self):
+        self.use()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.unuse()
+        if exc_type:
+            logger.warning(f'{exc_type}: {exc_value}: {traceback}')
+
     def link(self, vs, fs) -> bool:
         GL.glAttachShader(self.program, vs)
         GL.glAttachShader(self.program, fs)

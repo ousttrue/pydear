@@ -28,12 +28,6 @@ void main()
 '''
 
 
-class Pipeline:
-    def __init__(self, shader: glo.Shader) -> None:
-        self.shader = shader
-        self.MVP = glo.UniformLocation.create(shader.program, "MVP")
-
-
 class Vertex(ctypes.Structure):
     _fields_ = [
         ('x', ctypes.c_float),
@@ -56,15 +50,13 @@ class Triangle:
         self.shader = glo.Shader.load(vs, fs)
         if not self.shader:
             return
-        self.pipeline = Pipeline(self.shader)
         vbo = glo.Vbo()
         vbo.set_vertices(vertices)
-
-        self.vao = glo.Vao(vbo, glo.VertexLayout.create_list(self.shader.program))
+        self.vao = glo.Vao(
+            vbo, glo.VertexLayout.create_list(self.shader.program))
 
     def draw(self):
         if not self.shader:
             return
-        self.shader.use()
-        self.vao.draw(3)
-        self.shader.unuse()
+        with self.shader:
+            self.vao.draw(3)
