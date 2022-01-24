@@ -1,17 +1,18 @@
+from typing import Optional
 from OpenGL import GL
 import logging
 logger = logging.getLogger(__name__)
 
 
 class Texture:
-    def __init__(self, width: int, height: int) -> None:
+    def __init__(self, width: int, height: int, data: Optional[bytes] = None) -> None:
         self.width = width
         self.height = height
         self.handle = GL.glGenTextures(1)
 
         self.bind()
         GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width,
-                        height, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, None)
+                        height, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, data)
         GL.glTexParameteri(
             GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
         GL.glTexParameteri(

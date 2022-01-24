@@ -68,7 +68,7 @@ class VertexLayout(NamedTuple):
     byte_offset: int
 
     @ staticmethod
-    def create_list(program) -> Iterable['VertexLayout']:
+    def create_list(program) -> List['VertexLayout']:
         count = GL.glGetProgramiv(program, GL.GL_ACTIVE_ATTRIBUTES)
         logger.debug(f"Active Attributes: {count}")
 
@@ -88,7 +88,10 @@ class VertexLayout(NamedTuple):
         # not same with location order
         layouts.sort(key=lambda l: l.attribute.location)
 
+        result = []
         offset = 0
         for layout in layouts:
-            yield VertexLayout(layout.attribute, layout.item_count, stride, offset)
+            result.append(VertexLayout(layout.attribute,
+                          layout.item_count, stride, offset))
             offset += layout.byte_offset
+        return result

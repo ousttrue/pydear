@@ -85,3 +85,12 @@ class UniformLocation(NamedTuple):
     def set_mat4(self, value, transpose: bool = False):
         GL.glUniformMatrix4fv(
             self.location, 1, GL.GL_TRUE if transpose else GL.GL_FALSE, value)
+
+
+class ShaderProp:
+    def __init__(self, setter, getter) -> None:
+        self.setter = setter
+        self.getter = getter
+
+    def update(self):
+        self.setter(self.getter())

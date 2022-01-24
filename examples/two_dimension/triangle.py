@@ -4,6 +4,7 @@ simple triangle sample
 import logging
 import ctypes
 from pydear import glo
+from pydear.utils.item import Item
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +46,11 @@ vertices = (Vertex * 3)(
 )
 
 
-class Triangle:
+class Triangle(Item):
     def __init__(self) -> None:
+        super().__init__('triangle')
+
+    def initialize(self) -> None:
         self.shader = glo.Shader.load(vs, fs)
         if not self.shader:
             return
@@ -56,6 +60,10 @@ class Triangle:
             vbo, glo.VertexLayout.create_list(self.shader.program))
 
     def render(self):
+        if not self.is_initialized:
+            self.initialize()
+            self.is_initialized = True
+
         if not self.shader:
             return
         with self.shader:

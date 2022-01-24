@@ -19,8 +19,16 @@ def empty(*args):
     pass
 
 
-class Item(NamedTuple):
-    name: str
-    render: Callable[[], None]
-    show: Callable[[], None] = empty
-    input: Callable[[Input], None] = empty
+class Item:
+    def __init__(self, name) -> None:
+        self.name = name
+        self.is_initialized = False
+
+    def render(self):
+        pass
+
+    def show(self):
+        pass
+
+    def input(self, input: Input):
+        pass

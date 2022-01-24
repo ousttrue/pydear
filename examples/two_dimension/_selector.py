@@ -25,15 +25,12 @@ def main():
     clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
     fbo_manager = glo.FboRenderer()
 
-    from triangle import Triangle
-    triangle = Triangle()
-    selector.add(Item('triangle', triangle.render))
-    from view import View
-    view = View()
-    selector.add(Item('view', view.render,
-                 input=view.on_input,
-                 show=view.show)
-                 )
+    import triangle
+    selector.add(triangle.Triangle())
+    import view
+    selector.add(view.View())
+    import text
+    selector.add(text.TextRenderer())
 
     def show_selector(p_open):
         if ImGui.Begin("selector", p_open):

@@ -5,7 +5,7 @@ Triangle with Orthogonal Matrix
 import logging
 import ctypes
 from pydear import glo
-from pydear.utils.item import Input
+from pydear.utils.item import Input, Item
 from pydear import imgui as ImGui
 import glm
 
@@ -53,17 +53,12 @@ vertices = (Vertex * 3)(
 )
 
 
-class ShaderProp:
-    def __init__(self, setter, getter) -> None:
-        self.setter = setter
-        self.getter = getter
-
-    def update(self):
-        self.setter(self.getter())
-
-
-class View:
+class View(Item):
     def __init__(self) -> None:
+        super().__init__('view')
+        self._input = None
+
+    def initialize(self):
         self.shader = glo.Shader.load(vs, fs)
         if not self.shader:
             return
@@ -74,7 +69,7 @@ class View:
             vbo, glo.VertexLayout.create_list(self.shader.program))
 
         self.p_open = (ctypes.c_bool * 1)(True)
-        self.input = None
+        self._input = None
 
         self.zoom = 1
         self.x = 0
@@ -85,14 +80,14 @@ class View:
         self.view = glm.mat4()
         view = glo.UniformLocation.create(self.shader.program, "V")
         self.props = [
-            ShaderProp(lambda x: model.set_mat4(
+            glo.ShaderProp(lambda x: model.set_mat4(
                 x), lambda:glm.value_ptr(self.model)),
-            ShaderProp(lambda x: view.set_mat4(
+            glo.ShaderProp(lambda x: view.set_mat4(
                 x), lambda:glm.value_ptr(self.view)),
         ]
 
-    def on_input(self, input: Input):
-        self.input = input
+    def input(self, input: Input):
+        self._input = input
 
         if input.wheel < 0:
             self.zoom *= 1.1
@@ -115,9 +110,9 @@ class View:
         if not self.p_open[0]:
             return
         if ImGui.Begin('view info', self.p_open):
-            input = self.input
+            input = self._input
             if input:
-                ImGui.TextUnformatted(f"{self.input}")
+                ImGui.TextUnformatted(f"{self._input}")
                 w = input.width/2
                 h = input.height/2
                 ImGui.TextUnformatted(f"{w}: {h}")
@@ -125,9 +120,12 @@ class View:
         ImGui.End()
 
     def render(self):
+        if not self.is_initialized:
+            self.initialize()
+            self.is_initialized = True
+
         if not self.shader:
             return
-
         with self.shader:
             for prop in self.props:
                 prop.update()
