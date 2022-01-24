@@ -7,10 +7,10 @@ from pydear import glo
 
 logger = logging.getLogger(__name__)
 
-vs = '''#version 110
-attribute vec3 vCol;
-attribute vec2 vPos;
-varying vec3 color;
+vs = '''#version 330
+in vec3 vCol;
+in vec2 vPos;
+out vec3 color;
 void main()
 {
     gl_Position = vec4(vPos, 0.0, 1.0);
@@ -18,11 +18,12 @@ void main()
 }
 '''
 
-fs = '''#version 110
-varying vec3 color;
+fs = '''#version 330
+in vec3 color;
+out vec4 FragColor;
 void main()
 {
-    gl_FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, 1.0);
 }
 '''
 
