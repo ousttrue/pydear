@@ -1,5 +1,5 @@
 from typing import List
-import item
+from . import item
 from pydear import imgui as ImGui
 
 
@@ -7,7 +7,7 @@ class Selector:
     def __init__(self) -> None:
         self.items: List[item.Item] = []
         self.selected = None
-    
+
     @property
     def view_name(self):
         name = self.selected.name if self.selected else ''

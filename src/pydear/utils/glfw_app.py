@@ -4,6 +4,7 @@ from OpenGL import GL
 import ctypes
 logger = logging.getLogger(__name__)
 
+
 class GlfwApp:
     def __init__(self, title: str, width=1024, height=768) -> None:
         def glfw_error_callback(error: int, description: str):
@@ -12,6 +13,10 @@ class GlfwApp:
 
         if not glfw.init():
             raise RuntimeError('glfw.init')
+
+        glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
+        glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 0)
+        glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 
         self.window = glfw.create_window(width, height, title, None, None)
         if not self.window:

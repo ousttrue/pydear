@@ -1,24 +1,24 @@
+'''
+simple triangle sample
+'''
 import logging
 import ctypes
 from pydear import glo
 
 logger = logging.getLogger(__name__)
 
-vs = '''
-#version 110
-uniform mat4 MVP;
+vs = '''#version 110
 attribute vec3 vCol;
 attribute vec2 vPos;
 varying vec3 color;
 void main()
 {
-    gl_Position = MVP * vec4(vPos, 0.0, 1.0);
+    gl_Position = vec4(vPos, 0.0, 1.0);
     color = vCol;
 }
 '''
 
-fs = '''
-#version 110
+fs = '''#version 110
 varying vec3 color;
 void main()
 {
@@ -53,18 +53,24 @@ vertices = (Vertex * 3)(
 class Triangle:
     def __init__(self) -> None:
         self.shader = glo.Shader.load(vs, fs)
+        if not self.shader:
+            return
         self.pipeline = Pipeline(self.shader)
         vbo = glo.Vbo()
         vbo.set_vertices(vertices)
 
-        glo.AttributeLocation.create_list(self.shader.program)
+        # glo.AttributeLocation.create_list(self.shader.program)
 
         self.vao = glo.Vao(vbo, [
             glo.VertexLayout(glo.AttributeLocation.create(
-                self.shader.program, 'vCol'), 3, ctypes.sizeof(Vertex), 0),
+                self.shader.program, 'vPos'), 2, ctypes.sizeof(Vertex), 0),
             glo.VertexLayout(glo.AttributeLocation.create(
-                self.shader.program, 'vPos'), 2, ctypes.sizeof(Vertex), 12),
+                self.shader.program, 'vCol'), 3, ctypes.sizeof(Vertex), 8),
         ])
 
     def draw(self):
+        if not self.shader:
+            return
+        self.shader.use()
         self.vao.draw(3)
+        self.shader.unuse()

@@ -44,7 +44,7 @@
             "name": "viewer(2d)",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/two_dimension/viewer.py",
+            "program": "${workspaceFolder}/examples/two_dimension/_selector.py",
             "args": [],
             "console": "integratedTerminal",
             "justMyCode": false

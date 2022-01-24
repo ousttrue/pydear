@@ -10,7 +10,9 @@ class AttributeLocation(NamedTuple):
 
     @staticmethod
     def create(program,  name: str) -> 'AttributeLocation':
-        return AttributeLocation(name, GL.glGetAttribLocation(program, name))
+        location = GL.glGetAttribLocation(program, name)
+        assert(location != -1)
+        return AttributeLocation(name, location)
 
     @staticmethod
     def create_list(program) -> Iterable['AttributeLocation']:

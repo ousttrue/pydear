@@ -1,27 +1,69 @@
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 from OpenGL import GL
 import logging
 logger = logging.getLogger(__name__)
 
 
+class ShaderCompile:
+    def __init__(self, shader_type):
+        '''
+        GL.GL_VERTEX_SHADER
+        GL.GL_FRAGMENT_SHADER
+        '''
+        self.shader = GL.glCreateShader(shader_type)
+
+    def compile(self, src: str) -> bool:
+        GL.glShaderSource(self.shader, src, None)
+        GL.glCompileShader(self.shader)
+        result = GL.glGetShaderiv(self.shader, GL.GL_COMPILE_STATUS)
+        if result == GL.GL_TRUE:
+            return True
+        # error message
+        info = GL.glGetShaderInfoLog(self.shader)
+        logging.error(info)
+        return False
+
+    def __del__(self):
+        GL.glDeleteShader(self.shader)
+
+
 class Shader:
-    def __init__(self, vs, fs) -> None:
+    def __init__(self) -> None:
         self.program = GL.glCreateProgram()
+
+    def __del__(self):
+        GL.glDeleteProgram(self.program)
+
+    def link(self, vs, fs) -> bool:
         GL.glAttachShader(self.program, vs)
         GL.glAttachShader(self.program, fs)
         GL.glLinkProgram(self.program)
+        error = GL.glGetProgramiv(self.program, GL.GL_LINK_STATUS)
+        if error == GL.GL_TRUE:
+            return True
+        # error message
+        info = GL.glGetShaderInfoLog(self.program)
+        logger.error(info)
+        return False
 
     @staticmethod
-    def load(vs, fs) -> 'Shader':
-        vertex_shader = GL.glCreateShader(GL.GL_VERTEX_SHADER)
-        GL.glShaderSource(vertex_shader, vs, None)
-        GL.glCompileShader(vertex_shader)
+    def load(vs_src: str, fs_src: str) -> Optional['Shader']:
+        vs = ShaderCompile(GL.GL_VERTEX_SHADER)
+        if not vs.compile(vs_src):
+            return
+        fs = ShaderCompile(GL.GL_FRAGMENT_SHADER)
+        if not fs.compile(fs_src):
+            return
+        shader = Shader()
+        if not shader.link(vs.shader, fs.shader):
+            return
+        return shader
 
-        fragment_shader = GL.glCreateShader(GL.GL_FRAGMENT_SHADER)
-        GL.glShaderSource(fragment_shader, fs, None)
-        GL.glCompileShader(fragment_shader)
+    def use(self):
+        GL.glUseProgram(self.program)
 
-        return Shader(vertex_shader, fragment_shader)
+    def unuse(self):
+        GL.glUseProgram(0)
 
 
 class UniformLocation(NamedTuple):

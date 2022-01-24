@@ -5,15 +5,16 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    logging.basicConfig(format='[%(levelname)s]%(name)s:%(funcName)s: %(message)s', level=logging.DEBUG)
+    logging.basicConfig(
+        format='[%(levelname)s]%(name)s:%(funcName)s: %(message)s', level=logging.DEBUG)
 
     from pydear.utils import glfw_app
-    app = glfw_app.GlfwApp('fbo')
+    app = glfw_app.GlfwApp('samples')
 
-    from pydear.utils import dockspace
     from pydear import glo
-    from selector import Selector
-    from item import Item
+    from pydear.utils import dockspace
+    from pydear.utils.selector import Selector
+    from pydear.utils.item import Item
     selector = Selector()
     clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
     fbo_manager = glo.FboRenderer()
