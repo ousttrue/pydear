@@ -50,6 +50,15 @@
             "justMyCode": false
         },
         {
+            "name": "text",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/two_dimension/text.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "example_glfw_opengl3",
             "type": "python",
             "request": "launch",
