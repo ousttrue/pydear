@@ -55,7 +55,7 @@ class Triangle:
         self.vao = glo.Vao(
             vbo, glo.VertexLayout.create_list(self.shader.program))
 
-    def draw(self):
+    def render(self):
         if not self.shader:
             return
         with self.shader:

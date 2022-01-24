@@ -11,7 +11,7 @@ class Selector:
     @property
     def view_name(self):
         name = self.selected.name if self.selected else ''
-        return f'{name}##view'
+        return f'{name}##__selector_view_name__'
 
     def add(self, item: item.Item):
         self.items.append(item)
