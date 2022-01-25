@@ -1,4 +1,5 @@
 from typing import Optional, NamedTuple
+import ctypes
 import dataclasses
 import logging
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class Tile(NamedTuple):
         return Rect(l, t, x_unit, y_unit)
 
 
-MIN_HEIGHT_LATITUDE = 2
+MIN_HEIGHT_LATITUDE = 0.05
 
 
 @dataclasses.dataclass
@@ -58,7 +59,7 @@ class View:
     aspect_ratio: float = 1
 
     def __str__(self) -> str:
-        return f'{self.longitude:.2f}: {self.latitude:.2f} ({self.height_latitude})'
+        return f'{self.longitude:.2f}: {self.latitude:.2f} ({self.height_latitude}) {self.aspect_ratio}'
 
     @property
     def rect(self) -> Rect:
@@ -67,11 +68,12 @@ class View:
         return Rect(self.longitude-width/2, self.latitude+height/2, width, height)
 
     def get_matrix(self):
+
         import glm
         x = self.longitude
         y = self.latitude
-        h = self.height_latitude / 2
-        w = h * self.aspect_ratio
+        h = self.height_latitude/2
+        w = h * self.aspect_ratio*2
         return glm.ortho(
             x-w, x+w,
             y-h, y+h,
@@ -89,8 +91,7 @@ class View:
 
     def drag(self, screen_height: int, dx: int, dy: int):
         self.latitude += self.height_latitude * float(dy) / screen_height
-        self.longitude += self.aspect_ratio * 2 * \
-            self.height_latitude * float(dx) / screen_height
+        self.longitude -= 2 * self.height_latitude * float(dx) / screen_height
 
 
 MAX_LEVEL = 4
@@ -98,7 +99,7 @@ MAX_LEVEL = 4
 
 class Map:
     def __init__(self, zoom_level=0) -> None:
-        self.zoom_level = zoom_level
+        self.zoom_level = (ctypes.c_int32 * 1)(2)
         self.view = View()
 
     def __str__(self) -> str:
@@ -106,13 +107,13 @@ class Map:
 
     @property
     def count(self) -> int:
-        return pow(2, self.zoom_level)
+        return pow(2, self.zoom_level[0])
 
     def iter_visible(self):
         count = self.count
         view_rect = self.view.rect
         for x in range(count):
             for y in range(count):
-                tile = Tile(self.zoom_level, x, y)
+                tile = Tile(self.zoom_level[0], x, y)
                 if tile.rect in view_rect:
                     yield tile

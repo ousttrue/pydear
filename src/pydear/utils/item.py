@@ -14,6 +14,10 @@ class Input(NamedTuple):
     middle: bool
     wheel: int
 
+    @property
+    def aspect_ratio(self) -> float:
+        return self.width/float(self.height)
+
     @staticmethod
     def get(hover: bool, w, h) -> Optional['Input']:
         if hover or ImGui.IsMouseDragging(0) or ImGui.IsMouseDragging(1) or ImGui.IsMouseDragging(2):
