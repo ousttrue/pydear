@@ -1,10 +1,10 @@
 
 import logging
 import dataclasses
-from pydear import glo
-from pydear.utils.item import Item
 import ctypes
-from pydear.utils.item import Input
+from pydear.utils.item import Item, Input
+from pydear import glo
+from pydear import imgui as ImGui
 import xyztile
 import glm
 
@@ -53,9 +53,13 @@ class XYZTile(Item):
     def __init__(self) -> None:
         super().__init__('xyztile')
         self._input = None
-        self.map = xyztile.Map()
+        self.map = xyztile.Map(3)
         self.p_open = (ctypes.c_bool * 1)(True)
         self.draw_count = 0
+        self.tiles = []
+
+    def add_tile(self, i: int, tile: xyztile.Tile):
+        self.tiles.append(tile)
 
     def initialize(self):
         self.shader = glo.Shader.load(vs, fs)
@@ -82,12 +86,15 @@ class XYZTile(Item):
 
         self._input = input
 
+        if input.wheel:
+            self.map.view.wheel(input.wheel)
         if input.middle:
             self.map.view.drag(input.height, input.dx, input.dy)
 
+        self.tiles.clear()
         for i, tile in enumerate(self.map.iter_visible()):
             # setup vertices
-            pass
+            self.add_tile(i, tile)
 
         self.view = self.map.view.get_matrix()
 
@@ -98,10 +105,40 @@ class XYZTile(Item):
         if ImGui.Begin('view info', self.p_open):
             input = self._input
             if input:
-                ImGui.TextUnformatted(f"{self._input}")
-                w = input.width/2
-                h = input.height/2
-                ImGui.TextUnformatted(f"{w}: {h}")
+                ImGui.TextUnformatted(f"{self.map}")
+
+            # table
+            flags = (
+                ImGui.ImGuiTableFlags_.BordersV
+                | ImGui.ImGuiTableFlags_.BordersOuterH
+                | ImGui.ImGuiTableFlags_.Resizable
+                | ImGui.ImGuiTableFlags_.RowBg
+                | ImGui.ImGuiTableFlags_.NoBordersInBody
+            )
+            if ImGui.BeginTable("tiles", 4, flags):
+                # header
+                # ImGui.TableSetupScrollFreeze(0, 1); // Make top row always visible
+                ImGui.TableSetupColumn('index')
+                ImGui.TableSetupColumn('z')
+                ImGui.TableSetupColumn('x')
+                ImGui.TableSetupColumn('y')
+                ImGui.TableHeadersRow()
+
+                # body
+                for i, tile in enumerate(self.tiles):
+                    ImGui.TableNextRow()
+                    # index
+                    ImGui.TableNextColumn()
+                    ImGui.TextUnformatted(f'{i:03}')
+                    #
+                    ImGui.TableNextColumn()
+                    ImGui.TextUnformatted(f'{tile.z}')
+                    ImGui.TableNextColumn()
+                    ImGui.TextUnformatted(f'{tile.x}')
+                    ImGui.TableNextColumn()
+                    ImGui.TextUnformatted(f'{tile.y}')
+
+                ImGui.EndTable()
 
         ImGui.End()
 
@@ -163,6 +200,7 @@ def main():
 
                 ImGui.BeginChild("_image_")
                 ImGui.Image(texture, (w, h), (0, 1), (1, 0))
+                state.hover = ImGui.IsItemHovered()
                 ImGui.EndChild()
         ImGui.End()
         ImGui.PopStyleVar()

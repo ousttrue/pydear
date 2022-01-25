@@ -31,15 +31,15 @@ class TestGeo(unittest.TestCase):
         view = xyztile.View(20, 40, 60)
         self.assertEqual(view.rect, (-40, 70, 120, 60))
 
-        self.assertFalse(xyztile.Rect(1, 2, 10, 20).is_overlap(
-            xyztile.Rect(11, 0, 10, 20)))
-        self.assertTrue(xyztile.Rect(1, 2, 10, 20).is_overlap(
-            xyztile.Rect(9, 2, 10, 20)))
+        self.assertFalse(
+            xyztile.Rect(1, 2, 10, 20) in (xyztile.Rect(11, 0, 10, 20)))
+        self.assertTrue(
+            xyztile.Rect(1, 2, 10, 20) in (xyztile.Rect(9, 2, 10, 20)))
 
-        self.assertFalse(xyztile.Rect(1, 2, 10, 20).is_overlap(
-            xyztile.Rect(0, 22, 10, 20)))
-        self.assertTrue(xyztile.Rect(1, 2, 10, 20).is_overlap(
-            xyztile.Rect(0, 21, 10, 20)))
+        self.assertFalse(
+            xyztile.Rect(1, 2, 10, 20) in (xyztile.Rect(0, 22, 10, 20)))
+        self.assertTrue(
+            xyztile.Rect(1, 2, 10, 20) in (xyztile.Rect(0, 21, 10, 20)))
 
 
 if __name__ == '__main__':

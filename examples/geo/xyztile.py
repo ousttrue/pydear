@@ -18,7 +18,7 @@ class Rect(NamedTuple):
     def bottom(self) -> float:
         return self.top - self.height
 
-    def is_overlap(self, other: 'Rect') -> bool:
+    def __contains__(self, other: 'Rect') -> bool:
         if self.right <= other.left:
             return False
         if other.right <= self.left:
@@ -47,16 +47,22 @@ class Tile(NamedTuple):
         return Rect(l, t, x_unit, y_unit)
 
 
+MIN_HEIGHT_LATITUDE = 2
+
+
 @dataclasses.dataclass
 class View:
     longitude: float = 0  # -180 + 180
     latitude: float = 0  # -90 ~ +90
-    height_longitude: float = 180
+    height_latitude: float = 180
     aspect_ratio: float = 1
+
+    def __str__(self) -> str:
+        return f'{self.longitude:.2f}: {self.latitude:.2f} ({self.height_latitude})'
 
     @property
     def rect(self) -> Rect:
-        height = self.height_longitude
+        height = self.height_latitude
         width = height * self.aspect_ratio * 2
         return Rect(self.longitude-width/2, self.latitude+height/2, width, height)
 
@@ -64,15 +70,30 @@ class View:
         import glm
         x = self.longitude
         y = self.latitude
-        h = self.height_longitude / 2
+        h = self.height_latitude / 2
         w = h * self.aspect_ratio
         return glm.ortho(
             x-w, x+w,
             y-h, y+h,
             0, 1)
 
+    def wheel(self, d):
+        if d < 0:
+            self.height_latitude *= 1.1
+            if self.height_latitude > 180:
+                self.height_latitude = 180
+        elif d > 0:
+            self.height_latitude *= 0.9
+            if self.height_latitude < MIN_HEIGHT_LATITUDE:
+                self.height_latitude = MIN_HEIGHT_LATITUDE
+
     def drag(self, screen_height: int, dx: int, dy: int):
-        pass
+        self.latitude += self.height_latitude * float(dy) / screen_height
+        self.longitude += self.aspect_ratio * 2 * \
+            self.height_latitude * float(dx) / screen_height
+
+
+MAX_LEVEL = 4
 
 
 class Map:
@@ -80,13 +101,18 @@ class Map:
         self.zoom_level = zoom_level
         self.view = View()
 
+    def __str__(self) -> str:
+        return f'zoom level: {self.zoom_level}, {self.view}'
+
     @property
     def count(self) -> int:
         return pow(2, self.zoom_level)
 
     def iter_visible(self):
         count = self.count
+        view_rect = self.view.rect
         for x in range(count):
             for y in range(count):
                 tile = Tile(self.zoom_level, x, y)
-                yield tile
+                if tile.rect in view_rect:
+                    yield tile
