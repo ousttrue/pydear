@@ -32,7 +32,7 @@ def main():
                 int(w), int(h), clear_color)
             if texture:
                 ImGui.BeginChild("_image_")
-                ImGui.Image(texture, (w, h))
+                ImGui.Image(texture, (w, h), (0, 1), (1, 0))
                 ImGui.EndChild()
         ImGui.End()
         ImGui.PopStyleVar()

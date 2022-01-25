@@ -1,4 +1,4 @@
-from typing import NamedTuple, Callable
+from typing import NamedTuple, Callable, Optional
 from pydear import imgui as ImGui
 
 
@@ -13,6 +13,18 @@ class Input(NamedTuple):
     right: bool
     middle: bool
     wheel: int
+
+    @staticmethod
+    def get(hover: bool, w, h) -> Optional['Input']:
+        if hover or ImGui.IsMouseDragging(0) or ImGui.IsMouseDragging(1) or ImGui.IsMouseDragging(2):
+            x, y = ImGui.GetWindowPos()
+            y += ImGui.GetFrameHeight()
+            io = ImGui.GetIO()
+            return Input(
+                int(w), int(h),
+                int(io.MousePos.x-x), int(io.MousePos.y-y),
+                int(io.MouseDelta.x), int(io.MouseDelta.y),
+                io.MouseDown[0], io.MouseDown[1], io.MouseDown[2], int(io.MouseWheel))
 
 
 def empty(*args):

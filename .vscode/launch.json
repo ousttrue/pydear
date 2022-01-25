@@ -50,10 +50,10 @@
             "justMyCode": false
         },
         {
-            "name": "text",
+            "name": "geo",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/two_dimension/text.py",
+            "program": "${workspaceFolder}/examples/geo/tile.py",
             "args": [],
             "console": "integratedTerminal",
             "justMyCode": false

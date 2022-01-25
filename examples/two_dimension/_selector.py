@@ -51,16 +51,8 @@ def main():
                 selected = selector.selected
                 if selected:
                     # input handling
-                    if state.hover or ImGui.IsMouseDragging(0) or ImGui.IsMouseDragging(1) or ImGui.IsMouseDragging(2):
-                        x, y = ImGui.GetWindowPos()
-                        y += ImGui.GetFrameHeight()
-                        io = ImGui.GetIO()
-
-                        input = Input(
-                            int(w), int(h),
-                            int(io.MousePos.x-x), int(io.MousePos.y-y),
-                            int(io.MouseDelta.x), int(io.MouseDelta.y),
-                            io.MouseDown[0], io.MouseDown[1], io.MouseDown[2], int(io.MouseWheel))
+                    input = Input.get(state.hover, w, h)
+                    if input:
                         selected.input(input)
 
                     # rendering
