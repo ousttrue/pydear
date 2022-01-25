@@ -46,8 +46,12 @@ class Ibo:
     def unbind(self):
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0)
 
-    def set_indices(self, vertices, format):
-        self.format = format
+    def set_indices(self, vertices: ctypes.Array):
+        match vertices._type_:
+            case ctypes.c_ushort:
+                self.format = GL.GL_UNSIGNED_SHORT
+            case _:
+                raise NotImplementedError()
         self.bind()
         GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, ctypes.sizeof(vertices),
                         vertices, GL.GL_STATIC_DRAW)
