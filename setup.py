@@ -37,8 +37,10 @@ HEADERS: List[Header] = [
 #
 # generate c++ source and relative py and pyi
 #
-from rawtypes import generator  # noqa
-cpp_path = generator.generate(HEADERS, PACKAGE_DIR)
+from rawtypes.generator import Generator  # noqa
+generator = Generator()
+generator.parse(*HEADERS)
+cpp_path = generator.generate(PACKAGE_DIR)
 
 #
 # build impl to build/Release/lib/imgui.lib
