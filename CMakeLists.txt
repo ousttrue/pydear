@@ -33,7 +33,9 @@ add_library(
   _external/ImGuizmo/ImCurveEdit.cpp
   _external/ImGuizmo/ImGradient.cpp
   _external/ImGuizmo/ImSequencer.cpp
-  _external/tinygizmo/tinygizmo/tiny-gizmo.cpp)
+  _external/tinygizmo/tinygizmo/tiny-gizmo.cpp
+  _external/nanovg/src/nanovg.c
+  )
 target_include_directories(
   ${PROJECT_NAME} PRIVATE _external _external/imgui _external/stb
                           _external/tinygizmo/tinygizmo)
