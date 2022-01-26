@@ -19,3 +19,6 @@
 [submodule "_external/tinygizmo"]
 	path = _external/tinygizmo
 	url = https://github.com/ousttrue/tinygizmo.git
+[submodule "_external/nanovg"]
+	path = _external/nanovg
+	url = https://github.com/memononen/nanovg.git
