@@ -35,6 +35,20 @@ class ImVector(ctypes.Structure):
 
 '''
 
+CPP_BEGIN='''
+static ImVec2 get_ImVec2(PyObject *src)
+{
+    float x, y;
+    if(PyArg_ParseTuple(src, "ff", &x, &y))
+    {
+        return {x, y};
+    }
+    PyErr_Clear();
+
+    return {};
+}
+'''
+
 HEADERS: List[Header] = [
     # Header(
     #     EXTERNAL_DIR, 'tinygizmo/tinygizmo/tiny-gizmo.hpp',
@@ -42,7 +56,8 @@ HEADERS: List[Header] = [
     Header(
         EXTERNAL_DIR / 'imgui/imgui.h',
         include_dirs=[EXTERNAL_DIR / 'imgui'],
-        begin=IMVECTOR),
+        begin=IMVECTOR,
+        cpp_begin=CPP_BEGIN),
     Header(
         EXTERNAL_DIR / 'ImFileDialogWrap.h',
         include_dirs=[EXTERNAL_DIR]),
