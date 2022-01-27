@@ -53,7 +53,7 @@
             "name": "geo",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/geo/tile.py",
+            "program": "${workspaceFolder}/examples/geo/tile_viewer.py",
             "args": [],
             "console": "integratedTerminal",
             "justMyCode": false

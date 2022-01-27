@@ -20,3 +20,4 @@
 *.pdb
 /.venv/
 /_build/
+/tile_cache/

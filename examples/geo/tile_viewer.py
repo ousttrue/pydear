@@ -10,6 +10,9 @@ import glm
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
+from tile_texture_manager import TileTextureManager
+import pathlib
+HERE = pathlib.Path(__file__).absolute().parent
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +69,10 @@ class XYZTile(Item):
         self.map = xyztile.Map(1)
         self.p_open = (ctypes.c_bool * 1)(True)
         self.tiles: List[xyztile.Tile] = []
-        self.texture_map = {}
+        self.texture_manager = TileTextureManager(
+            'http://tile.thunderforest.com/cycle/',
+            HERE.parent.parent / 'tile_cache'
+        )
 
     def add_tile(self, i: int, tile: xyztile.Tile):
         self.tiles.append(tile)
@@ -80,15 +86,6 @@ class XYZTile(Item):
         VERTICES[vpos+1] = Vertex(r, b, 1, 1)
         VERTICES[vpos+2] = Vertex(r, t, 1, 0)
         VERTICES[vpos+3] = Vertex(l, t, 0, 0)
-
-        if tile not in self.texture_map:
-            img = PIL.Image.new("RGBA", (256, 256))
-            draw = PIL.ImageDraw.Draw(img)
-            font = PIL.ImageFont.truetype("verdana.ttf", 24)
-            draw.text((0, 0), f"[{tile.z}]{tile.x}:{tile.y}",
-                      font=font, fill=(255, 0, 0, 255))
-            texture = glo.Texture(img.width, img.height,  img.tobytes('raw'))
-            self.texture_map[tile] = texture
 
     def initialize(self):
         self.shader = glo.Shader.load(vs, fs)
@@ -199,8 +196,9 @@ class XYZTile(Item):
 
             offset = 0
             for tile in self.tiles:
-                texture = self.texture_map[tile]
-                texture.bind()
+                texture = self.texture_manager.get_or_create(tile)
+                if texture:
+                    texture.bind()
                 self.vao.draw(6, offset)
                 offset += 6 * 2
 
