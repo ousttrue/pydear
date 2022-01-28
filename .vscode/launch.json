@@ -68,13 +68,20 @@
             "justMyCode": false
         },
         {
+            "name": "nanovg",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/basic/hello_nanovg.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "dbg",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "C:/Python310/Python.exe",
             "args": [
-                "-m",
-                "pydear.impl",
                 "${file}"
             ],
             "stopAtEntry": false,

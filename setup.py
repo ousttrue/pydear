@@ -35,7 +35,7 @@ class ImVector(ctypes.Structure):
 
 '''
 
-CPP_BEGIN='''
+CPP_BEGIN = '''
 static ImVec2 get_ImVec2(PyObject *src)
 {
     float x, y;
@@ -57,19 +57,30 @@ HEADERS: List[Header] = [
         EXTERNAL_DIR / 'imgui/imgui.h',
         include_dirs=[EXTERNAL_DIR / 'imgui'],
         begin=IMVECTOR,
-        cpp_begin=CPP_BEGIN),
-    Header(
-        EXTERNAL_DIR / 'ImFileDialogWrap.h',
-        include_dirs=[EXTERNAL_DIR]),
+        after_include=CPP_BEGIN),
+    # Header(
+    #     EXTERNAL_DIR / 'ImFileDialogWrap.h',
+    #     include_dirs=[EXTERNAL_DIR]),
     # Header(
     #     EXTERNAL_DIR, 'ImGuizmo/ImGuizmo.h',
     #     include_dirs=[EXTERNAL_DIR / 'ImGuizmo'], prefix='ImGuizmo_'),
     Header(
         EXTERNAL_DIR / 'imnodes/imnodes.h',
         include_dirs=[EXTERNAL_DIR / 'imnodes']),
-    # Header(
-    #     EXTERNAL_DIR, 'nanovg/src/nanovg.h',
-    #     include_dirs=[EXTERNAL_DIR / 'nanovg/src']),
+    Header(
+        EXTERNAL_DIR / 'nanovg/src/nanovg.h',
+        include_dirs=[EXTERNAL_DIR / 'nanovg/src']),
+    Header(
+        EXTERNAL_DIR / 'glew-2.1.0/include/GL/glew.h',
+        include_dirs=[EXTERNAL_DIR / 'glew-2.1.0/include/GL'],
+        definitions=['GLEW_STATIC'],
+        if_include=lambda name: name == 'glewInit'),
+    Header(
+        EXTERNAL_DIR / 'nanovg/src/nanovg_gl.h',
+        include_dirs=[EXTERNAL_DIR / 'nanovg/src',
+                      EXTERNAL_DIR / 'glew-2.1.0/include'],
+        definitions=['NANOVG_GL3_IMPLEMENTATION', 'NOMINMAX'],
+        before_include='#include <GL/glew.h>\n'),
 ]
 
 WRAP_TYPES = [
@@ -108,6 +119,11 @@ WRAP_TYPES = [
 
     # tinygizmo
     WrapFlags('gizmo_context', fields=True, methods=True),
+
+    # nanovg
+    WrapFlags('NVGcolor', True),
+    WrapFlags('NVGpaint', True),
+    WrapFlags('GLNVGblend', True),
 ]
 
 
@@ -251,9 +267,10 @@ EXTENSIONS = [setuptools.Extension(
     include_dirs=[
         str(include_dir) for header in HEADERS for include_dir in header.include_dirs],
     language='c++',
-    extra_compile_args=['/wd4244', '/std:c++17'],
+    extra_compile_args=['/wd4244', '/std:c++17',
+                        '-DNANOVG_GL3_IMPLEMENTATION', '-D_WIN32', '-DNOMINMAX', '-DGLEW_STATIC'],
     # cmake built
-    libraries=["imgui", "Advapi32", "Gdi32"],
+    libraries=["imgui", "Advapi32", "Gdi32", "OpenGL32"],
     library_dirs=[
         str(CMAKE_BUILD / f'{build_type}/lib')],
 )]

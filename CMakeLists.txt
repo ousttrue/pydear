@@ -35,8 +35,12 @@ add_library(
   _external/ImGuizmo/ImSequencer.cpp
   _external/tinygizmo/tinygizmo/tiny-gizmo.cpp
   _external/nanovg/src/nanovg.c
-  )
+  _external/glew-2.1.0/src/glew.c
+  _external/glew-2.1.0/src/glewinfo.c
+  _external/glew-2.1.0/src/visualinfo.c)
 target_include_directories(
-  ${PROJECT_NAME} PRIVATE _external _external/imgui _external/stb
-                          _external/tinygizmo/tinygizmo)
+  ${PROJECT_NAME}
+  PRIVATE _external _external/imgui _external/stb _external/tinygizmo/tinygizmo
+          _external/glew-2.1.0/include)
+target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_BUILD GLEW_STATIC)
 target_link_libraries(${PROJECT_NAME} PUBLIC Advapi32.lib)
