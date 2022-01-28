@@ -203,7 +203,7 @@ class VertexBufferType(BaseType):
 from rawtypes.generator import Generator  # noqa
 generator = Generator(*HEADERS)
 
-generator.types.WRAP_TYPES.extend(WRAP_TYPES)
+generator.type_manager.WRAP_TYPES.extend(WRAP_TYPES)
 
 IMVECTOR_TYPE = ImVector()
 
@@ -214,7 +214,7 @@ def if_imvector(c):
         return IMVECTOR_TYPE
 
 
-generator.types.processors = [
+generator.type_manager.processors = [
     TypeProcessor(if_imvector),
     TypeProcessor(lambda c: ImVec2WrapType() if c.type.spelling in [
                   'ImVec2', 'const ImVec2 &'] else None),

@@ -70,7 +70,7 @@ class XYZTile(Item):
         self.p_open = (ctypes.c_bool * 1)(True)
         self.tiles: List[xyztile.Tile] = []
         self.texture_manager = TileTextureManager(
-            'http://tile.thunderforest.com/cycle/',
+            'http://tile.openstreetmap.org/',
             HERE.parent.parent / 'tile_cache'
         )
 
