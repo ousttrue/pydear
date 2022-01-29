@@ -1,12 +1,12 @@
 from rawtypes.interpreted_types import *
-from rawtypes import vcenv  # search setup vc path
+# from rawtypes import vcenv  # search setup vc path
 from rawtypes.parser.header import Header
 from rawtypes.parser.struct_cursor import WrapFlags
 import os
 import pathlib
 
 from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext as build_ext_orig
+from setuptools.command.build_ext import build_ext
 
 import subprocess
 import setuptools
@@ -251,21 +251,8 @@ generator.type_manager.processors = [
 
 generator.generate(PACKAGE_DIR, CPP_PATH)
 
-#
-# build impl to build/Release/lib/imgui.lib
-#
-build_type = "Release"
-if '--debug' in sys.argv:
-    build_type = "Debug"
-subprocess.run(
-    f'cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE={build_type}')
-subprocess.run(f'cmake --build build --config {build_type}')
 
-
-def rel_path(src: pathlib.Path) -> str:
-    return str(src.relative_to(HERE)).replace('\\', '/')
-
-
+# https://stackoverflow.com/questions/42585210/extending-setuptools-extension-to-use-cmake-in-setup-py
 class CMakeExtension(Extension):
 
     def __init__(self, name):
@@ -273,61 +260,36 @@ class CMakeExtension(Extension):
         super().__init__(name, sources=[])
 
 
-class build_ext(build_ext_orig):
+class build_ext_cmake(build_ext):
 
     def run(self):
         for ext in self.extensions:
             self.build_cmake(ext)
-        super().run()
 
     def build_cmake(self, ext):
-        cwd = pathlib.Path().absolute()
-
         # these dirs will be created in build_py, so if you don't have
         # any python sources to bundle, the dirs will be missing
         build_temp = pathlib.Path(self.build_temp)
         build_temp.mkdir(parents=True, exist_ok=True)
-        extdir = pathlib.Path(self.get_ext_fullpath(ext.name))
-        extdir.mkdir(parents=True, exist_ok=True)
+        ext_path = pathlib.Path(self.get_ext_fullpath(ext.name))
+        ext_path.parent.mkdir(parents=True, exist_ok=True)
 
         # example of cmake args
         config = 'Debug' if self.debug else 'Release'
-        cmake_args = [
-            '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' +
-            str(extdir.parent.absolute()),
-            '-DCMAKE_BUILD_TYPE=' + config
-        ]
 
-        # example of build args
-        build_args = [
-            '--config', config,
-            '--', '-j4'
-        ]
-
-        os.chdir(str(build_temp))
-        self.spawn(['cmake', str(cwd)] + cmake_args)
+        # os.chdir(str(build_temp))
+        self.spawn(['cmake', '-S', '.', '-B', str(build_temp),
+                    f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{config.upper()}={ext_path.parent}',
+                    f'-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_{config.upper()}={ext_path.parent}',
+                    f'-DCMAKE_BUILD_TYPE={config}'
+                    ])
         if not self.dry_run:
-            self.spawn(['cmake', '--build', '.'] + build_args)
-        # Troubleshooting: if fail on line above then delete all possible
-        # temporary CMake files including "CMakeCache.txt" in top level dir.
-        os.chdir(str(cwd))
+            self.spawn(
+                ['cmake', '--build', str(build_temp), '--config', config])
 
 
-EXTENSIONS = [CMakeExtension(
+EXTENSIONS: List[Extension] = [CMakeExtension(
     'pydear.impl',
-    # sources=[
-    #     # generated
-    #     rel_path(cpp_path),
-    # ],
-    # include_dirs=[
-    #     str(include_dir) for header in HEADERS for include_dir in header.include_dirs],
-    # language='c++',
-    # extra_compile_args=['/wd4244', '/std:c++17',
-    #                     '-DNANOVG_GL3_IMPLEMENTATION', '-D_WIN32', '-DNOMINMAX', '-DGLEW_STATIC'],
-    # # cmake built
-    # libraries=["imgui", "Advapi32", "Gdi32", "OpenGL32"],
-    # library_dirs=[
-    #     str(CMAKE_BUILD / f'{build_type}/lib')],
 )]
 
 setuptools.setup(
@@ -345,6 +307,9 @@ setuptools.setup(
     ],
     package_data={
         'pydear': ['py.typed', '*.pyi']
+    },
+    cmdclass={
+        'build_ext': build_ext_cmake,  # type: ignore
     },
     ext_modules=EXTENSIONS,
     use_scm_version={

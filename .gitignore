@@ -21,4 +21,4 @@
 /_build/
 /tile_cache/
 /.cache/
-/cpp_path/
+/cpp_src/
