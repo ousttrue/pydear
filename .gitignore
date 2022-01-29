@@ -3,7 +3,6 @@
 *.pyi
 *.egg-info
 *.whl
-/src/**/*.cpp
 *.pyx
 *.pxd
 /src/pydear/_version.py
@@ -21,3 +20,5 @@
 /.venv/
 /_build/
 /tile_cache/
+/.cache/
+/cpp_path/
