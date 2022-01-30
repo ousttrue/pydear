@@ -132,6 +132,7 @@ WRAP_TYPES = [
     WrapFlags('NVGcolor', True),
     WrapFlags('NVGpaint', True),
     WrapFlags('GLNVGblend', True),
+    WrapFlags('NVGtextRow', True),
 ]
 
 
