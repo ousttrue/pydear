@@ -17,6 +17,8 @@ def key_callback_fn(window_handle, key, scancode, action, mods):
 
 
 def render(vg, x, y, w, h):
+    w = float(w)
+    h = float(h)
     cornerRadius = 4.0
     s = nanovg.nvgRGBA(255, 255, 255, 16)
     e = nanovg.nvgRGBA(0, 0, 0, 16)
@@ -34,7 +36,7 @@ def main():
     glfw.make_context_current(win)
 
     glew.glewInit()
-    vg = nanovg_gl.nvgCreateGL3(0)
+    vg = nanovg_gl.nvgCreateGL3(nanovg_gl.NVGcreateFlags.NVG_ANTIALIAS)
     # nanovg_gl.NVGcreateFlags.NVG_ANTIALIAS)
     # | NVG_STENCIL_STROKES | NVG_DEBUG)
     if not vg:
