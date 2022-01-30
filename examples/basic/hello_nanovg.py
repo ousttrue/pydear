@@ -1,84 +1,56 @@
-# For local/library development:
-# import sys, os
-# sys.path.append(os.pardir)
-# sys.path.append('../../python-glfw_private')
-
-import ctypes
+from typing import Tuple
 from OpenGL import GL
 import glfw
-from pydear import nanovg
-from pydear import nanovg_gl
-from pydear import glew
+import nanovg_demo
 
 
-def key_callback_fn(window_handle, key, scancode, action, mods):
-    if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
-        glfw.set_window_should_close(window_handle, 1)
+class GlfwApp:
+    def __init__(self, w, h, title) -> None:
+        glfw.init()
+        self.window = glfw.create_window(w, h, title, None, None)
+        glfw.make_context_current(self.window)
+        glfw.swap_interval(0)
+        glfw.set_time(0)
 
+    def __del__(self):
+        glfw.destroy_window(self.window)
+        glfw.terminate()
 
-def render(vg, x, y, w, h):
-    w = float(w)
-    h = float(h)
-    cornerRadius = 4.0
-    s = nanovg.nvgRGBA(255, 255, 255, 16)
-    e = nanovg.nvgRGBA(0, 0, 0, 16)
-    bg = nanovg.nvgLinearGradient(vg, x, y, x, y+h, s, e)
-    nanovg.nvgBeginPath(vg)
-    nanovg.nvgRoundedRect(vg, x+1, y+1, w-2, h-2, cornerRadius-1)
-    nanovg.nvgFillPaint(vg, bg)
-    nanovg.nvgFill(vg)
+    def begin_frame(self) -> bool:
+        if glfw.window_should_close(self.window):
+            return False
+        return True
+
+    def end_frame(self):
+        glfw.swap_buffers(self.window)
+        glfw.poll_events()
+
+    def get_rect(self) -> Tuple[float, float, float, float]:
+        x, y = glfw.get_cursor_pos(self.window)
+        w, h = glfw.get_framebuffer_size(self.window)
+        return x, y, w, h
 
 
 def main():
-    glfw.init()
+    app = GlfwApp(1000, 600, "nanovg: example_gl3.c")
+    demo = nanovg_demo.Demo()
 
-    win = glfw.create_window(1000, 600, "Python NanoVG/GLFW", None, None)
-    glfw.make_context_current(win)
-
-    glew.glewInit()
-    vg = nanovg_gl.nvgCreateGL3(nanovg_gl.NVGcreateFlags.NVG_ANTIALIAS)
-    # nanovg_gl.NVGcreateFlags.NVG_ANTIALIAS)
-    # | NVG_STENCIL_STROKES | NVG_DEBUG)
-    if not vg:
-        raise RuntimeError("Could not init nanovg")
-
-    glfw.set_key_callback(win, key_callback_fn)
-    glfw.swap_interval(0)
-    glfw.set_time(0)
     prevt = glfw.get_time()
+    while app.begin_frame():
+        x, y, w, h = app.get_rect()
+        ratio = w / float(h)
 
-    try:
-        while glfw.window_should_close(win) == 0:
-            t = glfw.get_time()
-            dt = t - prevt
-            prevt = t
-            # fps.update(dt)
+        t = glfw.get_time()
+        dt = t - prevt
+        prevt = t
 
-            x, y = glfw.get_cursor_pos(win)
-            w, h = glfw.get_framebuffer_size(win)
-            ratio = w / float(h)
+        GL.glViewport(0, 0, w, h)
+        GL.glClearColor(0.3, 0.3, 0.32, 1.0)
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-            GL.glViewport(0, 0, w, h)
-            GL.glClearColor(0.3, 0.3, 0.32, 1.0)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+        demo.render(x, y, w, h, t)
 
-            nanovg.nvgBeginFrame(vg, float(w),
-                                 float(h), ratio)
-            # data.render(vg, mx.value, my.value, fb_width.value,
-            #             fb_height.value, t, False)
-            # fps.render(vg, 5, 5)
-
-            render(vg, x, y, w, h)
-
-            nanovg.nvgEndFrame(vg)
-
-            glfw.swap_buffers(win)
-            glfw.poll_events()
-    finally:
-        # data.free(vg)
-        nanovg_gl.nvgDeleteGL3_2(vg)
-        glfw.destroy_window(win)
-        glfw.terminate()
+        app.end_frame()
 
 
 if __name__ == '__main__':
