@@ -523,6 +523,7 @@ class Demo:
         # data
         self.images = []
         self.load_data()
+        self.blowup = False
 
     def __del__(self):
         nanovg_gl.nvgDeleteGL3_2(self.vg)
@@ -579,6 +580,11 @@ class Demo:
         drawCaps(self.vg, 10, 300, 30)
 
         drawScissor(self.vg, 50, height-80, t)
+
+        nanovg.nvgSave(self.vg)
+        if self.blowup:
+            nanovg.nvgRotate(self.vg, math.sin(t*0.3)*5.0/180.0*math.pi)
+            nanovg.nvgScale(self.vg, 2.0, 2.0)
 
         nanovg.nvgEndFrame(self.vg)
 
