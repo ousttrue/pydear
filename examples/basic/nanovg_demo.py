@@ -474,6 +474,42 @@ def drawCaps(vg, x, y, width):
     nanovg.nvgRestore(vg)
 
 
+def drawScissor(vg, x, y, t):
+
+    nanovg.nvgSave(vg)
+
+    # Draw first rect and set scissor to it's area.
+    nanovg.nvgTranslate(vg, x, y)
+    nanovg.nvgRotate(vg, nanovg.nvgDegToRad(5))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, -20, -20, 60, 40)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 0, 0, 255))
+    nanovg.nvgFill(vg)
+    nanovg.nvgScissor(vg, -20, -20, 60, 40)
+
+    # Draw second rectangle with offset and rotation.
+    nanovg.nvgTranslate(vg, 40, 0)
+    nanovg.nvgRotate(vg, t)
+
+    # Draw the intended second rectangle without any scissoring.
+    nanovg.nvgSave(vg)
+    nanovg.nvgResetScissor(vg)
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, -20, -10, 60, 30)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 128, 0, 64))
+    nanovg.nvgFill(vg)
+    nanovg.nvgRestore(vg)
+
+    # Draw second rectangle with combined scissoring.
+    nanovg.nvgIntersectScissor(vg, -20, -10, 60, 30)
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, -20, -10, 60, 30)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 128, 0, 255))
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgRestore(vg)
+
+
 class Demo:
     def __init__(self) -> None:
         glew.glewInit()
@@ -541,6 +577,8 @@ class Demo:
 
         # Line caps
         drawCaps(self.vg, 10, 300, 30)
+
+        drawScissor(self.vg, 50, height-80, t)
 
         nanovg.nvgEndFrame(self.vg)
 
