@@ -80,19 +80,21 @@ def drawEyes(vg, x, y, w, h, mx, my, t):
 def drawParagraph(vg, x, y, width, height, mx, my):
 
     rows = (nanovg.NVGtextRow * 3)()
-    # NVGglyphPosition glyphs[100];
-    _text = "This is longer chunk of text.\n  \n  Would have used lorem ipsum but she    was busy jumping over the lazy dog with the fox and all the men who came to the aid of the party.🎉"
-    # text = ctypes.create_string_buffer(_text, len(_text))
+    glyphs = (nanovg.NVGglyphPosition * 100)()
+    _text = "This is longer chunk of text.\n  \n  Would have used lorem ipsum but she    was busy jumping over the lazy dog with the fox and all the men who came to the aid of the party.🎉".encode(
+        'utf-8')
+    text = ctypes.create_string_buffer(_text, len(_text))
     # const char* start;
     # const char* end;
-    # int nrows, i, nglyphs, j, lnum = 0;
+    # int nrows, i, nglyphs, j
+    lnum = 0
     lineh = (ctypes.c_float * 1)()
     # float caretx, px;
-    # float bounds[4];
+    bounds = (ctypes.c_float * 4)()
     # float a;
-    # const char* hoverText = "Hover your mouse over the text to see calculated caret position.";
+    hoverText = "Hover your mouse over the text to see calculated caret position."
     # float gx,gy;
-    # int gutter = 0;
+    gutter = 0
     # const char* boxText = "Testing\nsome multiline\ntext.";
     # nanovg.NVG_NOTUSED(height);
 
@@ -107,98 +109,105 @@ def drawParagraph(vg, x, y, width, height, mx, my):
     # The text break API can be used to fill a large buffer of rows,
     # or to iterate over the text just few lines (or just one) at a time.
     # The "next" variable of the last returned item tells where to continue.
-    start = _text
-    end = _text[:len(_text)]
+    start = text
+    end = ctypes.c_void_p(ctypes.cast(
+        start, ctypes.c_void_p).value + len(text))
     while True:
         nrows = nanovg.nvgTextBreakLines(vg, start, end, width, rows, 3)
         if not nrows:
             break
-        # for (i=0
-        #      i < nrows
-        #      i++) {
-        #     NVGtextRow * row = &rows[i]
-        #     int hit = mx > x & & mx < (x+width) & & my >= y & & my < (y+lineh)
+        for i in range(nrows):
+            row = rows[i]
+            hit = mx > x and mx < (x+width) and my >= y and my < (y+lineh[0])
 
-        #     nanovg.nvgBeginPath(vg)
-        #     nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, hit?64: 16))
-        #     nanovg.nvgRect(vg, x + row -> minx, y, row -> maxx - row -> minx, lineh)
-        #     nanovg.nvgFill(vg)
+            nanovg.nvgBeginPath(vg)
+            nanovg.nvgFillColor(vg, nanovg.nvgRGBA(
+                255, 255, 255, 64 if hit else 16))
+            nanovg.nvgRect(vg, x + row.minx, y, row.maxx - row.minx, lineh[0])
+            nanovg.nvgFill(vg)
 
-        #     nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 255))
-        #     nanovg.nvgText(vg, x, y, row -> start, row -> end)
+            nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 255))
+            row_str = ctypes.string_at(row.start, row.end-row.start)
+            nanovg.nvgText(vg, x, y, row_str, None)
 
-        #     if (hit) {
-        #         caretx = (mx < x+row -> width/2) ? x: x+row -> width
-        #         px = x
-        #         nglyphs = nanovg.nvgTextGlyphPositions(vg, x, y, row -> start, row -> end, glyphs, 100)
-        #         for (j=0
-        #              j < nglyphs
-        #              j++) {
-        #             float x0 = glyphs[j].x
-        #             float x1 = (j+1 < nglyphs) ? glyphs[j+1].x: x+row -> width
-        #             float gx = x0 * 0.3f + x1 * 0.7f
-        #             if (mx >= px & & mx < gx)
-        #             caretx = glyphs[j].x
-        #             px = gx
-        #         }
-        #         nanovg.nvgBeginPath(vg)
-        #         nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 192, 0, 255))
-        #         nanovg.nvgRect(vg, caretx, y, 1, lineh)
-        #         nanovg.nvgFill(vg)
+            if hit:
+                caretx = x if(mx < x+row.width/2) else x+row.width
+                px = x
+                nglyphs = nanovg.nvgTextGlyphPositions(
+                    vg, x, y, row_str, None, glyphs, 100)
+                for j in range(nglyphs):
+                    x0 = glyphs[j].x
+                    x1 = glyphs[j+1].x if (j+1 < nglyphs) else x+row.width
+                    gx = x0 * 0.3 + x1 * 0.7
+                    if mx >= px and mx < gx:
+                        caretx = glyphs[j].x
+                        px = gx
+                nanovg.nvgBeginPath(vg)
+                nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 192, 0, 255))
+                nanovg.nvgRect(vg, caretx, y, 1, lineh[0])
+                nanovg.nvgFill(vg)
 
-        #         gutter = lnum+1
-        #         gx = x - 10
-        #         gy = y + lineh/2
-        #     }
-        #     lnum++
-        #     y += lineh
-        # }
+                gutter = lnum+1
+                gx = x - 10
+                gy = y + lineh[0]/2
+            lnum += 1
+            y += lineh[0]
+
         # Keep going...
-        start = rows[nrows-1].next
+        start = ctypes.c_void_p(rows[nrows-1].next)
 
-    # if (gutter) {
-    # 	char txt[16];
-    # 	snprintf(txt, sizeof(txt), "%d", gutter);
-    # 	nanovg.nvgFontSize(vg, 12.0f);
-    # 	nanovg.nvgTextAlign(vg, NVG_ALIGN_RIGHT|NVG_ALIGN_MIDDLE);
+    if gutter:
+        txt = f'{gutter}'
+        nanovg.nvgFontSize(vg, 12.0)
+        nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_RIGHT |
+                            nanovg.NVGalign. NVG_ALIGN_MIDDLE)
 
-    # 	nanovg.nvgTextBounds(vg, gx,gy, txt, NULL, bounds);
+        nanovg.nvgTextBounds(vg, gx, gy, txt, None, bounds)
 
-    # 	nanovg.nvgBeginPath(vg);
-    # 	nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255,192,0,255));
-    # 	nanovg.nvgRoundedRect(vg, (int)bounds[0]-4,(int)bounds[1]-2, (int)(bounds[2]-bounds[0])+8, (int)(bounds[3]-bounds[1])+4, ((int)(bounds[3]-bounds[1])+4)/2-1);
-    # 	nanovg.nvgFill(vg);
+        nanovg.nvgBeginPath(vg)
+        nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 192, 0, 255))
+        nanovg.nvgRoundedRect(
+            vg,
+            int(bounds[0]-4),
+            int(bounds[1]-2),
+            int((bounds[2]-bounds[0])+8),
+            int((bounds[3]-bounds[1])+4),
+            (int(bounds[3]-bounds[1])+4)/2-1)
+        nanovg.nvgFill(vg)
 
-    # 	nanovg.nvgFillColor(vg, nanovg.nvgRGBA(32,32,32,255));
-    # 	nanovg.nvgText(vg, gx,gy, txt, NULL);
-    # }
+        nanovg.nvgFillColor(vg, nanovg.nvgRGBA(32, 32, 32, 255))
+        nanovg.nvgText(vg, gx, gy, txt, None)
 
-    # y += 20.0f;
+    y += 20.0
 
-    # nanovg.nvgFontSize(vg, 11.0f);
-    # nanovg.nvgTextAlign(vg, NVG_ALIGN_LEFT|NVG_ALIGN_TOP);
-    # nanovg.nvgTextLineHeight(vg, 1.2f);
+    nanovg.nvgFontSize(vg, 11.0)
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
+                        nanovg.NVGalign.NVG_ALIGN_TOP)
+    nanovg.nvgTextLineHeight(vg, 1.2)
 
-    # nanovg.nvgTextBoxBounds(vg, x,y, 150, hoverText, NULL, bounds);
+    nanovg.nvgTextBoxBounds(vg, x, y, 150, hoverText, None, bounds)
 
-    # // Fade the tooltip out when close to it.
-    # gx = clampf(mx, bounds[0], bounds[2]) - mx;
-    # gy = clampf(my, bounds[1], bounds[3]) - my;
-    # a = sqrtf(gx*gx + gy*gy) / 30.0f;
-    # a = clampf(a, 0, 1);
-    # nanovg.nvgGlobalAlpha(vg, a);
+    # Fade the tooltip out when close to it.
+    def clamp(my_value, min_value, max_value):
+        return max(min(my_value, max_value), min_value)
+    gx = clamp(mx, bounds[0], bounds[2]) - mx
+    gy = clamp(my, bounds[1], bounds[3]) - my
+    a = math.sqrt(gx*gx + gy*gy) / 30.0
+    a = clamp(a, 0, 1)
+    nanovg.nvgGlobalAlpha(vg, a)
 
-    # nanovg.nvgBeginPath(vg);
-    # nanovg.nvgFillColor(vg, nanovg.nvgRGBA(220,220,220,255));
-    # nanovg.nvgRoundedRect(vg, bounds[0]-2,bounds[1]-2, (int)(bounds[2]-bounds[0])+4, (int)(bounds[3]-bounds[1])+4, 3);
-    # px = (int)((bounds[2]+bounds[0])/2);
-    # nanovg.nvgMoveTo(vg, px,bounds[1] - 10);
-    # nanovg.nvgLineTo(vg, px+7,bounds[1]+1);
-    # nanovg.nvgLineTo(vg, px-7,bounds[1]+1);
-    # nanovg.nvgFill(vg);
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(220, 220, 220, 255))
+    nanovg.nvgRoundedRect(
+        vg, bounds[0]-2, bounds[1]-2, int(bounds[2]-bounds[0])+4, int(bounds[3]-bounds[1])+4, 3)
+    px = int((bounds[2]+bounds[0])/2)
+    nanovg.nvgMoveTo(vg, px, bounds[1] - 10)
+    nanovg.nvgLineTo(vg, px+7, bounds[1]+1)
+    nanovg.nvgLineTo(vg, px-7, bounds[1]+1)
+    nanovg.nvgFill(vg)
 
-    # nanovg.nvgFillColor(vg, nanovg.nvgRGBA(0,0,0,220));
-    # nanovg.nvgTextBox(vg, x,y, 150, hoverText, NULL);
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(0, 0, 0, 220))
+    nanovg.nvgTextBox(vg, x, y, 150, hoverText, None)
 
     nanovg.nvgRestore(vg)
 

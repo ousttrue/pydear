@@ -1,3 +1,4 @@
+from rawtypes.generator.cpp_writer import FunctionCustomization
 from rawtypes.interpreted_types import *
 # from rawtypes import vcenv  # search setup vc path
 from rawtypes.parser.header import Header
@@ -133,6 +134,7 @@ WRAP_TYPES = [
     WrapFlags('NVGpaint', True),
     WrapFlags('GLNVGblend', True),
     WrapFlags('NVGtextRow', True),
+    WrapFlags('NVGglyphPosition', True),
 ]
 
 
@@ -226,7 +228,6 @@ class VertexBufferType(BaseType):
 # generate c++ source and relative py and pyi
 #
 from rawtypes.generator.generator import Generator  # noqa
-from rawtypes.generator.cpp_writer import FunctionCustomization
 generator = Generator(*HEADERS)
 
 generator.type_manager.WRAP_TYPES.extend(WRAP_TYPES)
@@ -251,14 +252,20 @@ generator.type_manager.processors = [
                   'tinygizmo::VertexBuffer' else None),
 ]
 
-# TODO: python as void.
 FUNCTION_CUSTOMIZE = [
     FunctionCustomization(
         'nvgTextBreakLines',
-        {'start': PointerType(VoidType(True)),
-         'end': PointerType(VoidType(True)),
+        {'string': CharPointerType(),
+         'end': CharPointerType(),
          }
-    )]
+    ),
+    # FunctionCustomization(
+    #     'nvgText',
+    #     {'string': CharPointerType(),
+    #      'end': CharPointerType(),
+    #      }
+    # ),
+]
 
 generator.generate(PACKAGE_DIR, CPP_PATH, FUNCTION_CUSTOMIZE)
 
