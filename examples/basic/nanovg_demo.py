@@ -561,6 +561,41 @@ def drawWindow(vg, title, x, y, w, h):
     nanovg.nvgRestore(vg)
 
 
+def drawSearchBox(vg, text, x, y, w, h):
+
+    cornerRadius = h/2-1
+
+    # Edit
+    bg = nanovg.nvgBoxGradient(
+        vg, x, y+1.5, w, h, h/2, 5, nanovg.nvgRGBA(0, 0, 0, 16), nanovg.nvgRGBA(0, 0, 0, 92))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x, y, w, h, cornerRadius)
+    nanovg.nvgFillPaint(vg, bg)
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgFontSize(vg, h*1.3)
+    nanovg.nvgFontFace(vg, "icons")
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 64))
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_CENTER |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    # nanovg.nvgText(vg, x+h*0.55, y+h*0.55, cpToUTF8(ICON_SEARCH,icon), NULL);
+
+    nanovg.nvgFontSize(vg, 17.0)
+    nanovg.nvgFontFace(vg, "sans")
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 32))
+
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    nanovg.nvgText(vg, x+h*1.05, y+h*0.5, text, None)
+
+    nanovg.nvgFontSize(vg, h*1.3)
+    nanovg.nvgFontFace(vg, "icons")
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 32))
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_CENTER |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    # nanovg.nvgText(vg, x+w-h*0.55f, y+h*0.55f, cpToUTF8(ICON_CIRCLED_CROSS,icon), NULL);
+
+
 class Demo:
     def __init__(self) -> None:
         glew.glewInit()
@@ -639,6 +674,9 @@ class Demo:
 
         # Widgets
         drawWindow(self.vg, "Widgets `n Stuff", 50, 50, 300, 400)
+        x = 60
+        y = 95
+        drawSearchBox(self.vg, "Search", x, y, 280, 25)
 
         nanovg.nvgEndFrame(self.vg)
 
