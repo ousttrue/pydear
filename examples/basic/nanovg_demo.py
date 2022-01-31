@@ -81,9 +81,8 @@ def drawParagraph(vg, x, y, width, height, mx, my):
 
     rows = (nanovg.NVGtextRow * 3)()
     # NVGglyphPosition glyphs[100];
-    _text = "This is longer chunk of text.\n  \n  Would have used lorem ipsum but she    was busy jumping over the lazy dog with the fox and all the men who came to the aid of the party.🎉".encode(
-        'utf-8')
-    text = ctypes.create_string_buffer(_text, len(_text))
+    _text = "This is longer chunk of text.\n  \n  Would have used lorem ipsum but she    was busy jumping over the lazy dog with the fox and all the men who came to the aid of the party.🎉"
+    # text = ctypes.create_string_buffer(_text, len(_text))
     # const char* start;
     # const char* end;
     # int nrows, i, nglyphs, j, lnum = 0;
@@ -108,8 +107,8 @@ def drawParagraph(vg, x, y, width, height, mx, my):
     # The text break API can be used to fill a large buffer of rows,
     # or to iterate over the text just few lines (or just one) at a time.
     # The "next" variable of the last returned item tells where to continue.
-    start = ctypes.cast(text, ctypes.c_void_p)
-    end = ctypes.c_void_p(start.value + len(_text))
+    start = _text
+    end = _text[:len(_text)]
     while True:
         nrows = nanovg.nvgTextBreakLines(vg, start, end, width, rows, 3)
         if not nrows:
@@ -204,6 +203,79 @@ def drawParagraph(vg, x, y, width, height, mx, my):
     nanovg.nvgRestore(vg)
 
 
+def drawGraph(vg, x, y, w, h, t):
+
+    samples = []
+    sx = (ctypes.c_float * 6)()
+    sy = (ctypes.c_float * 6)()
+    dx = w/5.0
+
+    samples.append((1+math.sin(t*1.2345+math.cos(t*0.33457)*0.44))*0.5)
+    samples.append((1+math.sin(t*0.68363+math.cos(t*1.3)*1.55))*0.5)
+    samples.append((1+math.sin(t*1.1642+math.cos(t*0.33457)*1.24))*0.5)
+    samples.append((1+math.sin(t*0.56345+math.cos(t*1.63)*0.14))*0.5)
+    samples.append((1+math.sin(t*1.6245+math.cos(t*0.254)*0.3))*0.5)
+    samples.append((1+math.sin(t*0.345+math.cos(t*0.03)*0.6))*0.5)
+
+    for i in range(6):
+        sx[i] = x+i*dx
+        sy[i] = y+h*samples[i]*0.8
+
+    # Graph background
+    bg = nanovg.nvgLinearGradient(
+        vg, x, y, x, y+h, nanovg.nvgRGBA(0, 160, 192, 0), nanovg.nvgRGBA(0, 160, 192, 64))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgMoveTo(vg, sx[0], sy[0])
+    for i in range(6):
+        nanovg.nvgBezierTo(vg, sx[i-1]+dx*0.5, sy[i-1],
+                           sx[i]-dx*0.5, sy[i], sx[i], sy[i])
+    nanovg.nvgLineTo(vg, x+w, y+h)
+    nanovg.nvgLineTo(vg, x, y+h)
+    nanovg.nvgFillPaint(vg, bg)
+    nanovg.nvgFill(vg)
+
+    # Graph line
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgMoveTo(vg, sx[0], sy[0]+2)
+    for i in range(1, 6):
+        nanovg.nvgBezierTo(vg, sx[i-1]+dx*0.5, sy[i-1]+2,
+                           sx[i]-dx*0.5, sy[i]+2, sx[i], sy[i]+2)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 0, 0, 32))
+    nanovg.nvgStrokeWidth(vg, 3.0)
+    nanovg.nvgStroke(vg)
+
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgMoveTo(vg, sx[0], sy[0])
+    for i in range(1, 6):
+        nanovg.nvgBezierTo(vg, sx[i-1]+dx*0.5, sy[i-1],
+                           sx[i]-dx*0.5, sy[i], sx[i], sy[i])
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 160, 192, 255))
+    nanovg.nvgStrokeWidth(vg, 3.0)
+    nanovg.nvgStroke(vg)
+
+    # Graph sample pos
+    for i in range(6):
+        bg = nanovg.nvgRadialGradient(
+            vg, sx[i], sy[i]+2, 3.0, 8.0, nanovg.nvgRGBA(0, 0, 0, 32), nanovg.nvgRGBA(0, 0, 0, 0))
+        nanovg.nvgBeginPath(vg)
+        nanovg.nvgRect(vg, sx[i]-10, sy[i]-10+2, 20, 20)
+        nanovg.nvgFillPaint(vg, bg)
+        nanovg.nvgFill(vg)
+
+    nanovg.nvgBeginPath(vg)
+    for i in range(6):
+        nanovg. nvgCircle(vg, sx[i], sy[i], 4.0)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(0, 160, 192, 255))
+    nanovg.nvgFill(vg)
+    nanovg.nvgBeginPath(vg)
+    for i in range(6):
+        nanovg.nvgCircle(vg, sx[i], sy[i], 2.0)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(220, 220, 220, 255))
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgStrokeWidth(vg, 1.01)
+
+
 class Demo:
     def __init__(self) -> None:
         glew.glewInit()
@@ -259,6 +331,7 @@ class Demo:
 
         drawEyes(self.vg, width - 250, 50, 150, 100, mx, my, t)
         drawParagraph(self.vg, width - 450, 50, 150, 100, mx, my)
+        drawGraph(self.vg, 0, height/2, width, height/2, t)
 
         nanovg.nvgBeginFrame(self.vg, width, height, ratio)
         # data.render(vg, mx.value, my.value, fb_width.value,
