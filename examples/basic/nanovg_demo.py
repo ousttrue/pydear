@@ -510,6 +510,57 @@ def drawScissor(vg, x, y, t):
     nanovg.nvgRestore(vg)
 
 
+def drawWindow(vg, title, x, y, w, h):
+
+    cornerRadius = 3.0
+
+    nanovg.nvgSave(vg)
+
+    # Window
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x, y, w, h, cornerRadius)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(28, 30, 34, 192))
+    nanovg.nvgFill(vg)
+
+    # Drop shadow
+    shadowPaint = nanovg.nvgBoxGradient(
+        vg, x, y+2, w, h, cornerRadius*2, 10, nanovg.nvgRGBA(0, 0, 0, 128), nanovg.nvgRGBA(0, 0, 0, 0))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, x-10, y-10, w+20, h+30)
+    nanovg.nvgRoundedRect(vg, x, y, w, h, cornerRadius)
+    nanovg.nvgPathWinding(vg, nanovg.NVGsolidity.NVG_HOLE)
+    nanovg.nvgFillPaint(vg, shadowPaint)
+    nanovg.nvgFill(vg)
+
+    # Header
+    headerPaint = nanovg.nvgLinearGradient(
+        vg, x, y, x, y+15, nanovg.nvgRGBA(255, 255, 255, 8), nanovg.nvgRGBA(0, 0, 0, 16))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x+1, y+1, w-2, 30, cornerRadius-1)
+    nanovg.nvgFillPaint(vg, headerPaint)
+    nanovg.nvgFill(vg)
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgMoveTo(vg, x+0.5, y+0.5+30)
+    nanovg.nvgLineTo(vg, x+0.5+w-1, y+0.5+30)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 0, 0, 32))
+    nanovg.nvgStroke(vg)
+
+    nanovg.nvgFontSize(vg, 15.0)
+    nanovg.nvgFontFace(vg, "sans-bold")
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_CENTER |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+
+    nanovg.nvgFontBlur(vg, 2)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(0, 0, 0, 128))
+    nanovg.nvgText(vg, x+w/2, y+16+1, title, None)
+
+    nanovg.nvgFontBlur(vg, 0)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(220, 220, 220, 160))
+    nanovg.nvgText(vg, x+w/2, y+16, title, None)
+
+    nanovg.nvgRestore(vg)
+
+
 class Demo:
     def __init__(self) -> None:
         glew.glewInit()
@@ -585,6 +636,9 @@ class Demo:
         if self.blowup:
             nanovg.nvgRotate(self.vg, math.sin(t*0.3)*5.0/180.0*math.pi)
             nanovg.nvgScale(self.vg, 2.0, 2.0)
+
+        # Widgets
+        drawWindow(self.vg, "Widgets `n Stuff", 50, 50, 300, 400)
 
         nanovg.nvgEndFrame(self.vg)
 
