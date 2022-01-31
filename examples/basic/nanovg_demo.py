@@ -596,6 +596,98 @@ def drawSearchBox(vg, text, x, y, w, h):
     # nanovg.nvgText(vg, x+w-h*0.55f, y+h*0.55f, cpToUTF8(ICON_CIRCLED_CROSS,icon), NULL);
 
 
+def drawDropDown(vg, text, x, y, w, h):
+    # NVGpaint bg;
+    # char icon[8];
+    cornerRadius = 4.0
+
+    bg = nanovg.nvgLinearGradient(
+        vg, x, y, x, y+h, nanovg.nvgRGBA(255, 255, 255, 16), nanovg.nvgRGBA(0, 0, 0, 16))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x+1, y+1, w-2, h-2, cornerRadius-1)
+    nanovg.nvgFillPaint(vg, bg)
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x+0.5, y+0.5, w-1, h-1, cornerRadius-0.5)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 0, 0, 48))
+    nanovg.nvgStroke(vg)
+
+    nanovg.nvgFontSize(vg, 17.0)
+    nanovg.nvgFontFace(vg, "sans")
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 160))
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    nanovg.nvgText(vg, x+h*0.3, y+h*0.5, text, None)
+
+    nanovg.nvgFontSize(vg, h*1.3)
+    nanovg.nvgFontFace(vg, "icons")
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 64))
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_CENTER |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    # nanovg.nvgText(vg, x+w-h*0.5f, y+h*0.5f, cpToUTF8(ICON_CHEVRON_RIGHT,icon), NULL);
+
+
+def drawEditBoxBase(vg, x, y, w,  h):
+    # Edit
+    bg = nanovg.nvgBoxGradient(vg, x+1, y+1+1.5, w-2, h-2, 3, 4,
+                               nanovg.nvgRGBA(255, 255, 255, 32), nanovg.nvgRGBA(32, 32, 32, 32))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x+1, y+1, w-2, h-2, 4-1)
+    nanovg.nvgFillPaint(vg, bg)
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x+0.5, y+0.5, w-1, h-1, 4-0.5)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 0, 0, 48))
+    nanovg.nvgStroke(vg)
+
+
+def drawEditBox(vg, text, x, y, w, h):
+    drawEditBoxBase(vg, x, y, w, h)
+
+    nanovg.nvgFontSize(vg, 17.0)
+    nanovg.nvgFontFace(vg, "sans")
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 64))
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    nanovg.nvgText(vg, x+h*0.3, y+h*0.5, text, None)
+
+
+def drawCheckBox(vg, text, x, y, w, h):
+    nanovg.nvgFontSize(vg, 15.0)
+    nanovg.nvgFontFace(vg, "sans")
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 160))
+
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    nanovg.nvgText(vg, x+28, y+h*0.5, text, None)
+
+    bg = nanovg.nvgBoxGradient(vg, x+1, y+(int)(h*0.5)-9+1, 18, 18,
+                               3, 3, nanovg.nvgRGBA(0, 0, 0, 32), nanovg.nvgRGBA(0, 0, 0, 92))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x+1, y+(int)(h*0.5)-9, 18, 18, 3)
+    nanovg.nvgFillPaint(vg, bg)
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgFontSize(vg, 33)
+    nanovg.nvgFontFace(vg, "icons")
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 128))
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_CENTER |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    # nanovg.nvgText(vg, x+9+2, y+h*0.5f, cpToUTF8(ICON_CHECK,icon), NULL);
+
+
+def drawLabel(vg, text, x, y, w, h):
+    nanovg.nvgFontSize(vg, 15.0)
+    nanovg.nvgFontFace(vg, "sans")
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 128))
+
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    nanovg.nvgText(vg, x, y+h*0.5, text, None)
+
+
 class Demo:
     def __init__(self) -> None:
         glew.glewInit()
@@ -677,6 +769,34 @@ class Demo:
         x = 60
         y = 95
         drawSearchBox(self.vg, "Search", x, y, 280, 25)
+        y += 40
+        drawDropDown(self.vg, "Effects", x, y, 280, 28)
+
+        # Form
+        popy = y + 14
+        y += 45
+        drawLabel(self.vg, "Login", x, y, 280, 20)
+        y += 25
+        drawEditBox(self.vg, "Email",  x, y, 280, 28)
+        y += 35
+        drawEditBox(self.vg, "Password", x, y, 280, 28)
+        y += 38
+        drawCheckBox(self.vg, "Remember me", x, y, 140, 28)
+        # drawButton(vg, ICON_LOGIN, "Sign in", x+138, y, 140, 28, nvgRGBA(0,96,128,255));
+        y += 45
+
+        # // Slider
+        # drawLabel(vg, "Diameter", x,y, 280,20);
+        # y += 25;
+        # drawEditBoxNum(vg, "123.00", "px", x+180,y, 100,28);
+        # drawSlider(vg, 0.4f, x,y, 170,28);
+        # y += 55;
+
+        # drawButton(vg, ICON_TRASH, "Delete", x, y, 160, 28, nvgRGBA(128,16,8,255));
+        # drawButton(vg, 0, "Cancel", x+170, y, 110, 28, nvgRGBA(0,0,0,0));
+
+        # // Thumbnails box
+        # drawThumbnails(vg, 365, popy-30, 160, 300, data->images, 12, t);
 
         nanovg.nvgEndFrame(self.vg)
 
