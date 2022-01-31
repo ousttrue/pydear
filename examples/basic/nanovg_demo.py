@@ -444,6 +444,36 @@ def drawWidths(vg, x, y, width):
     nanovg.nvgRestore(vg)
 
 
+def drawCaps(vg, x, y, width):
+
+    caps = [nanovg.NVGlineCap.NVG_BUTT,
+            nanovg.NVGlineCap.NVG_ROUND, nanovg.NVGlineCap.NVG_SQUARE]
+    lineWidth = 8.0
+
+    nanovg.nvgSave(vg)
+
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, x-lineWidth/2, y, width+lineWidth, 40)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 32))
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, x, y, width, 40)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 32))
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgStrokeWidth(vg, lineWidth)
+    for i in range(3):
+        nanovg.nvgLineCap(vg, caps[i])
+        nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 0, 0, 255))
+        nanovg.nvgBeginPath(vg)
+        nanovg.nvgMoveTo(vg, x, y + i*10 + 5)
+        nanovg.nvgLineTo(vg, x+width, y + i*10 + 5)
+        nanovg.nvgStroke(vg)
+
+    nanovg.nvgRestore(vg)
+
+
 class Demo:
     def __init__(self) -> None:
         glew.glewInit()
@@ -508,6 +538,9 @@ class Demo:
 
         # Line caps
         drawWidths(self.vg, 10, 50, 30)
+
+        # Line caps
+        drawCaps(self.vg, 10, 300, 30)
 
         nanovg.nvgEndFrame(self.vg)
 
