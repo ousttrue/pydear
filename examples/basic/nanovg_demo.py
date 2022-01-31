@@ -46,7 +46,7 @@ def drawEyes(vg, x, y, w, h, mx, my, t):
     dy *= ey*0.5
     nanovg.nvgBeginPath(vg)
     nanovg.nvgEllipse(vg, lx+dx, ly+dy+ey*0.25*(1-blink), br, br*blink)
-    nanovg.nvgFillColor(vg, nanovg. nvgRGBA(32, 32, 32, 255))
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(32, 32, 32, 255))
     nanovg.nvgFill(vg)
 
     dx = (mx - rx) / (ex * 10)
@@ -94,7 +94,7 @@ def drawParagraph(vg, x, y, width, height, mx, my):
     # float gx,gy;
     # int gutter = 0;
     # const char* boxText = "Testing\nsome multiline\ntext.";
-    # NVG_NOTUSED(height);
+    # nanovg.NVG_NOTUSED(height);
 
     nanovg.nvgSave(vg)
 
@@ -119,18 +119,18 @@ def drawParagraph(vg, x, y, width, height, mx, my):
         #     NVGtextRow * row = &rows[i]
         #     int hit = mx > x & & mx < (x+width) & & my >= y & & my < (y+lineh)
 
-        #     nvgBeginPath(vg)
-        #     nvgFillColor(vg, nvgRGBA(255, 255, 255, hit?64: 16))
-        #     nvgRect(vg, x + row -> minx, y, row -> maxx - row -> minx, lineh)
-        #     nvgFill(vg)
+        #     nanovg.nvgBeginPath(vg)
+        #     nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, hit?64: 16))
+        #     nanovg.nvgRect(vg, x + row -> minx, y, row -> maxx - row -> minx, lineh)
+        #     nanovg.nvgFill(vg)
 
-        #     nvgFillColor(vg, nvgRGBA(255, 255, 255, 255))
-        #     nvgText(vg, x, y, row -> start, row -> end)
+        #     nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 255))
+        #     nanovg.nvgText(vg, x, y, row -> start, row -> end)
 
         #     if (hit) {
         #         caretx = (mx < x+row -> width/2) ? x: x+row -> width
         #         px = x
-        #         nglyphs = nvgTextGlyphPositions(vg, x, y, row -> start, row -> end, glyphs, 100)
+        #         nglyphs = nanovg.nvgTextGlyphPositions(vg, x, y, row -> start, row -> end, glyphs, 100)
         #         for (j=0
         #              j < nglyphs
         #              j++) {
@@ -141,10 +141,10 @@ def drawParagraph(vg, x, y, width, height, mx, my):
         #             caretx = glyphs[j].x
         #             px = gx
         #         }
-        #         nvgBeginPath(vg)
-        #         nvgFillColor(vg, nvgRGBA(255, 192, 0, 255))
-        #         nvgRect(vg, caretx, y, 1, lineh)
-        #         nvgFill(vg)
+        #         nanovg.nvgBeginPath(vg)
+        #         nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 192, 0, 255))
+        #         nanovg.nvgRect(vg, caretx, y, 1, lineh)
+        #         nanovg.nvgFill(vg)
 
         #         gutter = lnum+1
         #         gx = x - 10
@@ -159,46 +159,46 @@ def drawParagraph(vg, x, y, width, height, mx, my):
     # if (gutter) {
     # 	char txt[16];
     # 	snprintf(txt, sizeof(txt), "%d", gutter);
-    # 	nvgFontSize(vg, 12.0f);
-    # 	nvgTextAlign(vg, NVG_ALIGN_RIGHT|NVG_ALIGN_MIDDLE);
+    # 	nanovg.nvgFontSize(vg, 12.0f);
+    # 	nanovg.nvgTextAlign(vg, NVG_ALIGN_RIGHT|NVG_ALIGN_MIDDLE);
 
-    # 	nvgTextBounds(vg, gx,gy, txt, NULL, bounds);
+    # 	nanovg.nvgTextBounds(vg, gx,gy, txt, NULL, bounds);
 
-    # 	nvgBeginPath(vg);
-    # 	nvgFillColor(vg, nvgRGBA(255,192,0,255));
-    # 	nvgRoundedRect(vg, (int)bounds[0]-4,(int)bounds[1]-2, (int)(bounds[2]-bounds[0])+8, (int)(bounds[3]-bounds[1])+4, ((int)(bounds[3]-bounds[1])+4)/2-1);
-    # 	nvgFill(vg);
+    # 	nanovg.nvgBeginPath(vg);
+    # 	nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255,192,0,255));
+    # 	nanovg.nvgRoundedRect(vg, (int)bounds[0]-4,(int)bounds[1]-2, (int)(bounds[2]-bounds[0])+8, (int)(bounds[3]-bounds[1])+4, ((int)(bounds[3]-bounds[1])+4)/2-1);
+    # 	nanovg.nvgFill(vg);
 
-    # 	nvgFillColor(vg, nvgRGBA(32,32,32,255));
-    # 	nvgText(vg, gx,gy, txt, NULL);
+    # 	nanovg.nvgFillColor(vg, nanovg.nvgRGBA(32,32,32,255));
+    # 	nanovg.nvgText(vg, gx,gy, txt, NULL);
     # }
 
     # y += 20.0f;
 
-    # nvgFontSize(vg, 11.0f);
-    # nvgTextAlign(vg, NVG_ALIGN_LEFT|NVG_ALIGN_TOP);
-    # nvgTextLineHeight(vg, 1.2f);
+    # nanovg.nvgFontSize(vg, 11.0f);
+    # nanovg.nvgTextAlign(vg, NVG_ALIGN_LEFT|NVG_ALIGN_TOP);
+    # nanovg.nvgTextLineHeight(vg, 1.2f);
 
-    # nvgTextBoxBounds(vg, x,y, 150, hoverText, NULL, bounds);
+    # nanovg.nvgTextBoxBounds(vg, x,y, 150, hoverText, NULL, bounds);
 
     # // Fade the tooltip out when close to it.
     # gx = clampf(mx, bounds[0], bounds[2]) - mx;
     # gy = clampf(my, bounds[1], bounds[3]) - my;
     # a = sqrtf(gx*gx + gy*gy) / 30.0f;
     # a = clampf(a, 0, 1);
-    # nvgGlobalAlpha(vg, a);
+    # nanovg.nvgGlobalAlpha(vg, a);
 
-    # nvgBeginPath(vg);
-    # nvgFillColor(vg, nvgRGBA(220,220,220,255));
-    # nvgRoundedRect(vg, bounds[0]-2,bounds[1]-2, (int)(bounds[2]-bounds[0])+4, (int)(bounds[3]-bounds[1])+4, 3);
+    # nanovg.nvgBeginPath(vg);
+    # nanovg.nvgFillColor(vg, nanovg.nvgRGBA(220,220,220,255));
+    # nanovg.nvgRoundedRect(vg, bounds[0]-2,bounds[1]-2, (int)(bounds[2]-bounds[0])+4, (int)(bounds[3]-bounds[1])+4, 3);
     # px = (int)((bounds[2]+bounds[0])/2);
-    # nvgMoveTo(vg, px,bounds[1] - 10);
-    # nvgLineTo(vg, px+7,bounds[1]+1);
-    # nvgLineTo(vg, px-7,bounds[1]+1);
-    # nvgFill(vg);
+    # nanovg.nvgMoveTo(vg, px,bounds[1] - 10);
+    # nanovg.nvgLineTo(vg, px+7,bounds[1]+1);
+    # nanovg.nvgLineTo(vg, px-7,bounds[1]+1);
+    # nanovg.nvgFill(vg);
 
-    # nvgFillColor(vg, nvgRGBA(0,0,0,220));
-    # nvgTextBox(vg, x,y, 150, hoverText, NULL);
+    # nanovg.nvgFillColor(vg, nanovg.nvgRGBA(0,0,0,220));
+    # nanovg.nvgTextBox(vg, x,y, 150, hoverText, NULL);
 
     nanovg.nvgRestore(vg)
 
@@ -226,7 +226,7 @@ def drawGraph(vg, x, y, w, h, t):
         vg, x, y, x, y+h, nanovg.nvgRGBA(0, 160, 192, 0), nanovg.nvgRGBA(0, 160, 192, 64))
     nanovg.nvgBeginPath(vg)
     nanovg.nvgMoveTo(vg, sx[0], sy[0])
-    for i in range(6):
+    for i in range(1, 6):
         nanovg.nvgBezierTo(vg, sx[i-1]+dx*0.5, sy[i-1],
                            sx[i]-dx*0.5, sy[i], sx[i], sy[i])
     nanovg.nvgLineTo(vg, x+w, y+h)
@@ -264,7 +264,7 @@ def drawGraph(vg, x, y, w, h, t):
 
     nanovg.nvgBeginPath(vg)
     for i in range(6):
-        nanovg. nvgCircle(vg, sx[i], sy[i], 4.0)
+        nanovg.nvgCircle(vg, sx[i], sy[i], 4.0)
     nanovg.nvgFillColor(vg, nanovg.nvgRGBA(0, 160, 192, 255))
     nanovg.nvgFill(vg)
     nanovg.nvgBeginPath(vg)
@@ -274,6 +274,110 @@ def drawGraph(vg, x, y, w, h, t):
     nanovg.nvgFill(vg)
 
     nanovg.nvgStrokeWidth(vg, 1.01)
+
+
+def drawColorwheel(vg, x, y, w, h, t):
+
+    # 	int i;
+    # 	float r0, r1, ax,ay, bx,by, cx,cy, aeps, r;
+    hue = math.sin(t * 0.12)
+    # 	NVGpaint paint;
+
+    nanovg.nvgSave(vg)
+
+    cx = x + w*0.5
+    cy = y + h*0.5
+    r1 = (w if w < h else h) * 0.5 - 5.0
+    r0 = r1 - 20.0
+    aeps = 0.5 / r1  # half a pixel arc length in radians (2pi cancels out).
+
+    for i in range(6):
+        a0 = float(i / 6.0 * math.pi * 2.0 - aeps)
+        a1 = float((i+1.0) / 6.0 * math.pi * 2.0 + aeps)
+        nanovg.nvgBeginPath(vg)
+        nanovg.nvgArc(vg, cx, cy, r0, a0, a1, nanovg.NVGwinding.NVG_CW)
+        nanovg.nvgArc(vg, cx, cy, r1, a1, a0, nanovg.NVGwinding.NVG_CCW)
+        nanovg.nvgClosePath(vg)
+        ax = cx + math.cos(a0) * (r0+r1)*0.5
+        ay = cy + math.sin(a0) * (r0+r1)*0.5
+        bx = cx + math.cos(a1) * (r0+r1)*0.5
+        by = cy + math.sin(a1) * (r0+r1)*0.5
+        paint = nanovg.nvgLinearGradient(vg, ax, ay, bx, by, nanovg.nvgHSLA(
+            a0/(math.pi*2), 1.0, 0.55, 255), nanovg.nvgHSLA(a1/(math.pi*2), 1.0, 0.55, 255))
+        nanovg.nvgFillPaint(vg, paint)
+        nanovg.nvgFill(vg)
+
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgCircle(vg, cx, cy, r0-0.5)
+    nanovg.nvgCircle(vg, cx, cy, r1+0.5)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 0, 0, 64))
+    nanovg.nvgStrokeWidth(vg, 1.0)
+    nanovg.nvgStroke(vg)
+
+    # Selector
+    nanovg.nvgSave(vg)
+    nanovg.nvgTranslate(vg, cx, cy)
+    nanovg.nvgRotate(vg, hue*math.pi*2)
+
+    # Marker on
+    nanovg.nvgStrokeWidth(vg, 2.0)
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, r0-1, -3, r1-r0+2, 6)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(255, 255, 255, 192))
+    nanovg.nvgStroke(vg)
+
+    paint = nanovg.nvgBoxGradient(
+        vg, r0-3, -5, r1-r0+6, 10, 2, 4, nanovg.nvgRGBA(0, 0, 0, 128), nanovg.nvgRGBA(0, 0, 0, 0))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, r0-2-10, -4-10, r1-r0+4+20, 8+20)
+    nanovg.nvgRect(vg, r0-2, -4, r1-r0+4, 8)
+    nanovg.nvgPathWinding(vg, nanovg.NVGsolidity.NVG_HOLE)
+    nanovg.nvgFillPaint(vg, paint)
+    nanovg.nvgFill(vg)
+
+    # Center triangle
+    r = r0 - 6
+    ax = math.cos(120.0/180.0*math.pi) * r
+    ay = math.sin(120.0/180.0*math.pi) * r
+    bx = math.cos(-120.0/180.0*math.pi) * r
+    by = math.sin(-120.0/180.0*math.pi) * r
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgMoveTo(vg, r, 0)
+    nanovg.nvgLineTo(vg, ax, ay)
+    nanovg.nvgLineTo(vg, bx, by)
+    nanovg.nvgClosePath(vg)
+    paint = nanovg.nvgLinearGradient(vg, r, 0, ax, ay, nanovg.nvgHSLA(
+        hue, 1.0, 0.5, 255), nanovg.nvgRGBA(255, 255, 255, 255))
+    nanovg.nvgFillPaint(vg, paint)
+    nanovg.nvgFill(vg)
+    paint = nanovg.nvgLinearGradient(
+        vg, (r+ax)*0.5, (0+ay)*0.5, bx, by, nanovg.nvgRGBA(0, 0, 0, 0), nanovg.nvgRGBA(0, 0, 0, 255))
+    nanovg.nvgFillPaint(vg, paint)
+    nanovg.nvgFill(vg)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 0, 0, 64))
+    nanovg.nvgStroke(vg)
+
+    # Select circle on triangle
+    ax = math.cos(120.0/180.0*math.pi) * r*0.3
+    ay = math.sin(120.0/180.0*math.pi) * r*0.4
+    nanovg.nvgStrokeWidth(vg, 2.0)
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgCircle(vg, ax, ay, 5)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(255, 255, 255, 192))
+    nanovg.nvgStroke(vg)
+
+    paint = nanovg.nvgRadialGradient(vg, ax, ay, 7, 9, nanovg.nvgRGBA(
+        0, 0, 0, 64), nanovg.nvgRGBA(0, 0, 0, 0))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, ax-20, ay-20, 40, 40)
+    nanovg.nvgCircle(vg, ax, ay, 7)
+    nanovg.nvgPathWinding(vg, nanovg.NVGsolidity.NVG_HOLE)
+    nanovg.nvgFillPaint(vg, paint)
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgRestore(vg)
+
+    nanovg.nvgRestore(vg)
 
 
 class Demo:
@@ -332,6 +436,7 @@ class Demo:
         drawEyes(self.vg, width - 250, 50, 150, 100, mx, my, t)
         drawParagraph(self.vg, width - 450, 50, 150, 100, mx, my)
         drawGraph(self.vg, 0, height/2, width, height/2, t)
+        drawColorwheel(self.vg, width - 300, height - 300, 250.0, 250.0, t)
 
         nanovg.nvgBeginFrame(self.vg, width, height, ratio)
         # data.render(vg, mx.value, my.value, fb_width.value,
