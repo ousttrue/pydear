@@ -226,9 +226,11 @@ class VertexBufferType(BaseType):
 # generate c++ source and relative py and pyi
 #
 from rawtypes.generator.generator import Generator  # noqa
+from rawtypes.generator.cpp_writer import FunctionCustomization
 generator = Generator(*HEADERS)
 
 generator.type_manager.WRAP_TYPES.extend(WRAP_TYPES)
+
 
 IMVECTOR_TYPE = ImVector()
 
@@ -249,8 +251,16 @@ generator.type_manager.processors = [
                   'tinygizmo::VertexBuffer' else None),
 ]
 
+# TODO: python as void.
+FUNCTION_CUSTOMIZE = [
+    FunctionCustomization(
+        'nvgTextBreakLines',
+        {'start': PointerType(VoidType(True)),
+         'end': PointerType(VoidType(True)),
+         }
+    )]
 
-generator.generate(PACKAGE_DIR, CPP_PATH)
+generator.generate(PACKAGE_DIR, CPP_PATH, FUNCTION_CUSTOMIZE)
 
 
 # https://stackoverflow.com/questions/42585210/extending-setuptools-extension-to-use-cmake-in-setup-py
