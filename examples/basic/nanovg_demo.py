@@ -277,11 +277,7 @@ def drawGraph(vg, x, y, w, h, t):
 
 
 def drawColorwheel(vg, x, y, w, h, t):
-
-    # 	int i;
-    # 	float r0, r1, ax,ay, bx,by, cx,cy, aeps, r;
     hue = math.sin(t * 0.12)
-    # 	NVGpaint paint;
 
     nanovg.nvgSave(vg)
 
@@ -380,6 +376,60 @@ def drawColorwheel(vg, x, y, w, h, t):
     nanovg.nvgRestore(vg)
 
 
+def drawLines(vg, x, y, w, h, t):
+
+    # int i, j;
+    pad = 5.0
+    s = w/9.0 - pad*2
+    # float pts[4*2], fx, fy;
+    joins = [nanovg.NVGlineCap.NVG_MITER,
+             nanovg.NVGlineCap.NVG_ROUND, nanovg.NVGlineCap.NVG_BEVEL]
+    caps = [nanovg.NVGlineCap.NVG_BUTT,
+            nanovg.NVGlineCap.NVG_ROUND, nanovg.NVGlineCap.NVG_SQUARE]
+
+    nanovg.nvgSave(vg)
+    pts = []
+    pts.append(-s*0.25 + math.cos(t*0.3) * s*0.5)
+    pts.append(math.sin(t*0.3) * s*0.5)
+    pts.append(-s*0.25)
+    pts.append(0)
+    pts.append(s*0.25)
+    pts.append(0)
+    pts.append(s*0.25 + math.cos(-t*0.3) * s*0.5)
+    pts.append(math.sin(-t*0.3) * s*0.5)
+
+    for i in range(3):
+        for j in range(3):
+            fx = x + s*0.5 + (i*3+j)/9.0*w + pad
+            fy = y - s*0.5 + pad
+
+            nanovg.nvgLineCap(vg, caps[i])
+            nanovg.nvgLineJoin(vg, joins[j])
+
+            nanovg.nvgStrokeWidth(vg, s*0.3)
+            nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 0, 0, 160))
+            nanovg.nvgBeginPath(vg)
+            nanovg.nvgMoveTo(vg, fx+pts[0], fy+pts[1])
+            nanovg.nvgLineTo(vg, fx+pts[2], fy+pts[3])
+            nanovg.nvgLineTo(vg, fx+pts[4], fy+pts[5])
+            nanovg.nvgLineTo(vg, fx+pts[6], fy+pts[7])
+            nanovg.nvgStroke(vg)
+
+            nanovg.nvgLineCap(vg, nanovg.NVGlineCap.NVG_BUTT)
+            nanovg.nvgLineJoin(vg, nanovg.NVGlineCap.NVG_BEVEL)
+
+            nanovg.nvgStrokeWidth(vg, 1.0)
+            nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 192, 255, 255))
+            nanovg.nvgBeginPath(vg)
+            nanovg.nvgMoveTo(vg, fx+pts[0], fy+pts[1])
+            nanovg.nvgLineTo(vg, fx+pts[2], fy+pts[3])
+            nanovg.nvgLineTo(vg, fx+pts[4], fy+pts[5])
+            nanovg.nvgLineTo(vg, fx+pts[6], fy+pts[7])
+            nanovg.nvgStroke(vg)
+
+    nanovg.nvgRestore(vg)
+
+
 class Demo:
     def __init__(self) -> None:
         glew.glewInit()
@@ -432,13 +482,16 @@ class Demo:
         width = float(width)
         height = float(height)
         ratio = width / height
+        nanovg.nvgBeginFrame(self.vg, width, height, ratio)
 
         drawEyes(self.vg, width - 250, 50, 150, 100, mx, my, t)
         drawParagraph(self.vg, width - 450, 50, 150, 100, mx, my)
         drawGraph(self.vg, 0, height/2, width, height/2, t)
         drawColorwheel(self.vg, width - 300, height - 300, 250.0, 250.0, t)
 
-        nanovg.nvgBeginFrame(self.vg, width, height, ratio)
+        # Line joints
+        drawLines(self.vg, 120, height-50, 600, 50, t)
+
         # data.render(vg, mx.value, my.value, fb_width.value,
         #             fb_height.value, t, False)
         # fps.render(vg, 5, 5)
