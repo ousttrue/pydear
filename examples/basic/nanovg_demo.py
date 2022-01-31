@@ -430,6 +430,20 @@ def drawLines(vg, x, y, w, h, t):
     nanovg.nvgRestore(vg)
 
 
+def drawWidths(vg, x, y, width):
+    nanovg.nvgSave(vg)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 0, 0, 255))
+    for i in range(20):
+        w = (i+0.5)*0.1
+        nanovg.nvgStrokeWidth(vg, w)
+        nanovg.nvgBeginPath(vg)
+        nanovg.nvgMoveTo(vg, x, y)
+        nanovg.nvgLineTo(vg, x+width, y+width*0.3)
+        nanovg.nvgStroke(vg)
+        y += 10
+    nanovg.nvgRestore(vg)
+
+
 class Demo:
     def __init__(self) -> None:
         glew.glewInit()
@@ -492,11 +506,8 @@ class Demo:
         # Line joints
         drawLines(self.vg, 120, height-50, 600, 50, t)
 
-        # data.render(vg, mx.value, my.value, fb_width.value,
-        #             fb_height.value, t, False)
-        # fps.render(vg, 5, 5)
-
-        # render(vg, x, y, w, h)
+        # Line caps
+        drawWidths(self.vg, 10, 50, 30)
 
         nanovg.nvgEndFrame(self.vg)
 
