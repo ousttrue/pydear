@@ -183,9 +183,9 @@ class Renderer:
             return
         match self._textures.get(image):
             case (_, resource):
-                # if self._texure != resource.handle:
-                resource.bind()
-                self._texure = resource.handle
+                if self._texure != resource.handle:
+                    resource.bind()
+                    self._texure = resource.handle
             case _:
                 raise RuntimeError()
 

@@ -4,8 +4,19 @@ import math
 from pydear import nanovg
 from pydear.nanovg_backends import opengl3
 
+
 HERE = pathlib.Path(__file__).absolute().parent
 NVG_DIR = HERE.parent.parent / '_external/nanovg'
+# ICON_SEARCH = '\u1F50D'
+ICON_CIRCLED_CROSS = '\u2716'
+ICON_CHEVRON_RIGHT = '\uE75E'
+ICON_CHECK = '\u2713'
+ICON_LOGIN = '\uE740'
+ICON_TRASH = '\uE729'
+
+
+def clamp(my_value, min_value, max_value):
+    return max(min(my_value, max_value), min_value)
 
 
 def drawEyes(vg, x, y, w, h, mx, my, t):
@@ -103,16 +114,17 @@ def drawParagraph(vg, x, y, width, height, mx, my):
     nanovg.nvgFontFace(vg, "sans")
     nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
                         nanovg.NVGalign.NVG_ALIGN_TOP)
-    nanovg.nvgTextMetrics(vg, None, None, lineh)
+    nanovg.nvgTextMetrics(vg, None, None, lineh)  # type: ignore
 
     # The text break API can be used to fill a large buffer of rows,
     # or to iterate over the text just few lines (or just one) at a time.
     # The "next" variable of the last returned item tells where to continue.
     start = text
-    end = ctypes.c_void_p(ctypes.cast(
-        start, ctypes.c_void_p).value + len(text))
+    end = ctypes.c_void_p(
+        ctypes.cast(start, ctypes.c_void_p).value + len(text))  # type: ignore
     while True:
-        nrows = nanovg.nvgTextBreakLines(vg, start, end, width, rows, 3)
+        nrows = nanovg.nvgTextBreakLines(
+            vg, start, end, width, rows, 3)  # type: ignore
         if not nrows:
             break
         for i in range(nrows):
@@ -127,13 +139,13 @@ def drawParagraph(vg, x, y, width, height, mx, my):
 
             nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 255))
             row_str = ctypes.string_at(row.start, row.end-row.start)
-            nanovg.nvgText(vg, x, y, row_str, None)
+            nanovg.nvgText(vg, x, y, row_str, None)  # type: ignore
 
             if hit:
                 caretx = x if(mx < x+row.width/2) else x+row.width
                 px = x
                 nglyphs = nanovg.nvgTextGlyphPositions(
-                    vg, x, y, row_str, None, glyphs, 100)
+                    vg, x, y, row_str, None, glyphs, 100)  # type: ignore
                 for j in range(nglyphs):
                     x0 = glyphs[j].x
                     x1 = glyphs[j+1].x if (j+1 < nglyphs) else x+row.width
@@ -161,7 +173,7 @@ def drawParagraph(vg, x, y, width, height, mx, my):
         nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_RIGHT |
                             nanovg.NVGalign. NVG_ALIGN_MIDDLE)
 
-        nanovg.nvgTextBounds(vg, gx, gy, txt, None, bounds)
+        nanovg.nvgTextBounds(vg, gx, gy, txt, None, bounds)  # type: ignore
 
         nanovg.nvgBeginPath(vg)
         nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 192, 0, 255))
@@ -175,7 +187,7 @@ def drawParagraph(vg, x, y, width, height, mx, my):
         nanovg.nvgFill(vg)
 
         nanovg.nvgFillColor(vg, nanovg.nvgRGBA(32, 32, 32, 255))
-        nanovg.nvgText(vg, gx, gy, txt, None)
+        nanovg.nvgText(vg, gx, gy, txt, None)  # type: ignore
 
     y += 20.0
 
@@ -184,11 +196,10 @@ def drawParagraph(vg, x, y, width, height, mx, my):
                         nanovg.NVGalign.NVG_ALIGN_TOP)
     nanovg.nvgTextLineHeight(vg, 1.2)
 
-    nanovg.nvgTextBoxBounds(vg, x, y, 150, hoverText, None, bounds)
+    nanovg.nvgTextBoxBounds(vg, x, y, 150, hoverText,
+                            None, bounds)  # type: ignore
 
     # Fade the tooltip out when close to it.
-    def clamp(my_value, min_value, max_value):
-        return max(min(my_value, max_value), min_value)
     gx = clamp(mx, bounds[0], bounds[2]) - mx
     gy = clamp(my, bounds[1], bounds[3]) - my
     a = math.sqrt(gx*gx + gy*gy) / 30.0
@@ -206,7 +217,7 @@ def drawParagraph(vg, x, y, width, height, mx, my):
     nanovg.nvgFill(vg)
 
     nanovg.nvgFillColor(vg, nanovg.nvgRGBA(0, 0, 0, 220))
-    nanovg.nvgTextBox(vg, x, y, 150, hoverText, None)
+    nanovg.nvgTextBox(vg, x, y, 150, hoverText, None)  # type: ignore
 
     nanovg.nvgRestore(vg)
 
@@ -560,11 +571,11 @@ def drawWindow(vg, title, x, y, w, h):
 
     nanovg.nvgFontBlur(vg, 2)
     nanovg.nvgFillColor(vg, nanovg.nvgRGBA(0, 0, 0, 128))
-    nanovg.nvgText(vg, x+w/2, y+16+1, title, None)
+    nanovg.nvgText(vg, x+w/2, y+16+1, title, None)  # type: ignore
 
     nanovg.nvgFontBlur(vg, 0)
     nanovg.nvgFillColor(vg, nanovg.nvgRGBA(220, 220, 220, 160))
-    nanovg.nvgText(vg, x+w/2, y+16, title, None)
+    nanovg.nvgText(vg, x+w/2, y+16, title, None)  # type: ignore
 
     nanovg.nvgRestore(vg)
 
@@ -594,7 +605,7 @@ def drawSearchBox(vg, text, x, y, w, h):
 
     nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
                         nanovg.NVGalign.NVG_ALIGN_MIDDLE)
-    nanovg.nvgText(vg, x+h*1.05, y+h*0.5, text, None)
+    nanovg.nvgText(vg, x+h*1.05, y+h*0.5, text, None)  # type: ignore
 
     nanovg.nvgFontSize(vg, h*1.3)
     nanovg.nvgFontFace(vg, "icons")
@@ -626,7 +637,7 @@ def drawDropDown(vg, text, x, y, w, h):
     nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 160))
     nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
                         nanovg.NVGalign.NVG_ALIGN_MIDDLE)
-    nanovg.nvgText(vg, x+h*0.3, y+h*0.5, text, None)
+    nanovg.nvgText(vg, x+h*0.3, y+h*0.5, text, None)  # type: ignore
 
     nanovg.nvgFontSize(vg, h*1.3)
     nanovg.nvgFontFace(vg, "icons")
@@ -659,7 +670,7 @@ def drawEditBox(vg, text, x, y, w, h):
     nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 64))
     nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
                         nanovg.NVGalign.NVG_ALIGN_MIDDLE)
-    nanovg.nvgText(vg, x+h*0.3, y+h*0.5, text, None)
+    nanovg.nvgText(vg, x+h*0.3, y+h*0.5, text, None)  # type: ignore
 
 
 def drawCheckBox(vg, text, x, y, w, h):
@@ -669,7 +680,7 @@ def drawCheckBox(vg, text, x, y, w, h):
 
     nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
                         nanovg.NVGalign.NVG_ALIGN_MIDDLE)
-    nanovg.nvgText(vg, x+28, y+h*0.5, text, None)
+    nanovg.nvgText(vg, x+28, y+h*0.5, text, None)  # type: ignore
 
     bg = nanovg.nvgBoxGradient(vg, x+1, y+(int)(h*0.5)-9+1, 18, 18,
                                3, 3, nanovg.nvgRGBA(0, 0, 0, 32), nanovg.nvgRGBA(0, 0, 0, 92))
@@ -693,7 +704,286 @@ def drawLabel(vg, text, x, y, w, h):
 
     nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
                         nanovg.NVGalign.NVG_ALIGN_MIDDLE)
-    nanovg.nvgText(vg, x, y+h*0.5, text, None)
+    nanovg.nvgText(vg, x, y+h*0.5, text, None)  # type: ignore
+
+
+def isBlack(col):
+    # Returns 1 if col.rgba is 0.0f,0.0f,0.0f,0.0f, 0 otherwise
+    if (col.r == 0.0 and col.g == 0.0 and col.b == 0.0 and col.a == 0.0):
+        return 1
+
+    return 0
+
+
+def drawButton(vg, preicon, text, x, y, w, h, col):
+    cornerRadius = 4.0
+    bg = nanovg.nvgLinearGradient(vg, x, y, x, y + h,
+                                  nanovg.nvgRGBA(
+                                      255, 255, 255, 16 if isBlack(col) else 32),
+                                  nanovg.nvgRGBA(
+                                      0, 0, 0, 16 if isBlack(col) else 32))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x + 1, y + 1, w - 2, h - 2, cornerRadius - 1)
+    if not isBlack(col):
+        nanovg.nvgFillColor(vg, col)
+        nanovg.nvgFill(vg)
+    nanovg.nvgFillPaint(vg, bg)
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x + 0.5, y + 0.5, w - 1,
+                          h - 1, cornerRadius - 0.5)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 0, 0, 48))
+    nanovg.nvgStroke(vg)
+
+    nanovg.nvgFontSize(vg, 17.0)
+    nanovg.nvgFontFace(vg, "sans-bold")
+    iw = 0
+    tw = nanovg.nvgTextBounds(vg, 0, 0, text, None, None)  # type: ignore
+    if preicon:
+        nanovg.nvgFontSize(vg, h * 1.3)
+        nanovg.nvgFontFace(vg, "icons")
+        iw = nanovg.nvgTextBounds(
+            vg, 0, 0, preicon, None, None)  # type: ignore
+        iw += h * 0.15
+
+    if preicon:
+        nanovg.nvgFontSize(vg, h * 1.3)
+        nanovg.nvgFontFace(vg, "icons")
+        nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 96))
+        nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
+                            nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+        nanovg.nvgText(vg, x + w * 0.5 - tw * 0.5 - iw *
+                       0.75, y + h * 0.5, preicon, None)  # type: ignore
+
+    nanovg.nvgFontSize(vg, 17.0)
+    nanovg.nvgFontFace(vg, "sans-bold")
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(0, 0, 0, 160))
+    nanovg.nvgText(vg, x + w * 0.5 - tw * 0.5 + iw *
+                   0.25, y + h * 0.5 - 1, text, None)  # type: ignore
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 160))
+    nanovg.nvgText(vg, x + w * 0.5 - tw * 0.5 +
+                   iw * 0.25, y + h * 0.5, text, None)  # type: ignore
+
+
+def drawEditBoxNum(vg, text, units, x, y, w, h):
+    #   float uw;
+
+    drawEditBoxBase(vg, x, y, w, h)
+
+    uw = nanovg.nvgTextBounds(vg, 0, 0, units, None, None)  # type: ignore
+
+    nanovg.nvgFontSize(vg, 15.0)
+    nanovg.nvgFontFace(vg, "sans")
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 64))
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_RIGHT |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    nanovg.nvgText(vg, x + w - h * 0.3, y + h *
+                   0.5, units, None)  # type: ignore
+
+    nanovg.nvgFontSize(vg, 17.0)
+    nanovg.nvgFontFace(vg, "sans")
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 128))
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_RIGHT |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    nanovg.nvgText(vg, x + w - uw - h * 0.5, y + h *
+                   0.5, text, None)  # type: ignore
+
+
+def drawSlider(vg, pos, x, y, w, h):
+    #   NVGpaint bg, knob;
+    cy = y + int(h * 0.5)
+    kr = int(h * 0.25)
+
+    nanovg.nvgSave(vg)
+
+    # Slot
+    bg = nanovg.nvgBoxGradient(vg, x, cy - 2 + 1, w, 4, 2, 2, nanovg.nvgRGBA(0, 0, 0, 32),
+                               nanovg.nvgRGBA(0, 0, 0, 128))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x, cy - 2, w, 4, 2)
+    nanovg.nvgFillPaint(vg, bg)
+    nanovg.nvgFill(vg)
+
+    # Knob Shadow
+    bg = nanovg.nvgRadialGradient(vg, x + (int)(pos * w), cy + 1, kr - 3, kr + 3,
+                                  nanovg.nvgRGBA(0, 0, 0, 64), nanovg.nvgRGBA(0, 0, 0, 0))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, x + (int)(pos * w) - kr - 5, cy - kr - 5, kr * 2 + 5 + 5,
+                   kr * 2 + 5 + 5 + 3)
+    nanovg.nvgCircle(vg, x + (int)(pos * w), cy, kr)
+    nanovg.nvgPathWinding(vg, nanovg.NVGsolidity.NVG_HOLE)
+    nanovg.nvgFillPaint(vg, bg)
+    nanovg.nvgFill(vg)
+
+    # Knob
+    knob = nanovg.nvgLinearGradient(vg, x, cy - kr, x, cy + kr,
+                                    nanovg.nvgRGBA(255, 255, 255, 16), nanovg.nvgRGBA(0, 0, 0, 16))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgCircle(vg, x + int(pos * w), cy, kr - 1)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(40, 43, 48, 255))
+    nanovg.nvgFill(vg)
+    nanovg.nvgFillPaint(vg, knob)
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgCircle(vg, x + int(pos * w), cy, kr - 0.5)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 0, 0, 92))
+    nanovg.nvgStroke(vg)
+
+    nanovg.nvgRestore(vg)
+
+
+def drawSpinner(vg, cx, cy, r, t):
+    a0 = 0.0 + t * 6
+    a1 = math.pi + t * 6
+    r0 = r
+    r1 = r * 0.75
+
+    nanovg.nvgSave(vg)
+
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgArc(vg, cx, cy, r0, a0, a1, nanovg.NVGwinding.NVG_CW)
+    nanovg.nvgArc(vg, cx, cy, r1, a1, a0, nanovg.NVGwinding.NVG_CCW)
+    nanovg.nvgClosePath(vg)
+    ax = cx + math.cos(a0) * (r0 + r1) * 0.5
+    ay = cy + math.sin(a0) * (r0 + r1) * 0.5
+    bx = cx + math.cos(a1) * (r0 + r1) * 0.5
+    by = cy + math.sin(a1) * (r0 + r1) * 0.5
+    paint = nanovg.nvgLinearGradient(vg, ax, ay, bx, by, nanovg.nvgRGBA(0, 0, 0, 0),
+                                     nanovg.nvgRGBA(0, 0, 0, 128))
+    nanovg.nvgFillPaint(vg, paint)
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgRestore(vg)
+
+
+def drawThumbnails(vg, x, y, w, h, images, nimages, t):
+    cornerRadius = 3.0
+#   NVGpaint shadowPaint, imgPaint, fadePaint;
+#   float ix, iy, iw, ih;
+    thumb = 60.0
+    arry = 30.5
+    imgw = (ctypes.c_int * 1)()
+    imgh = (ctypes.c_int * 1)()
+    stackh = (nimages / 2) * (thumb + 10) + 10
+#   int i;
+    u = (1 + math.cos(t * 0.5)) * 0.5
+    u2 = (1 - math.cos(t * 0.2)) * 0.5
+#   float scrollh, dv;
+
+    nanovg.nvgSave(vg)
+
+    # Drop shadow
+    shadowPaint = nanovg.nvgBoxGradient(vg, x, y + 4, w, h, cornerRadius * 2, 20,
+                                        nanovg.nvgRGBA(0, 0, 0, 128), nanovg.nvgRGBA(0, 0, 0, 0))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, x - 10, y - 10, w + 20, h + 30)
+    nanovg.nvgRoundedRect(vg, x, y, w, h, cornerRadius)
+    nanovg.nvgPathWinding(vg, nanovg.NVGsolidity.NVG_HOLE)
+    nanovg.nvgFillPaint(vg, shadowPaint)
+    nanovg.nvgFill(vg)
+
+    # Window
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x, y, w, h, cornerRadius)
+    nanovg.nvgMoveTo(vg, x - 10, y + arry)
+    nanovg.nvgLineTo(vg, x + 1, y + arry - 11)
+    nanovg.nvgLineTo(vg, x + 1, y + arry + 11)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(200, 200, 200, 255))
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgSave(vg)
+    nanovg.nvgScissor(vg, x, y, w, h)
+    nanovg.nvgTranslate(vg, 0, -(stackh - h) * u)
+
+    dv = 1.0 / float(nimages - 1)
+
+    for i in range(nimages):
+        tx = x + 10
+        ty = y + 10
+        tx += int(i % 2) * (thumb + 10)
+        ty += int(i / 2) * (thumb + 10)
+        nanovg.nvgImageSize(vg, images[i], imgw, imgh)
+        if imgw[0] < imgh[0]:
+            iw = thumb
+            ih = int(iw * float(imgh[0]) / float(imgw[0]))
+            ix = 0
+            iy = int(-(ih - thumb) * 0.5)
+        else:
+            ih = thumb
+            iw = int(ih * float(imgw[0]) / float(imgh[0]))
+            ix = int(-(iw - thumb) * 0.5)
+            iy = 0
+
+        v = int(i * dv)
+        a = clamp((u2 - v) / dv, 0, 1)
+
+        if a < 1.0:
+            drawSpinner(vg, tx + thumb / 2, ty + thumb / 2, thumb * 0.25, t)
+
+        imgPaint = nanovg.nvgImagePattern(vg, tx + ix, ty + iy, iw, ih,
+                                          0.0 / 180.0 * math.pi, images[i], a)
+        nanovg.nvgBeginPath(vg)
+        nanovg.nvgRoundedRect(vg, tx, ty, thumb, thumb, 5)
+        nanovg.nvgFillPaint(vg, imgPaint)
+        nanovg.nvgFill(vg)
+
+        shadowPaint = nanovg.nvgBoxGradient(vg, tx - 1, ty, thumb + 2, thumb + 2, 5, 3,
+                                            nanovg.nvgRGBA(0, 0, 0, 128), nanovg.nvgRGBA(0, 0, 0, 0))
+        nanovg.nvgBeginPath(vg)
+        nanovg.nvgRect(vg, tx - 5, ty - 5, thumb + 10, thumb + 10)
+        nanovg.nvgRoundedRect(vg, tx, ty, thumb, thumb, 6)
+        nanovg.nvgPathWinding(vg, nanovg.NVGsolidity.NVG_HOLE)
+        nanovg.nvgFillPaint(vg, shadowPaint)
+        nanovg.nvgFill(vg)
+
+        nanovg.nvgBeginPath(vg)
+        nanovg.nvgRoundedRect(vg, tx + 0.5, ty + 0.5,
+                              thumb - 1, thumb - 1, 4 - 0.5)
+        nanovg.nvgStrokeWidth(vg, 1.0)
+        nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(255, 255, 255, 192))
+        nanovg.nvgStroke(vg)
+
+    nanovg.nvgRestore(vg)
+
+    # Hide fades
+    fadePaint = nanovg.nvgLinearGradient(vg, x, y, x, y + 6, nanovg.nvgRGBA(200, 200, 200, 255),
+                                         nanovg.nvgRGBA(200, 200, 200, 0))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, x + 4, y, w - 8, 6)
+    nanovg.nvgFillPaint(vg, fadePaint)
+    nanovg.nvgFill(vg)
+
+    fadePaint = nanovg.nvgLinearGradient(vg, x, y + h, x, y + h - 6, nanovg.nvgRGBA(200, 200, 200, 255),
+                                         nanovg.nvgRGBA(200, 200, 200, 0))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRect(vg, x + 4, y + h - 6, w - 8, 6)
+    nanovg.nvgFillPaint(vg, fadePaint)
+    nanovg.nvgFill(vg)
+
+    # Scroll bar
+    shadowPaint = nanovg.nvgBoxGradient(vg, x + w - 12 + 1, y + 4 + 1, 8, h - 8, 3, 4,
+                                        nanovg.nvgRGBA(0, 0, 0, 32), nanovg.nvgRGBA(0, 0, 0, 92))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x + w - 12, y + 4, 8, h - 8, 3)
+    nanovg.nvgFillPaint(vg, shadowPaint)
+    nanovg.nvgFill(vg)
+
+    scrollh = (h / stackh) * (h - 8)
+    shadowPaint = nanovg.nvgBoxGradient(
+        vg, x + w - 12 - 1, y + 4 +
+        (h - 8 - scrollh) * u - 1, 8, scrollh, 3, 4,
+        nanovg.nvgRGBA(220, 220, 220, 255), nanovg.nvgRGBA(128, 128, 128, 255))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgRoundedRect(vg, x + w - 12 + 1, y + 4 + 1 + (h - 8 - scrollh) * u, 8 - 2,
+                          scrollh - 2, 2)
+    nanovg.nvgFillPaint(vg, shadowPaint)
+    nanovg.nvgFill(vg)
+
+    nanovg.nvgRestore(vg)
 
 
 class Demo:
@@ -748,6 +1038,8 @@ class Demo:
     def render(self, mx, my, width, height, t):
         width = float(width)
         height = float(height)
+        if width == 0 or height == 0:
+            return
         ratio = width / height
         nanovg.nvgBeginFrame(self.vg, width, height, ratio)
 
@@ -790,21 +1082,24 @@ class Demo:
         drawEditBox(self.vg, "Password", x, y, 280, 28)
         y += 38
         drawCheckBox(self.vg, "Remember me", x, y, 140, 28)
-        # drawButton(vg, ICON_LOGIN, "Sign in", x+138, y, 140, 28, nvgRGBA(0,96,128,255));
+        drawButton(self.vg, ICON_LOGIN, "Sign in", x+138, y,
+                   140, 28, nanovg.nvgRGBA(0, 96, 128, 255))
         y += 45
 
-        # // Slider
-        # drawLabel(vg, "Diameter", x,y, 280,20);
-        # y += 25;
-        # drawEditBoxNum(vg, "123.00", "px", x+180,y, 100,28);
-        # drawSlider(vg, 0.4f, x,y, 170,28);
-        # y += 55;
+        # Slider
+        drawLabel(self.vg, "Diameter", x, y, 280, 20)
+        y += 25
+        drawEditBoxNum(self.vg, "123.00", "px", x+180, y, 100, 28)
+        drawSlider(self.vg, 0.4, x, y, 170, 28)
+        y += 55
 
-        # drawButton(vg, ICON_TRASH, "Delete", x, y, 160, 28, nvgRGBA(128,16,8,255));
-        # drawButton(vg, 0, "Cancel", x+170, y, 110, 28, nvgRGBA(0,0,0,0));
+        drawButton(self.vg, ICON_TRASH, "Delete", x, y,
+                   160, 28, nanovg.nvgRGBA(128, 16, 8, 255))
+        drawButton(self.vg, 0, "Cancel", x+170, y,
+                   110, 28, nanovg.nvgRGBA(0, 0, 0, 0))
 
-        # // Thumbnails box
-        # drawThumbnails(vg, 365, popy-30, 160, 300, data->images, 12, t);
+        # Thumbnails box
+        drawThumbnails(self.vg, 365, popy-30, 160, 300, self.images, 12, t)
 
         opengl3.render(nanovg.nvgGetDrawData(self.vg))
 

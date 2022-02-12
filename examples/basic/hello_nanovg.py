@@ -44,7 +44,6 @@ def run(app):
     prevt = glfw.get_time()
     while app.begin_frame():
         x, y, w, h = app.get_rect()
-        ratio = w / float(h)
 
         t = glfw.get_time()
         dt = t - prevt
@@ -62,7 +61,7 @@ def run(app):
 def main():
     logging.basicConfig(
         level=logging.DEBUG, format='[%(levelname)s]%(name)s %(funcName)s: %(message)s')
-    app = GlfwApp(1000, 600, "nanovg: example_gl3.c")
+    app = GlfwApp(1000, 600, "nanovg: pydear")
     run(app)
 
 

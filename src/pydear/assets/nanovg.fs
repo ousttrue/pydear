@@ -1,4 +1,5 @@
 #version 330
+#define EDGE_AA 1
 precision mediump float;
 layout(std140) uniform frag {
   mat3 scissorMat;
