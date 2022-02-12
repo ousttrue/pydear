@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v1
       - run: pip install sphinx
       - run: pip install myst-parser
+      - run: pip install furo
       - run: pip install gitinclude
       - run: pip install sphinxcontrib-actdiag sphinxcontrib-blockdiag sphinxcontrib-nwdiag sphinxcontrib-seqdiag
       - run: sphinx-build docs html

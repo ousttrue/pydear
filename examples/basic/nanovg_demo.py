@@ -2,7 +2,6 @@ import ctypes
 import pathlib
 import math
 from pydear import nanovg
-from pydear.nanovg_backends import opengl3
 
 
 HERE = pathlib.Path(__file__).absolute().parent
@@ -987,22 +986,11 @@ def drawThumbnails(vg, x, y, w, h, images, nimages, t):
 
 
 class Demo:
-    def __init__(self) -> None:
-        self.vg = nanovg.nvgCreate(nanovg.NVGcreateFlags.NVG_ANTIALIAS
-                                   | nanovg.NVGcreateFlags.NVG_STENCIL_STROKES
-                                   | nanovg.NVGcreateFlags.NVG_DEBUG)
-        if not self.vg:
-            raise RuntimeError("Could not init nanovg")
-
-        opengl3.init(self.vg)
-
-        # data
+    def __init__(self, vg) -> None:
+        self.vg = vg
         self.images = []
         self.load_data()
         self.blowup = False
-
-    def __del__(self):
-        opengl3.delete()
 
     def load_data(self):
         for i in range(12):
@@ -1100,8 +1088,6 @@ class Demo:
 
         # Thumbnails box
         drawThumbnails(self.vg, 365, popy-30, 160, 300, self.images, 12, t)
-
-        opengl3.render(nanovg.nvgGetDrawData(self.vg))
 
 
 def render(vg, x, y, w, h):

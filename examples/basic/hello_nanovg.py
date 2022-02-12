@@ -1,48 +1,24 @@
-from typing import Tuple
 import logging
 from OpenGL import GL
 import glfw
 import nanovg_demo
-from pydear import glo
+from pydear import nanovg
+from pydear.nanovg_backends import nanovg_impl_opengl3
+from pydear.utils import glfw_app
 
 
-class GlfwApp:
-    def __init__(self, w, h, title) -> None:
-        glfw.init()
-        # Context profiles are only defined for OpenGL version 3.2 and above
-        glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
-        glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
-        glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-        glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
-        self.window = glfw.create_window(w, h, title, None, None)
-        glfw.make_context_current(self.window)
-        glfw.swap_interval(0)
-        glfw.set_time(0)
-        print(glo.get_info())
+def run(app: glfw_app.GlfwApp):
+    vg = nanovg.nvgCreate(nanovg.NVGcreateFlags.NVG_ANTIALIAS
+                          | nanovg.NVGcreateFlags.NVG_STENCIL_STROKES
+                          | nanovg.NVGcreateFlags.NVG_DEBUG)
+    if not vg:
+        raise RuntimeError("Could not init nanovg")
 
-    def __del__(self):
-        glfw.destroy_window(self.window)
-        glfw.terminate()
+    nanovg_impl_opengl3.init(vg)
 
-    def begin_frame(self) -> bool:
-        if glfw.window_should_close(self.window):
-            return False
-        return True
-
-    def end_frame(self):
-        glfw.swap_buffers(self.window)
-        glfw.poll_events()
-
-    def get_rect(self) -> Tuple[float, float, float, float]:
-        x, y = glfw.get_cursor_pos(self.window)
-        w, h = glfw.get_framebuffer_size(self.window)
-        return x, y, w, h
-
-
-def run(app):
-    demo = nanovg_demo.Demo()
+    demo = nanovg_demo.Demo(vg)
     prevt = glfw.get_time()
-    while app.begin_frame():
+    while app.clear():
         x, y, w, h = app.get_rect()
 
         t = glfw.get_time()
@@ -54,14 +30,17 @@ def run(app):
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
         demo.render(x, y, w, h, t)
+        nanovg_impl_opengl3.render(nanovg.nvgGetDrawData(vg))
 
-        app.end_frame()
+        # app.end_frame()
+    nanovg_impl_opengl3.delete()
 
 
 def main():
     logging.basicConfig(
         level=logging.DEBUG, format='[%(levelname)s]%(name)s %(funcName)s: %(message)s')
-    app = GlfwApp(1000, 600, "nanovg: pydear")
+
+    app = glfw_app.GlfwApp("nanovg: pydear", width=1000, height=600)
     run(app)
 
 
