@@ -16,7 +16,7 @@ class Texture:
         self.bind()
 
         GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1)
-        GL.glPixelStorei(GL.GL_UNPACK_ROW_LENGTH, width)
+        # GL.glPixelStorei(GL.GL_UNPACK_ROW_LENGTH, width)
         GL.glPixelStorei(GL.GL_UNPACK_SKIP_PIXELS, 0)
         GL.glPixelStorei(GL.GL_UNPACK_SKIP_ROWS, 0)
 

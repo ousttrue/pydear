@@ -204,6 +204,7 @@ class Texture:
             GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
         GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width,
                         height, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, pixels)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
     def __del__(self):
         if self._font_texture:
@@ -348,6 +349,8 @@ class Renderer:
                 for command in command_list.CmdBuffer.each(ImGui.ImDrawCmd):
                     if command.TextureId:
                         GL.glBindTexture(GL.GL_TEXTURE_2D, command.TextureId)
+                    else:
+                        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
                     rect = command.ClipRect
                     GL.glScissor(
