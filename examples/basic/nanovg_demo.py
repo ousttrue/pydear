@@ -2,8 +2,7 @@ import ctypes
 import pathlib
 import math
 from pydear import nanovg
-from pydear import nanovg_gl
-from pydear import glew
+from pydear.nanovg_backends import opengl3
 
 HERE = pathlib.Path(__file__).absolute().parent
 NVG_DIR = HERE.parent.parent / '_external/nanovg'
@@ -699,13 +698,13 @@ def drawLabel(vg, text, x, y, w, h):
 
 class Demo:
     def __init__(self) -> None:
-        glew.glewInit()
-        self.vg = nanovg_gl.nvgCreateGL3(
-            nanovg_gl.NVGcreateFlags.NVG_ANTIALIAS
-            | nanovg_gl.NVGcreateFlags.NVG_STENCIL_STROKES
-            | nanovg_gl.NVGcreateFlags.NVG_DEBUG)
+        self.vg = nanovg.nvgCreate(nanovg.NVGcreateFlags.NVG_ANTIALIAS
+                                   | nanovg.NVGcreateFlags.NVG_STENCIL_STROKES
+                                   | nanovg.NVGcreateFlags.NVG_DEBUG)
         if not self.vg:
             raise RuntimeError("Could not init nanovg")
+
+        opengl3.init(self.vg)
 
         # data
         self.images = []
@@ -713,7 +712,7 @@ class Demo:
         self.blowup = False
 
     def __del__(self):
-        nanovg_gl.nvgDeleteGL3_2(self.vg)
+        opengl3.delete()
 
     def load_data(self):
         for i in range(12):
@@ -807,7 +806,7 @@ class Demo:
         # // Thumbnails box
         # drawThumbnails(vg, 365, popy-30, 160, 300, data->images, 12, t);
 
-        nanovg.nvgEndFrame(self.vg)
+        opengl3.render(nanovg.nvgGetDrawData(self.vg))
 
 
 def render(vg, x, y, w, h):

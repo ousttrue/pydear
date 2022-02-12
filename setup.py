@@ -77,29 +77,18 @@ HEADERS: List[Header] = [
         EXTERNAL_DIR / 'imnodes/imnodes.h',
         include_dirs=[EXTERNAL_DIR / 'imnodes']),
     Header(
-        EXTERNAL_DIR / 'nanovg/src/nanovg.h',
-        include_dirs=[EXTERNAL_DIR / 'nanovg/src']),
-    Header(
-        EXTERNAL_DIR / 'glew-2.1.0/include/GL/glew.h',
-        include_dirs=[EXTERNAL_DIR / 'glew-2.1.0/include/GL'],
-        definitions=['GLEW_STATIC'],
-        if_include=lambda name: name == 'glewInit'),
-    Header(
-        EXTERNAL_DIR / 'nanovg/src/nanovg_gl.h',
-        include_dirs=[EXTERNAL_DIR / 'nanovg/src',
-                      EXTERNAL_DIR / 'glew-2.1.0/include'],
-        definitions=['NANOVG_GL3_IMPLEMENTATION', 'NOMINMAX'],
-        before_include='#include <GL/glew.h>\n'),
+        EXTERNAL_DIR / 'picovg/src/nanovg.h',
+        include_dirs=[EXTERNAL_DIR / 'picovg/src']),
 ]
 
 WRAP_TYPES = [
-    WrapFlags('ImVec2', fields=True, custom_methods=(
+    WrapFlags('imgui', 'ImVec2', fields=True, custom_methods=(
         '''def __iter__(self):
     yield self.x
     yield self.y
 ''',
     )),
-    WrapFlags('ImVec4', fields=True, custom_methods=(
+    WrapFlags('imgui', 'ImVec4', fields=True, custom_methods=(
         '''def __iter__(self):
     yield self.x
     yield self.y
@@ -107,34 +96,42 @@ WRAP_TYPES = [
     yield self.h
 ''',
     )),
-    WrapFlags('ImFont'),
-    WrapFlags('ImFontConfig', fields=True, default_constructor=True),
-    WrapFlags('ImFontAtlasCustomRect', fields=True),
-    WrapFlags('ImFontAtlas', fields=True, methods=True),
-    WrapFlags('ImGuiIO', fields=True, custom_fields={
+    WrapFlags('imgui', 'ImFont'),
+    WrapFlags('imgui', 'ImFontConfig', fields=True, default_constructor=True),
+    WrapFlags('imgui', 'ImFontAtlasCustomRect', fields=True),
+    WrapFlags('imgui', 'ImFontAtlas', fields=True, methods=True),
+    WrapFlags('imgui', 'ImGuiIO', fields=True, custom_fields={
         'Fonts': '''def Fonts(self)->'ImFontAtlas':
     return ctypes.cast(ctypes.c_void_p(self._Fonts), ctypes.POINTER(ImFontAtlas))[0]
 '''
     }),
-    WrapFlags('ImGuiContext'),
-    WrapFlags('ImDrawCmd', fields=True),
-    WrapFlags('ImDrawData', fields=True),
-    WrapFlags('ImDrawListSplitter', fields=True),
-    WrapFlags('ImDrawCmdHeader', fields=True),
-    WrapFlags('ImDrawList', fields=True),
-    WrapFlags('ImGuiViewport', fields=True, methods=True),
-    WrapFlags('ImGuiStyle'),
-    WrapFlags('ImGuiWindowClass'),
+    WrapFlags('imgui', 'ImGuiContext'),
+    WrapFlags('imgui', 'ImDrawCmd', fields=True),
+    WrapFlags('imgui', 'ImDrawData', fields=True),
+    WrapFlags('imgui', 'ImDrawListSplitter', fields=True),
+    WrapFlags('imgui', 'ImDrawCmdHeader', fields=True),
+    WrapFlags('imgui', 'ImDrawList', fields=True),
+    WrapFlags('imgui', 'ImGuiViewport', fields=True, methods=True),
+    WrapFlags('imgui', 'ImGuiStyle'),
+    WrapFlags('imgui', 'ImGuiWindowClass'),
 
     # tinygizmo
-    WrapFlags('gizmo_context', fields=True, methods=True),
+    WrapFlags('tinygizmo', 'gizmo_context', fields=True, methods=True),
 
     # nanovg
-    WrapFlags('NVGcolor', True),
-    WrapFlags('NVGpaint', True),
-    WrapFlags('GLNVGblend', True),
-    WrapFlags('NVGtextRow', True),
-    WrapFlags('NVGglyphPosition', True),
+    WrapFlags('nanovg', 'NVGcolor', True),
+    WrapFlags('nanovg', 'NVGpaint', True),
+    WrapFlags('nanovg', 'GLNVGblend', True),
+    WrapFlags('nanovg', 'NVGtextRow', True),
+    WrapFlags('nanovg', 'NVGglyphPosition', True),
+    WrapFlags('nanovg', 'NVGdrawData', True),
+    WrapFlags('nanovg', 'NVGparams', True),
+    WrapFlags('nanovg', 'NVGvertex', True),
+    WrapFlags('nanovg', 'NVGtextureInfo', True),
+    WrapFlags('nanovg', 'NVGcompositeOperationState', True),
+    WrapFlags('nanovg', 'GLNVGpath', True),
+    WrapFlags('nanovg', 'GLNVGcall', True),
+    WrapFlags('nanovg', 'GLNVGfragUniforms', True),
 ]
 
 
@@ -324,7 +321,7 @@ setuptools.setup(
         'pydear.utils',
     ],
     package_data={
-        'pydear': ['py.typed', '*.pyi']
+        'pydear': ['py.typed', '*.pyi', 'assets/*']
     },
     cmdclass={
         'build_ext': build_ext_cmake,  # type: ignore

@@ -1,4 +1,4 @@
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Union
 from OpenGL import GL
 import logging
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ class ShaderCompile:
         '''
         self.shader = GL.glCreateShader(shader_type)
 
-    def compile(self, src: str) -> bool:
+    def compile(self, src: Union[str, bytes]) -> bool:
         GL.glShaderSource(self.shader, src, None)
         GL.glCompileShader(self.shader)
         result = GL.glGetShaderiv(self.shader, GL.GL_COMPILE_STATUS)
@@ -55,7 +55,7 @@ class Shader:
         return False
 
     @staticmethod
-    def load(vs_src: str, fs_src: str) -> Optional['Shader']:
+    def load(vs_src: Union[str, bytes], fs_src: Union[str, bytes]) -> Optional['Shader']:
         vs = ShaderCompile(GL.GL_VERTEX_SHADER)
         if not vs.compile(vs_src):
             return
@@ -80,7 +80,16 @@ class UniformLocation(NamedTuple):
 
     @staticmethod
     def create(program,  name: str) -> 'UniformLocation':
-        return UniformLocation(name, GL.glGetUniformLocation(program, name))
+        location = GL.glGetUniformLocation(program, name)
+        if location == -1:
+            logger.warn(f'{name}: -1')
+        return UniformLocation(name, location)
+
+    def set_int(self, value: int):
+        GL.glUniform1i(self.location, value)
+
+    def set_float2(self, value):
+        GL.glUniform2fv(self.location, 1, value)
 
     def set_mat4(self, value, transpose: bool = False):
         GL.glUniformMatrix4fv(
@@ -94,3 +103,13 @@ class ShaderProp:
 
     def update(self):
         self.setter(self.getter())
+
+
+class UniformBlockIndex(NamedTuple):
+    name: str
+    index: int
+
+    @staticmethod
+    def create(program, name: str) -> 'UniformBlockIndex':
+        index = GL.glGetUniformBlockIndex(program, name)
+        return UniformBlockIndex(name, index)

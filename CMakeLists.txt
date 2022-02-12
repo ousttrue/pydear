@@ -36,10 +36,8 @@ add_library(
   _external/ImGuizmo/ImGradient.cpp
   _external/ImGuizmo/ImSequencer.cpp
   _external/tinygizmo/tinygizmo/tiny-gizmo.cpp
-  _external/nanovg/src/nanovg.c
-  _external/glew-2.1.0/src/glew.c
-  # _external/glew-2.1.0/src/glewinfo.c
-  _external/glew-2.1.0/src/visualinfo.c)
+  _external/picovg/src/nanovg.cpp
+)
 target_include_directories(
   ${PROJECT_NAME}
   PRIVATE _external
@@ -49,8 +47,7 @@ target_include_directories(
           _external/glew-2.1.0/include
           _external
           _external/imnodes
-          _external/nanovg/src
-          _external/glew-2.1.0/include/GL
+          _external/picovg/src
           C:/Python310/Include)
 target_compile_definitions(
   ${PROJECT_NAME} PRIVATE GLEW_BUILD GLEW_STATIC NANOVG_GL3_IMPLEMENTATION

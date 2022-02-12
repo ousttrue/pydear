@@ -3,48 +3,46 @@ import pathlib
 import ctypes
 import rawtypes.clang_util
 from rawtypes.clang import cindex
+from rawtypes.parser import Parser
 HERE = pathlib.Path(__file__).absolute().parent
 ROOT = HERE.parent
 
 
-class TestParse(unittest.TestCase):
+class TestNanoVG(unittest.TestCase):
 
     def test_forward(self):
-        dir = ROOT / '_external/nanovg'
+        dir = ROOT / '_external/picovg'
         header = dir / 'src/nanovg.h'
-        self.assertTrue(header.exists())
-        gl_header = dir / 'src/nanovg_gl.h'
-        self.assertTrue(gl_header.exists())
-        glew_dir = ROOT / '_external/glew-2.1.0/include'
-        tu = rawtypes.clang_util.get_tu(
-            'tmp.h',
-            include_dirs=[str(header.parent), str(glew_dir)],
-            definitions=['NOMINMAX'],
-            unsaved=[rawtypes.clang_util.Unsaved(
-                'tmp.h', '''
-#include <gl/glew.h>
-#include "nanovg.h"
-#define NANOVG_GL3_IMPLEMENTATION
-#include "nanovg_gl.h"
-                '''
-            )])
+#         tu = rawtypes.clang_util.get_tu(
+#             'tmp.h',
+#             include_dirs=[str(header.parent)],
+#             definitions=['NOMINMAX'],
+#             unsaved=[rawtypes.clang_util.Unsaved(
+#                 'tmp.h', '''
+# #include "nanovg.h"
+#                 '''
+#             )])
 
-        def callback(*cursors):
-            cursor = cursors[0]
-            location: cindex.SourceLocation = cursor.location
-            if not location:
-                return False
-            if not location.file:
-                return False
 
-            if pathlib.Path(location.file.name) == gl_header:
-                spellings = [c.spelling for c in cursors]
-                if 'nvglImageHandleGL3' in spellings:
-                    print(spellings)
-            return True
+#         def callback(*cursors):
+#             cursor = cursors[0]
+#             location: cindex.SourceLocation = cursor.location
+#             if not location:
+#                 return False
+#             if not location.file:
+#                 return False
 
-        rawtypes.clang_util.traverse(tu, callback)
+#             if pathlib.Path(location.file.name) == header:
 
+#             return True
+
+#         rawtypes.clang_util.traverse(tu, callback)
+
+        parser = Parser(
+            [header]
+        )
+        parser.traverse()
+        pass
 
 class TestParse(unittest.TestCase):
 
