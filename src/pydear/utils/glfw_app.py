@@ -1,4 +1,6 @@
-from typing import Tuple
+from typing import Tuple, NamedTuple, Optional
+import json
+import pathlib
 import logging
 import glfw
 from OpenGL import GL
@@ -6,8 +8,34 @@ import ctypes
 logger = logging.getLogger(__name__)
 
 
+class GlfwAppState(NamedTuple):
+    width: int = 1024
+    height: int = 768
+    is_maximized: bool = False
+
+    def save(self, ini_file: Optional[pathlib.Path]):
+        if not ini_file:
+            return
+        with ini_file.open('w') as w:
+            logger.debug(f'save: {ini_file}')
+            json.dump(self._asdict(), w)
+
+    @staticmethod
+    def load(ini_file: pathlib.Path) -> 'GlfwAppState':
+        if ini_file.exists():
+            try:
+                state = GlfwAppState(**json.loads(ini_file.read_bytes()))
+                logger.debug(f'load: {ini_file}')
+                return state
+            except:
+                pass
+        return GlfwAppState()
+
+
 class GlfwApp:
-    def __init__(self, title: str, width=1024, height=768, gl_major=3, gl_minor=3, use_core_profile=True, use_vsync=True) -> None:
+    def __init__(self, title: str, *,
+                 width=None, height=None,
+                 gl_major=3, gl_minor=3, use_core_profile=True, use_vsync=True, ini_file=pathlib.Path('glfw.ini')) -> None:
         def glfw_error_callback(error: int, description: str):
             logger.error(f"{error}: {description}")
         glfw.set_error_callback(glfw_error_callback)
@@ -22,9 +50,23 @@ class GlfwApp:
             glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         # glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
 
-        self.window = glfw.create_window(width, height, title, None, None)
+        self.ini_file = ini_file
+        state = GlfwAppState.load(ini_file)
+
+        self.window = glfw.create_window(
+            state.width, state.height, title, None, None)
         if not self.window:
             raise RuntimeError('glfw.create_window')
+
+        w, h = glfw.get_window_size(self.window)
+        self.width = w
+        self.height = h
+        self.is_maximized = False
+
+        glfw.set_window_size_callback(self.window, self.on_size)
+        glfw.set_window_maximize_callback(self.window, self.on_maximized)
+        if state.is_maximized:
+            glfw.maximize_window(self.window)
 
         glfw.make_context_current(self.window)
         if use_vsync:
@@ -38,8 +80,19 @@ class GlfwApp:
 
     def __del__(self):
         logging.debug('exit...')
-        glfw.destroy_window(self.window)
-        glfw.terminate()
+        # save state
+        GlfwAppState(self.width, self.height,
+                     self.is_maximized).save(self.ini_file)
+        # Called first for some reason. Can't be released
+        # glfw.destroy_window(self.window)
+        # glfw.terminate()
+
+    def on_size(self, window, w, h):
+        self.width = w
+        self.height = h
+
+    def on_maximized(self, window, maximized):
+        self.is_maximized = maximized
 
     def clear(self) -> bool:
 

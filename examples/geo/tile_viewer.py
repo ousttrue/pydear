@@ -3,6 +3,7 @@ import logging
 import dataclasses
 import ctypes
 from pydear.utils.item import Item, Input
+from pydear.utils import glfw_app
 from pydear import glo
 from pydear import imgui as ImGui
 import xyztile
@@ -70,7 +71,7 @@ class XYZTile(Item):
         self.p_open = (ctypes.c_bool * 1)(True)
         self.tiles: List[xyztile.Tile] = []
         self.texture_manager = TileTextureManager(
-            'http://tile.openstreetmap.org/',
+            'http://tile.openstreetmap.org',
             HERE.parent.parent / 'tile_cache'
         )
 
@@ -208,12 +209,7 @@ class State:
     hover: bool
 
 
-def main():
-    logging.basicConfig(level=logging.DEBUG)
-
-    from pydear.utils import glfw_app
-    app = glfw_app.GlfwApp('tile')
-
+def run(app: glfw_app.GlfwApp):
     from pydear import imgui as ImGui
     from pydear.utils import dockspace
     clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
@@ -268,6 +264,12 @@ def main():
     while app.clear():
         gui.render()
     del gui
+
+
+def main():
+    logging.basicConfig(level=logging.DEBUG)
+    app = glfw_app.GlfwApp('tile')
+    run(app)
 
 
 if __name__ == '__main__':

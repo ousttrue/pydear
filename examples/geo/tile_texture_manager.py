@@ -11,7 +11,7 @@ import logging
 from xyztile import Tile
 from pydear import glo
 
-logger = logging.getLevelName(__name__)
+logger = logging.getLogger(__name__)
 
 
 class TileTextureManager:
@@ -55,7 +55,8 @@ class TileTextureManager:
             if data:
                 return PIL.Image.open(io.BytesIO(data))
             url = f'{self.base_url}/{tile.z}/{tile.x}/{tile.y}.png'
-            req = urllib.request.Request(url)
+            req = urllib.request.Request(url, headers={
+                                         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"})
             with urllib.request.urlopen(req) as res:
                 data = res.read()
                 self.save_cache(tile, data)

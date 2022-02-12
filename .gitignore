@@ -22,3 +22,4 @@
 /tile_cache/
 /.cache/
 /cpp_src/
+glfw.ini
