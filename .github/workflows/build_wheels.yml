@@ -38,6 +38,8 @@ jobs:
     steps:
       - uses: actions/setup-python@v2
 
+      - run: python setup.py sdist --formats=gztar
+
       - uses: actions/download-artifact@v2
         with:
           name: artifact

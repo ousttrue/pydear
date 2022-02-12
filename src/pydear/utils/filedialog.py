@@ -4,7 +4,8 @@ import logging
 import ctypes
 import pathlib
 from OpenGL import GL
-import pydear as ImGui
+from pydear import imgui as ImGui
+from pydear import ImFileDialogWrap
 logger = logging.getLogger(__name__)
 
 # FileDialog
@@ -46,19 +47,19 @@ P_DELETE_TEXTURE = ctypes.CFUNCTYPE(None, ctypes.c_void_p)(delete_texture)
 
 # 違う !
 # print(
-#     ctypes.addressof(P_CREATE_TEXTURE), 
+#     ctypes.addressof(P_CREATE_TEXTURE),
 #     ctypes.cast(P_CREATE_TEXTURE, ctypes.c_void_p).value)
 
 
 def initialize():
-    ImGui.ImFileDialog_SetTextureCallback(
+    ImFileDialogWrap.ImFileDialog_SetTextureCallback(
         ctypes.cast(P_CREATE_TEXTURE, ctypes.c_void_p),
         ctypes.cast(P_DELETE_TEXTURE, ctypes.c_void_p))
 
 
 def open_menu(label: bytes):
     if ImGui.MenuItem(label, None, False, True):
-        ImGui.ImFileDialog_Open(FILE_DIALOG, b'open file', b'*.txt')
+        ImFileDialogWrap.ImFileDialog_Open(FILE_DIALOG, b'open file', b'*.txt')
 
 
 def get_result() -> Optional[pathlib.Path]:
@@ -67,6 +68,6 @@ def get_result() -> Optional[pathlib.Path]:
         GL.glDeleteTextures(DELETE_QUEUE)
         DELETE_QUEUE.clear()
 
-    result = ImGui.ImFileDialog_GetResult(FILE_DIALOG)
+    result = ImFileDialogWrap.ImFileDialog_GetResult(FILE_DIALOG)
     if result:
-        return pathlib.Path(result.decode('utf-8'))
+        return pathlib.Path(result)

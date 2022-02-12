@@ -1,7 +1,7 @@
 from typing import NamedTuple, List
 import logging
 import ctypes
-import pydear as ImGui
+from pydear import imgui as ImGui
 
 LOGLEVEL_COLORS = {
     'WARNING': ImGui.ImVec4(1, 1, 0, 1),

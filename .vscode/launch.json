@@ -5,23 +5,56 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "setup.py",
+            "name": "hello",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/setup.py",
-            "args": [
-                "build_ext",
-                "-i",
-                "--debug"
-            ],
+            "program": "${workspaceFolder}/examples/basic/hello.py",
+            "args": [],
             "console": "integratedTerminal",
             "justMyCode": false
         },
         {
-            "name": "generate clang.cindex stub",
+            "name": "docking",
             "type": "python",
             "request": "launch",
-            "module": "pycindex.generate_cindex_stub",
+            "program": "${workspaceFolder}/examples/basic/docking.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "fbo",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/basic/fbo.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "imnodes",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/nodes/imnodes.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "viewer(2d)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/two_dimension/_selector.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "geo",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/geo/tile_viewer.py",
+            "args": [],
             "console": "integratedTerminal",
             "justMyCode": false
         },
@@ -35,17 +68,39 @@
             "justMyCode": false
         },
         {
-            "name": "example_glfw_opengl3(dbg)",
+            "name": "nanovg",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/basic/hello_nanovg.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "dbg",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "C:/Python310/Python.exe",
             "args": [
-                "${workspaceFolder}/examples/example_glfw_opengl3.py"
+                "${file}"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/src",
             "environment": [],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "setup.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/setup.py",
+            "args": [
+                "build_ext",
+                "-i",
+                "--debug"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
         },
     ]
 }
