@@ -41,8 +41,11 @@ def main():
     ImNodes.CreateContext()
 
     from pydear.utils import gui_app
-    gui = gui_app.Gui(app.window, hello)
+    gui = gui_app.Gui(app.loop, hello)
+    from pydear.backends import impl_glfw
+    impl_glfw = impl_glfw.ImplGlfwInput(app.window)
     while app.clear():
+        impl_glfw.process_inputs()
         gui.render()
     ImNodes.DestroyContext()
     del gui

@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class Gui:
-    def __init__(self, glfw_window, loop: asyncio.AbstractEventLoop, widgets: Optional[Callable[[], None]] = None) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop, widgets: Optional[Callable[[], None]] = None) -> None:
         self.loop = loop
         ImGui.CreateContext()
 
@@ -15,9 +15,7 @@ class Gui:
 
         io.Fonts.Build()
 
-        from pydear.backends.glfw import GlfwRenderer
-        self.impl_glfw = GlfwRenderer(glfw_window)
-        from pydear.backends.opengl import Renderer
+        from pydear.backends.impl_opengl3 import Renderer
         self.impl_opengl = Renderer()
 
         if not widgets:
@@ -29,11 +27,9 @@ class Gui:
     def __del__(self):
         logging.debug('ImGui.DestroyContext')
         del self.impl_opengl
-        del self.impl_glfw
         ImGui.DestroyContext()
 
     def render(self):
-        self.impl_glfw.process_inputs()
         ImGui.NewFrame()
 
         self._widgets()

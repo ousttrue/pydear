@@ -46,8 +46,11 @@ def main():
         dockspace.Dock('view', (ctypes.c_bool * 1)(True), show_view),
     ]
 
-    gui = dockspace.DockingGui(app.window, views)
+    gui = dockspace.DockingGui(app.loop, views)
+    from pydear.backends import impl_glfw
+    impl_glfw = impl_glfw.ImplGlfwInput(app.window)
     while app.clear():
+        impl_glfw.process_inputs()
         gui.render()
     del gui
 

@@ -179,7 +179,7 @@ class TextRenderer(Item):
         vbo = glo.Vbo()
         vbo.set_vertices(vertices, is_dynamic=True)
         ibo = glo.Ibo()
-        ibo.set_indices(indices, GL.GL_UNSIGNED_SHORT)
+        ibo.set_indices(indices)
         layout = glo.VertexLayout.create_list(self.shader.program)
         logger.debug(layout)
         self.vao = glo.Vao(

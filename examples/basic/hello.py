@@ -7,10 +7,16 @@ logger = logging.getLogger(__name__)
 def main():
     logging.basicConfig(level=logging.DEBUG)
 
+    #
+    # glfw app
+    #
     from pydear.utils import glfw_app
     app = glfw_app.GlfwApp('hello')
 
     def hello():
+        '''
+        imgui widgets
+        '''
         ImGui.ShowDemoWindow()
 
         ImGui.ShowMetricsWindow()
@@ -21,21 +27,35 @@ def main():
             ImGui.ColorPicker4('color', app.clear_color)
         ImGui.End()
 
-    from pydear.utils import gui_app
-    gui = gui_app.Gui(app.window, app.loop, hello)
-
+    #
+    # async coroutine
+    #
     async def async_task():
         count = 1
         while True:
             await asyncio.sleep(1)
             logger.debug(f'count: {count}')
             count += 1
-
     app.loop.create_task(async_task())
 
+    #
+    # imgui
+    #
+    from pydear.utils import gui_app
+    gui = gui_app.Gui(app.loop, hello)
+
+    #
+    # glfw_app => ImplGlfwInput => imgui
+    #
+    from pydear.backends.impl_glfw import ImplGlfwInput
+    impl_glfw = ImplGlfwInput(app.window)
+
+    #
+    # main loop
+    #
     while app.clear():
+        impl_glfw.process_inputs()
         gui.render()
-    del gui
 
 
 if __name__ == '__main__':

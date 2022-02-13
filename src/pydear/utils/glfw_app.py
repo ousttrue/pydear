@@ -58,7 +58,7 @@ class GlfwApp:
         self.ini_file = ini_file
         state = GlfwAppState.load(ini_file)
 
-        self.window = glfw.create_window(
+        self.window: glfw._GLFWwindow = glfw.create_window(
             state.width, state.height, title, None, None)
         if not self.window:
             raise RuntimeError('glfw.create_window')

@@ -78,9 +78,9 @@ def main():
     # Setup Platform/Renderer backends
     # ImGui_ImplGlfw_InitForOpenGL(window, True)
     # ImGui_ImplOpenGL3_Init(glsl_version)
-    from pydear.backends.glfw import GlfwRenderer
-    impl_glfw = GlfwRenderer(window)
-    from pydear.backends.opengl import Renderer
+    from pydear.backends.impl_glfw import ImplGlfwInput
+    impl_glfw = ImplGlfwInput(window)
+    from pydear.backends.impl_opengl3 import Renderer
     impl_opengl = Renderer()
 
     # Our state

@@ -1,4 +1,5 @@
 from . import gui_app
+import asyncio
 from typing import Callable, List, Iterable
 import ctypes
 import dataclasses
@@ -81,9 +82,9 @@ TOOLBAR_SIZE = 50
 
 
 def show_docks(views: Iterable[Dock],
-              menu: Callable[[], None] = None,
-              toolbar: Callable[[], None] = None,
-              ):
+               menu: Callable[[], None] = None,
+               toolbar: Callable[[], None] = None,
+               ):
     menubar_height = _dockspace(
         '__DOCKING_SPACE__', TOOLBAR_SIZE if toolbar else 0)
 
@@ -91,8 +92,9 @@ def show_docks(views: Iterable[Dock],
     if toolbar:
         viewport: ImGui.ImGuiViewport = ImGui.GetMainViewport()
         ImGui.SetNextWindowPos(
-            (viewport.Pos.x, viewport.Pos.y + menubar_height))
-        ImGui.SetNextWindowSize((viewport.Size.x, TOOLBAR_SIZE))
+            (viewport.Pos.x, viewport.Pos.y + menubar_height))  # type: ignore
+        ImGui.SetNextWindowSize(
+            (viewport.Size.x, TOOLBAR_SIZE))  # type: ignore
         # imgui.SetNextWindowViewport(viewport -> ID);
 
         window_flags = (0
@@ -130,11 +132,11 @@ def show_docks(views: Iterable[Dock],
 
 
 class DockingGui(gui_app.Gui):
-    def __init__(self, glfw_window, docks: List[Dock]) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop, docks: List[Dock]) -> None:
         def draw():
             show_docks(self.views)
 
-        super().__init__(glfw_window, draw)
+        super().__init__(loop, draw)
 
         io = ImGui.GetIO()
         io.ConfigFlags |= ImGui.ImGuiConfigFlags_.DockingEnable

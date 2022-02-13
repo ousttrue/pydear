@@ -12,7 +12,7 @@ def compute_fb_scale(window_size: ImGui.ImVec2, frame_buffer_size: ImGui.ImVec2)
     )
 
 
-class GlfwRenderer:
+class ImplGlfwInput:
     def __init__(self, window, attach_callbacks=True):
         if not ImGui.GetCurrentContext():
             raise RuntimeError(
@@ -25,11 +25,11 @@ class GlfwRenderer:
         self.window = window
 
         if attach_callbacks:
-            glfw.set_key_callback(self.window, self.keyboard_callback)
-            glfw.set_cursor_pos_callback(self.window, self.mouse_callback)
-            glfw.set_window_size_callback(self.window, self.resize_callback)
-            glfw.set_char_callback(self.window, self.char_callback)
-            glfw.set_scroll_callback(self.window, self.scroll_callback)
+            glfw.set_key_callback(self.window, self._keyboard_callback)
+            glfw.set_cursor_pos_callback(self.window, self._mouse_callback)
+            glfw.set_window_size_callback(self.window, self._resize_callback)
+            glfw.set_char_callback(self.window, self._char_callback)
+            glfw.set_scroll_callback(self.window, self._scroll_callback)
 
         self.io.display_size = glfw.get_framebuffer_size(self.window)
         self.io.get_clipboard_text_fn = self._get_clipboard_text
@@ -69,7 +69,7 @@ class GlfwRenderer:
         key_map[ImGui.ImGuiKey_.Y] = glfw.KEY_Y
         key_map[ImGui.ImGuiKey_.Z] = glfw.KEY_Z
 
-    def keyboard_callback(self, window, key, scancode, action, mods):
+    def _keyboard_callback(self, window, key, scancode, action, mods):
         io = self.io
 
         if action == glfw.PRESS:
@@ -97,18 +97,18 @@ class GlfwRenderer:
             io.KeysDown[glfw.KEY_RIGHT_SUPER]
         )
 
-    def char_callback(self, window, char):
+    def _char_callback(self, window, char):
         pass
         # if 0 < char < 0x10000:
         #     self.io.add_input_character(char)
 
-    def resize_callback(self, window, width, height):
+    def _resize_callback(self, window, width, height):
         self.io.DisplaySize = ImGui.ImVec2(width, height)
 
-    def mouse_callback(self, *args, **kwargs):
+    def _mouse_callback(self, *args, **kwargs):
         pass
 
-    def scroll_callback(self, window, x_offset, y_offset):
+    def _scroll_callback(self, window, x_offset, y_offset):
         self.io.MouseWheelH = x_offset
         self.io.MouseWheel = y_offset
 
