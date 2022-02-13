@@ -110,15 +110,36 @@ class Map:
     def count(self) -> int:
         return pow(2, self.zoom_level[0])
 
+    @property
+    def tile_height(self) -> float:
+        count = self.count
+        return 180/count
+
     def iter_visible(self):
+        while True:
+            ratio = self.view.height_latitude / self.tile_height
+            if ratio < 2:
+                if self.zoom_level[0] == 8:
+                    break
+                self.zoom_level[0] += 1
+
+            elif ratio >= 4:
+                if self.zoom_level[0] == 0:
+                    break
+                self.zoom_level[0] -= 1
+            else:
+                break
+
+        logger.debug(ratio)
+
         count = self.count
         view_rect = self.view.rect
         x, y, w, h = view_rect
         # left top origin
-        l=x+180
-        r=l+w
-        t=90-y
-        b=t+h
+        l = x+180
+        r = l+w
+        t = 90-y
+        b = t+h
 
         x_unit = 360/count
         x_start = max(0, int((l) // x_unit))
