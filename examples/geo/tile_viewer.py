@@ -1,4 +1,5 @@
 from typing import List
+import asyncio
 import logging
 import dataclasses
 import ctypes
@@ -64,13 +65,14 @@ for i in range(0, 65530, 6):
 
 
 class XYZTile(Item):
-    def __init__(self) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop) -> None:
         super().__init__('xyztile')
         self._input = None
         self.map = xyztile.Map(1)
         self.p_open = (ctypes.c_bool * 1)(True)
         self.tiles: List[xyztile.Tile] = []
         self.texture_manager = TileTextureManager(
+            loop,
             'http://tile.openstreetmap.org',
             HERE.parent.parent / 'tile_cache'
         )
@@ -197,7 +199,7 @@ class XYZTile(Item):
 
             offset = 0
             for tile in self.tiles:
-                texture = self.texture_manager.get_or_create(tile)
+                texture = self.texture_manager.get_or_enqueue(tile)
                 if texture:
                     texture.bind()
                 self.vao.draw(6, offset)
@@ -222,7 +224,7 @@ def run(app: glfw_app.GlfwApp):
             ImGui.ColorPicker4('color', clear_color)
         ImGui.End()
 
-    view = XYZTile()
+    view = XYZTile(app.loop)
     state = State(False)
 
     def show_view(p_open):
