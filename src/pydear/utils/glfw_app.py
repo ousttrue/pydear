@@ -1,4 +1,5 @@
 from typing import Tuple, NamedTuple, Optional
+import asyncio
 import json
 import pathlib
 import logging
@@ -35,7 +36,11 @@ class GlfwAppState(NamedTuple):
 class GlfwApp:
     def __init__(self, title: str, *,
                  width=None, height=None,
-                 gl_major=3, gl_minor=3, use_core_profile=True, use_vsync=True, ini_file=pathlib.Path('glfw.ini')) -> None:
+                 gl_major=3, gl_minor=3, use_core_profile=True,
+                 use_vsync=True, ini_file=pathlib.Path('glfw.ini')) -> None:
+
+        self.loop = asyncio.get_event_loop()
+
         def glfw_error_callback(error: int, description: str):
             logger.error(f"{error}: {description}")
         glfw.set_error_callback(glfw_error_callback)
@@ -63,7 +68,7 @@ class GlfwApp:
         self.height = h
         self.is_maximized = False
 
-        glfw.set_window_size_callback(self.window, self.on_size)
+        # glfw.set_window_size_callback(self.window, self.on_size)
         glfw.set_window_maximize_callback(self.window, self.on_maximized)
         if state.is_maximized:
             glfw.maximize_window(self.window)
@@ -79,17 +84,19 @@ class GlfwApp:
         self.clear_color = (ctypes.c_float * 4)(0.5, 0.5, 0.8, 1)
 
     def __del__(self):
-        logging.debug('exit...')
         # save state
-        GlfwAppState(self.width, self.height,
-                     self.is_maximized).save(self.ini_file)
+        state = GlfwAppState(self.width, self.height,
+                             self.is_maximized)
+        logging.debug(f'save state: {state}')
+        state.save(self.ini_file)
         # Called first for some reason. Can't be released
         # glfw.destroy_window(self.window)
         # glfw.terminate()
 
-    def on_size(self, window, w, h):
-        self.width = w
-        self.height = h
+    # def on_size(self, window, w, h):
+    #     logger.debug(f'on_size: {w} x {h}')
+    #     self.width = w
+    #     self.height = h
 
     def on_maximized(self, window, maximized):
         self.is_maximized = maximized
@@ -98,10 +105,14 @@ class GlfwApp:
 
         glfw.swap_buffers(self.window)
 
+        self.loop.call_soon(self.loop.stop)
+        self.loop.run_forever()
+
         glfw.poll_events()
         if glfw.window_should_close(self.window):
             return False
 
+        self.width, self.height = glfw.get_window_size(self.window)
         width, height = glfw.get_framebuffer_size(self.window)
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0)
         GL.glViewport(0, 0, width, height)

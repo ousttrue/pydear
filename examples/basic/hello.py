@@ -1,5 +1,5 @@
 import logging
-import pathlib
+import asyncio
 from pydear import imgui as ImGui
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,17 @@ def main():
         ImGui.End()
 
     from pydear.utils import gui_app
-    gui = gui_app.Gui(app.window, hello)
+    gui = gui_app.Gui(app.window, app.loop, hello)
+
+    async def async_task():
+        count = 1
+        while True:
+            await asyncio.sleep(1)
+            logger.debug(f'count: {count}')
+            count += 1
+
+    app.loop.create_task(async_task())
+
     while app.clear():
         gui.render()
     del gui

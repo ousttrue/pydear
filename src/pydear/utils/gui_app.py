@@ -1,4 +1,5 @@
 from typing import Callable, Optional
+import asyncio
 import logging
 from pydear import imgui as ImGui
 from OpenGL import GL
@@ -6,7 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 class Gui:
-    def __init__(self, glfw_window, widgets: Optional[Callable[[], None]] = None) -> None:
+    def __init__(self, glfw_window, loop: asyncio.AbstractEventLoop, widgets: Optional[Callable[[], None]] = None) -> None:
+        self.loop = loop
         ImGui.CreateContext()
 
         io = ImGui.GetIO()

@@ -23,15 +23,6 @@
             "justMyCode": false
         },
         {
-            "name": "async_loop",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/examples/basic/async_loop.py",
-            "args": [],
-            "console": "integratedTerminal",
-            "justMyCode": false
-        },
-        {
             "name": "fbo",
             "type": "python",
             "request": "launch",
