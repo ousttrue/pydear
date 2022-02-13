@@ -65,7 +65,7 @@ for i in range(0, 65530, 6):
 
 
 class XYZTile(Item):
-    def __init__(self, loop: asyncio.AbstractEventLoop) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop, base_url) -> None:
         super().__init__('xyztile')
         self._input = None
         self.map = xyztile.Map(1)
@@ -73,7 +73,7 @@ class XYZTile(Item):
         self.tiles: List[xyztile.Tile] = []
         self.texture_manager = TileTextureManager(
             loop,
-            'http://tile.openstreetmap.org',
+            base_url,
             HERE.parent.parent / 'tile_cache'
         )
 
@@ -131,10 +131,10 @@ class XYZTile(Item):
             ImGui.InputInt('zoom level', self.map.zoom_level)
 
             p = ctypes.cast(glm.value_ptr(self.view), ctypes.c_void_p).value
-            ImGui.InputFloat4("view1", ctypes.c_void_p(p))
-            ImGui.InputFloat4("view2", ctypes.c_void_p(p+16))
-            ImGui.InputFloat4("view3", ctypes.c_void_p(p+32))
-            ImGui.InputFloat4("view4", ctypes.c_void_p(p+48))
+            ImGui.InputFloat4("view1", ctypes.c_void_p(p)) # type: ignore
+            ImGui.InputFloat4("view2", ctypes.c_void_p(p+16)) # type: ignore
+            ImGui.InputFloat4("view3", ctypes.c_void_p(p+32)) # type: ignore
+            ImGui.InputFloat4("view4", ctypes.c_void_p(p+48)) # type: ignore
 
             input = self._input
             if input:
@@ -211,7 +211,10 @@ class State:
     hover: bool
 
 
-def run(app: glfw_app.GlfwApp):
+def main():
+    logging.basicConfig(level=logging.DEBUG)
+    app = glfw_app.GlfwApp('tile')
+
     from pydear import imgui as ImGui
     from pydear.utils import dockspace
     clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
@@ -224,7 +227,9 @@ def run(app: glfw_app.GlfwApp):
             ImGui.ColorPicker4('color', clear_color)
         ImGui.End()
 
-    view = XYZTile(app.loop)
+    # url = 'http://tile.openstreetmap.org'
+    url = None
+    view = XYZTile(app.loop, url)
     state = State(False)
 
     def show_view(p_open):
@@ -269,12 +274,6 @@ def run(app: glfw_app.GlfwApp):
         impl_glfw.process_inputs()
         gui.render()
     del gui
-
-
-def main():
-    logging.basicConfig(level=logging.DEBUG)
-    app = glfw_app.GlfwApp('tile')
-    run(app)
 
 
 if __name__ == '__main__':

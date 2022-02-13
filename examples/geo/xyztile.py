@@ -1,5 +1,6 @@
 from typing import Optional, NamedTuple
 import ctypes
+import math
 import dataclasses
 import logging
 logger = logging.getLogger(__name__)
@@ -99,7 +100,7 @@ MAX_LEVEL = 4
 
 class Map:
     def __init__(self, zoom_level=0) -> None:
-        self.zoom_level = (ctypes.c_int32 * 1)(2)
+        self.zoom_level = (ctypes.c_int32 * 1)(zoom_level)
         self.view = View()
 
     def __str__(self) -> str:
@@ -112,8 +113,23 @@ class Map:
     def iter_visible(self):
         count = self.count
         view_rect = self.view.rect
-        for x in range(count):
-            for y in range(count):
+        x, y, w, h = view_rect
+        # left top origin
+        l=x+180
+        r=l+w
+        t=90-y
+        b=t+h
+
+        x_unit = 360/count
+        x_start = max(0, int((l) // x_unit))
+        x_end = min(count, math.ceil(r // x_unit) + 1)
+
+        y_unit = 180/count
+        y_start = max(0, int((t) // y_unit))
+        y_end = min(count, math.ceil(b // y_unit) + 1)
+
+        for x in range(x_start, x_end):
+            for y in range(y_start, y_end):
                 tile = Tile(self.zoom_level[0], x, y)
                 if tile.rect in view_rect:
                     yield tile
