@@ -122,15 +122,15 @@ class Map:
                 if self.zoom_level[0] == 8:
                     break
                 self.zoom_level[0] += 1
+                logger.debug(f'zoom_level: {self.zoom_level[0]}')
 
             elif ratio >= 4:
                 if self.zoom_level[0] == 0:
                     break
                 self.zoom_level[0] -= 1
+                logger.debug(f'zoom_level: {self.zoom_level[0]}')
             else:
                 break
-
-        logger.debug(ratio)
 
         count = self.count
         view_rect = self.view.rect

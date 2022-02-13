@@ -131,10 +131,10 @@ class XYZTile(Item):
             ImGui.InputInt('zoom level', self.map.zoom_level)
 
             p = ctypes.cast(glm.value_ptr(self.view), ctypes.c_void_p).value
-            ImGui.InputFloat4("view1", ctypes.c_void_p(p)) # type: ignore
-            ImGui.InputFloat4("view2", ctypes.c_void_p(p+16)) # type: ignore
-            ImGui.InputFloat4("view3", ctypes.c_void_p(p+32)) # type: ignore
-            ImGui.InputFloat4("view4", ctypes.c_void_p(p+48)) # type: ignore
+            ImGui.InputFloat4("view1", ctypes.c_void_p(p))  # type: ignore
+            ImGui.InputFloat4("view2", ctypes.c_void_p(p+16))  # type: ignore
+            ImGui.InputFloat4("view3", ctypes.c_void_p(p+32))  # type: ignore
+            ImGui.InputFloat4("view4", ctypes.c_void_p(p+48))  # type: ignore
 
             input = self._input
             if input:
@@ -213,6 +213,12 @@ class State:
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
+    from pydear.utils.loghandler import ImGuiLogHandler
+    log_handler = ImGuiLogHandler()
+    log_handler.setFormatter(logging.Formatter(
+        '%(name)s:%(lineno)s[%(levelname)s]%(message)s'))
+    log_handler.register_root()
+
     app = glfw_app.GlfwApp('tile')
 
     from pydear import imgui as ImGui
@@ -227,8 +233,8 @@ def main():
             ImGui.ColorPicker4('color', clear_color)
         ImGui.End()
 
-    # url = 'http://tile.openstreetmap.org'
-    url = None
+    url = 'http://tile.openstreetmap.org'
+    # url = None
     view = XYZTile(app.loop, url)
     state = State(False)
 
@@ -265,6 +271,7 @@ def main():
                        (True), ImGui.ShowMetricsWindow),
         dockspace.Dock('hello', (ctypes.c_bool * 1)(True), show_hello),
         dockspace.Dock('view', (ctypes.c_bool * 1)(True), show_view),
+        dockspace.Dock('log', (ctypes.c_bool * 1)(True), log_handler.draw),
     ]
 
     gui = dockspace.DockingGui(app.loop, views)
