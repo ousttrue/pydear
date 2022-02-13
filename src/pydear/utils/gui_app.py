@@ -13,7 +13,7 @@ class Gui:
 
         io = ImGui.GetIO()
 
-        io.Fonts.Build()
+        self._setup_font()
 
         from pydear.backends.impl_opengl3 import Renderer
         self.impl_opengl = Renderer()
@@ -28,6 +28,10 @@ class Gui:
         logging.debug('ImGui.DestroyContext')
         del self.impl_opengl
         ImGui.DestroyContext()
+
+    def _setup_font(self):
+        io = ImGui.GetIO()
+        io.Fonts.Build()
 
     def render(self):
         ImGui.NewFrame()
