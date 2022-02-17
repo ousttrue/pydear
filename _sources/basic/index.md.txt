@@ -3,5 +3,6 @@
 ```{toctree}
 hello
 docking
+modal
 fbo
 ```

@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-<link rel="index" title="索引" href="../genindex.html" /><link rel="search" title="検索" href="../search.html" /><link rel="next" title="docking" href="docking.html" /><link rel="prev" title="基本" href="index.html" />
+<link rel="index" title="索引" href="../genindex.html" /><link rel="search" title="検索" href="../search.html" /><link rel="next" title="FrameBufferObject" href="fbo.html" /><link rel="prev" title="docking" href="docking.html" />
 
     <meta name="generator" content="sphinx-4.4.0, furo 2022.02.14.1"/>
-        <title>hello - pydear ドキュメント</title>
+        <title>modal - pydear ドキュメント</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=a8f031f701c6af50c9919b48f173a5785af06fac" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=25ceb02ed1c46dc30f2321ff83e92799f69dfdb9" />
@@ -130,7 +130,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -152,9 +152,9 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">基本</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">hello</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hello.html">hello</a></li>
 <li class="toctree-l2"><a class="reference internal" href="docking.html">docking</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modal.html">modal</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">modal</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fbo.html">FrameBufferObject</a></li>
 </ul>
 </li>
@@ -185,78 +185,50 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          <section id="hello">
-<h1>hello<a class="headerlink" href="#hello" title="このヘッドラインへのパーマリンク">#</a></h1>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">from</span> <span class="nn">pydear</span> <span class="kn">import</span> <span class="n">imgui</span> <span class="k">as</span> <span class="n">ImGui</span>
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+          <section id="modal">
+<h1>modal<a class="headerlink" href="#modal" title="このヘッドラインへのパーマリンク">#</a></h1>
+<p>メッセージダイアログや、ファイルダイアログのような。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ImGui</span><span class="o">::</span><span class="n">Button</span><span class="p">(</span><span class="s">"Delete.."</span><span class="p">))</span><span class="w"></span>
+<span class="w">            </span><span class="n">ImGui</span><span class="o">::</span><span class="n">OpenPopup</span><span class="p">(</span><span class="s">"Delete?"</span><span class="p">);</span><span class="w"></span>
 
+<span class="w">        </span><span class="c1">// Always center this window when appearing</span>
+<span class="w">        </span><span class="n">ImVec2</span><span class="w"> </span><span class="n">center</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ImGui</span><span class="o">::</span><span class="n">GetMainViewport</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetCenter</span><span class="p">();</span><span class="w"></span>
+<span class="w">        </span><span class="n">ImGui</span><span class="o">::</span><span class="n">SetNextWindowPos</span><span class="p">(</span><span class="n">center</span><span class="p">,</span><span class="w"> </span><span class="n">ImGuiCond_Appearing</span><span class="p">,</span><span class="w"> </span><span class="n">ImVec2</span><span class="p">(</span><span class="mf">0.5f</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5f</span><span class="p">));</span><span class="w"></span>
 
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ImGui</span><span class="o">::</span><span class="n">BeginPopupModal</span><span class="p">(</span><span class="s">"Delete?"</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">ImGuiWindowFlags_AlwaysAutoResize</span><span class="p">))</span><span class="w"></span>
+<span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="n">ImGui</span><span class="o">::</span><span class="n">Text</span><span class="p">(</span><span class="s">"All those beautiful files will be deleted.</span><span class="se">\n</span><span class="s">This operation cannot be undone!</span><span class="se">\n\n</span><span class="s">"</span><span class="p">);</span><span class="w"></span>
+<span class="w">            </span><span class="n">ImGui</span><span class="o">::</span><span class="n">Separator</span><span class="p">();</span><span class="w"></span>
 
-    <span class="c1">#</span>
-    <span class="c1"># glfw app</span>
-    <span class="c1">#</span>
-    <span class="kn">from</span> <span class="nn">pydear.utils</span> <span class="kn">import</span> <span class="n">glfw_app</span>
-    <span class="n">app</span> <span class="o">=</span> <span class="n">glfw_app</span><span class="o">.</span><span class="n">GlfwApp</span><span class="p">(</span><span class="s1">'hello'</span><span class="p">)</span>
+<span class="w">            </span><span class="c1">//static int unused_i = 0;</span>
+<span class="w">            </span><span class="c1">//ImGui::Combo("Combo", &amp;unused_i, "Delete\0Delete harder\0");</span>
 
-    <span class="k">def</span> <span class="nf">hello</span><span class="p">():</span>
-        <span class="sd">'''</span>
-<span class="sd">        imgui widgets</span>
-<span class="sd">        '''</span>
-        <span class="n">ImGui</span><span class="o">.</span><span class="n">ShowDemoWindow</span><span class="p">()</span>
+<span class="w">            </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">dont_ask_me_next_time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">            </span><span class="n">ImGui</span><span class="o">::</span><span class="n">PushStyleVar</span><span class="p">(</span><span class="n">ImGuiStyleVar_FramePadding</span><span class="p">,</span><span class="w"> </span><span class="n">ImVec2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">));</span><span class="w"></span>
+<span class="w">            </span><span class="n">ImGui</span><span class="o">::</span><span class="n">Checkbox</span><span class="p">(</span><span class="s">"Don't ask me next time"</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">dont_ask_me_next_time</span><span class="p">);</span><span class="w"></span>
+<span class="w">            </span><span class="n">ImGui</span><span class="o">::</span><span class="n">PopStyleVar</span><span class="p">();</span><span class="w"></span>
 
-        <span class="n">ImGui</span><span class="o">.</span><span class="n">ShowMetricsWindow</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="n">ImGui</span><span class="o">.</span><span class="n">Begin</span><span class="p">(</span><span class="s1">'hello'</span><span class="p">):</span>
-            <span class="n">ImGui</span><span class="o">.</span><span class="n">TextUnformatted</span><span class="p">(</span><span class="s1">'hello text'</span><span class="p">)</span>
-            <span class="n">ImGui</span><span class="o">.</span><span class="n">SliderFloat4</span><span class="p">(</span><span class="s1">'clear color'</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">clear_color</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">ImGui</span><span class="o">.</span><span class="n">ColorPicker4</span><span class="p">(</span><span class="s1">'color'</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">clear_color</span><span class="p">)</span>
-        <span class="n">ImGui</span><span class="o">.</span><span class="n">End</span><span class="p">()</span>
-
-    <span class="c1">#</span>
-    <span class="c1"># async coroutine</span>
-    <span class="c1">#</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">async_task</span><span class="p">():</span>
-        <span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">'count: </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
-            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
-    <span class="n">app</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">async_task</span><span class="p">())</span>
-
-    <span class="c1">#</span>
-    <span class="c1"># imgui</span>
-    <span class="c1">#</span>
-    <span class="kn">from</span> <span class="nn">pydear.utils</span> <span class="kn">import</span> <span class="n">gui_app</span>
-    <span class="n">gui</span> <span class="o">=</span> <span class="n">gui_app</span><span class="o">.</span><span class="n">Gui</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">loop</span><span class="p">,</span> <span class="n">hello</span><span class="p">)</span>
-
-    <span class="c1">#</span>
-    <span class="c1"># glfw_app =&gt; ImplGlfwInput =&gt; imgui</span>
-    <span class="c1">#</span>
-    <span class="kn">from</span> <span class="nn">pydear.backends.impl_glfw</span> <span class="kn">import</span> <span class="n">ImplGlfwInput</span>
-    <span class="n">impl_glfw</span> <span class="o">=</span> <span class="n">ImplGlfwInput</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">window</span><span class="p">)</span>
-
-    <span class="c1">#</span>
-    <span class="c1"># main loop</span>
-    <span class="c1">#</span>
-    <span class="k">while</span> <span class="n">app</span><span class="o">.</span><span class="n">clear</span><span class="p">():</span>
-        <span class="n">impl_glfw</span><span class="o">.</span><span class="n">process_inputs</span><span class="p">()</span>
-        <span class="n">gui</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
-
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
-    <span class="n">main</span><span class="p">()</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ImGui</span><span class="o">::</span><span class="n">Button</span><span class="p">(</span><span class="s">"OK"</span><span class="p">,</span><span class="w"> </span><span class="n">ImVec2</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">ImGui</span><span class="o">::</span><span class="n">CloseCurrentPopup</span><span class="p">();</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="w">            </span><span class="n">ImGui</span><span class="o">::</span><span class="n">SetItemDefaultFocus</span><span class="p">();</span><span class="w"></span>
+<span class="w">            </span><span class="n">ImGui</span><span class="o">::</span><span class="n">SameLine</span><span class="p">();</span><span class="w"></span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ImGui</span><span class="o">::</span><span class="n">Button</span><span class="p">(</span><span class="s">"Cancel"</span><span class="p">,</span><span class="w"> </span><span class="n">ImVec2</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">ImGui</span><span class="o">::</span><span class="n">CloseCurrentPopup</span><span class="p">();</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="w">            </span><span class="n">ImGui</span><span class="o">::</span><span class="n">EndPopup</span><span class="p">();</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
+<section id="filedialog">
+<h2>filedialog<a class="headerlink" href="#filedialog" title="このヘッドラインへのパーマリンク">#</a></h2>
+<p>simple</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/Limeoats/L2DFileDialog/blob/master/L2DFileDialog/src/L2DFileDialog.h">https://github.com/Limeoats/L2DFileDialog/blob/master/L2DFileDialog/src/L2DFileDialog.h</a></p></li>
+</ul>
+</section>
 </section>
 
         </article>
@@ -264,23 +236,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="docking.html">
+          <a class="next-page" href="fbo.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">docking</div>
+                <div class="title">FrameBufferObject</div>
               </div>
               <svg><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="index.html">
+          <a class="prev-page" href="docking.html">
               <svg><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">基本</div>
+                <div class="title">docking</div>
                 
               </div>
             </a>
@@ -304,8 +276,27 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            コンテンツ
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">modal</a><ul>
+<li><a class="reference internal" href="#filedialog">filedialog</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
