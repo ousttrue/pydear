@@ -1,5 +1,5 @@
 import logging
-import filedialog
+from pydear.utils import filedialog
 logger = logging.getLogger(__name__)
 
 FILE_DIALOG = 'ModalFileDialog'

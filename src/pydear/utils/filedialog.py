@@ -1,73 +1,99 @@
-
-from typing import Optional
-import logging
-import ctypes
+from typing import Dict, Optional
 import pathlib
-from OpenGL import GL
-from pydear import imgui as ImGui
-from pydear import ImFileDialogWrap
-logger = logging.getLogger(__name__)
-
-# FileDialog
-FILE_DIALOG = b'open file'
+import ctypes
+import pydear.imgui as ImGui
 
 
-def create_texture(data: ctypes.c_void_p, w: int, h: int, fmt: int):
-    tex = GL.glGenTextures(1)
-    GL.glBindTexture(GL.GL_TEXTURE_2D, tex)
-    GL.glTexParameteri(
-        GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
-    GL.glTexParameteri(
-        GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
-    GL.glTexParameteri(
-        GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
-    GL.glTexParameteri(
-        GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
-    GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, w, h, 0, GL.GL_BGRA if(
-        fmt == 0) else GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, ctypes.c_void_p(data))
-    GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
-    GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
-    logger.debug(f'filedialog: create texture: {tex}')
-    return int(tex)
+class Dialog:
+    def __init__(self, name: str, path: pathlib.Path):
+        self.name = name
+        self.path = path
+        self.is_open = False
+        self.selected = None
+        self.p_open = (ctypes.c_bool * 1)(True)
+
+    def show(self):
+        if not self.is_open:
+            ImGui.OpenPopup(self.name)
+            self.is_open = True
+
+        # Always center this window when appearing
+        center = ImGui.GetMainViewport().GetCenter()
+        ImGui.SetNextWindowPos(center, ImGui.ImGuiCond_.Appearing, (0.5, 0.5))
+
+        selected = None
+        if ImGui.BeginPopupModal(self.name, self.p_open):
+
+            ImGui.Text(f"{self.path}")
+
+            w, h = ImGui.GetWindowSize()
+            ImGui.BeginChild("Files##1", (w-50, h-100), True,
+                             ImGui.ImGuiWindowFlags_.HorizontalScrollbar)
+            ImGui.Columns(3)
+            if ImGui.Selectable("File"):
+                pass
+            ImGui.NextColumn()
+            if ImGui.Selectable("Type"):
+                pass
+            ImGui.NextColumn()
+            if ImGui.Selectable("Size"):
+                pass
+            ImGui.NextColumn()
+            ImGui.Separator()
+
+            selected = self.show_files()
+
+            ImGui.EndChild()
+
+            if ImGui.Button("Close", (120, 0)) or selected:
+                ImGui.CloseCurrentPopup()
+
+            ImGui.EndPopup()
+
+        return selected
+
+    def _show_file(self, f: pathlib.Path, override: Optional[str] = None) -> Optional[pathlib.Path]:
+        selected = None
+        if ImGui.Selectable(override if override else f.stem, f == self.selected, ImGui.ImGuiSelectableFlags_.AllowDoubleClick, (ImGui.GetWindowContentRegionWidth(), 0)):
+            if ImGui.IsMouseDoubleClicked(0):
+                if f.is_file():
+                    selected = f
+                elif f.is_dir():
+                    self.path = f
+            else:
+                self.selected = f
+        ImGui.NextColumn()
+        ImGui.TextUnformatted(f.suffix)
+        ImGui.NextColumn()
+        if f.is_file():
+            ImGui.TextUnformatted(f'{f.stat().st_size}')
+        else:
+            ImGui.TextUnformatted('---')
+        ImGui.NextColumn()
+        return selected
+
+    def show_files(self) -> Optional[pathlib.Path]:
+        selected = None
+        # parent
+        self._show_file(self.path.parent, '..')
+
+        # files
+        for f in self.path.iterdir():
+            match self._show_file(f):
+                case pathlib.Path() as selected:
+                    pass
+
+        return selected
 
 
-# delay texture deletion
-DELETE_QUEUE = []
+POPUP: Dict[str, Dialog] = {}
 
 
-def delete_texture(tex):
-    logger.debug(f'filedialog: delete texture: {tex}')
-    DELETE_QUEUE.append(tex)
+def open(name: str, path: pathlib.Path = pathlib.Path('.').absolute()):
+    POPUP[name] = Dialog(name, path)
 
 
-P_CREATE_TEXTURE = ctypes.CFUNCTYPE(
-    ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_char)(create_texture)
-P_DELETE_TEXTURE = ctypes.CFUNCTYPE(None, ctypes.c_void_p)(delete_texture)
-
-
-# 違う !
-# print(
-#     ctypes.addressof(P_CREATE_TEXTURE),
-#     ctypes.cast(P_CREATE_TEXTURE, ctypes.c_void_p).value)
-
-
-def initialize():
-    ImFileDialogWrap.ImFileDialog_SetTextureCallback(
-        ctypes.cast(P_CREATE_TEXTURE, ctypes.c_void_p),
-        ctypes.cast(P_DELETE_TEXTURE, ctypes.c_void_p))
-
-
-def open_menu(label: bytes):
-    if ImGui.MenuItem(label, None, False, True):
-        ImFileDialogWrap.ImFileDialog_Open(FILE_DIALOG, b'open file', b'*.txt')
-
-
-def get_result() -> Optional[pathlib.Path]:
-    if DELETE_QUEUE:
-        logger.debug(f'file dialog delete: {DELETE_QUEUE}')
-        GL.glDeleteTextures(DELETE_QUEUE)
-        DELETE_QUEUE.clear()
-
-    result = ImFileDialogWrap.ImFileDialog_GetResult(FILE_DIALOG)
-    if result:
-        return pathlib.Path(result)
+def modal(name: str) -> Optional[pathlib.Path]:
+    state = POPUP.get(name)
+    if state:
+        return state.show()

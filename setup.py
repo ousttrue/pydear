@@ -1,19 +1,13 @@
+from typing import List
 from rawtypes.generator.cpp_writer import FunctionCustomization
 from rawtypes.interpreted_types import *
 # from rawtypes import vcenv  # search setup vc path
 from rawtypes.parser.header import Header
 from rawtypes.parser.struct_cursor import WrapFlags
-import os
 import pathlib
-
+import setuptools
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-
-import subprocess
-import setuptools
-import sys
-import pathlib
-from typing import List
 import logging
 logging.basicConfig(level=logging.DEBUG,
                     format='[%(levelname)s]%(name)s:%(lineno)s:%(message)s')
@@ -59,20 +53,11 @@ static ImVec2 get_ImVec2(PyObject *src)
 '''
 
 HEADERS: List[Header] = [
-    # Header(
-    #     EXTERNAL_DIR, 'tinygizmo/tinygizmo/tiny-gizmo.hpp',
-    #     include_dirs=[EXTERNAL_DIR / 'tinygizmo/tinygizmo'], prefix='tinygizmo_'),
     Header(
         EXTERNAL_DIR / 'imgui/imgui.h',
         include_dirs=[EXTERNAL_DIR / 'imgui'],
         begin=IMVECTOR,
         after_include=CPP_BEGIN),
-    # Header(
-    #     EXTERNAL_DIR / 'ImFileDialogWrap.h',
-    #     include_dirs=[EXTERNAL_DIR]),
-    # Header(
-    #     EXTERNAL_DIR, 'ImGuizmo/ImGuizmo.h',
-    #     include_dirs=[EXTERNAL_DIR / 'ImGuizmo'], prefix='ImGuizmo_'),
     Header(
         EXTERNAL_DIR / 'imnodes/imnodes.h',
         include_dirs=[EXTERNAL_DIR / 'imnodes']),
