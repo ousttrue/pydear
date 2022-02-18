@@ -1,5 +1,8 @@
 import logging
+import filedialog
 logger = logging.getLogger(__name__)
+
+FILE_DIALOG = 'ModalFileDialog'
 
 
 def main():
@@ -20,13 +23,24 @@ def main():
         ImGui.End()
     views = [
         dockspace.Dock('demo', (ctypes.c_bool * 1)
-                           (True), ImGui.ShowDemoWindow),
+                       (True), ImGui.ShowDemoWindow),
         dockspace.Dock('metrics', (ctypes.c_bool * 1)
-                           (True), ImGui.ShowMetricsWindow),
+                       (True), ImGui.ShowMetricsWindow),
         dockspace.Dock('hello', (ctypes.c_bool * 1)(True), show_hello),
     ]
 
-    gui = dockspace.DockingGui(app.loop, views)
+    def menu():
+        if ImGui.BeginMenu(b"File", True):
+            if ImGui.MenuItem('open'):
+                filedialog.open(FILE_DIALOG)
+            ImGui.EndMenu()
+
+    def modal():
+        selected = filedialog.modal(FILE_DIALOG)
+        if selected:
+            print(f'select: {selected}')
+
+    gui = dockspace.DockingGui(app.loop, docks=views, menu=menu, modal=modal)
 
     from pydear.backends.impl_glfw import ImplGlfwInput
     impl_glfw = ImplGlfwInput(app.window)
