@@ -23,3 +23,4 @@
 /.cache/
 /cpp_src/
 glfw.ini
+/docs/autodoc/

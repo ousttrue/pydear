@@ -10,9 +10,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import sys
+import pathlib
+HERE = pathlib.Path(__file__).absolute().parent
+sys.path.append(str(HERE.parent / 'src'))
 
 
 # -- Project information -----------------------------------------------------
@@ -30,7 +31,14 @@ author = 'ousttrue'
 extensions = [
     'myst_parser',
     'gitinclude',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
 ]
+
+autodoc_default_options = {
+    'undoc-members': True,
+    'imported-members': True,
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
