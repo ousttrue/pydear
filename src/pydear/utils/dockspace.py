@@ -121,7 +121,10 @@ def show_docks(views: Iterable[Dock],
         if views:
             if ImGui.BeginMenu(b"Views", True):
                 for v in views:
-                    ImGui.MenuItem_2(v.name, b'', v.p_open)
+                    if v.p_open:
+                        ImGui.MenuItem_2(v.name, b'', v.p_open)
+                    else:
+                        ImGui.MenuItem_2(v.name, b'', None, False)
                 ImGui.EndMenu()
 
         ImGui.EndMainMenuBar()
