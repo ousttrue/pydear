@@ -69,16 +69,17 @@ def main():
             selector.selected.show()
 
     views = [
-        dockspace.Dock('demo', (ctypes.c_bool * 1)
-                       (True), ImGui.ShowDemoWindow),
-        dockspace.Dock('metrics', (ctypes.c_bool * 1)
-                       (True), ImGui.ShowMetricsWindow),
-        dockspace.Dock('samples', (ctypes.c_bool * 1)(True), show_selector),
-
-        dockspace.Dock('view', (ctypes.c_bool * 1)(True), show_view),
+        dockspace.Dock('demo', ImGui.ShowDemoWindow,
+                       (ctypes.c_bool * 1)(True)),
+        dockspace.Dock('metrics', ImGui.ShowMetricsWindow,
+                       (ctypes.c_bool * 1)(True)),
+        dockspace.Dock('samples', show_selector,
+                       (ctypes.c_bool * 1)(True)),
+        dockspace.Dock('view', show_view,
+                       (ctypes.c_bool * 1)(True)),
     ]
 
-    gui = dockspace.DockingGui(app.loop, views)
+    gui = dockspace.DockingGui(app.loop, docks=views)
     from pydear.backends.impl_glfw import ImplGlfwInput
     impl_glfw = ImplGlfwInput(app.window)
     while app.clear():

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from rawtypes.generator.cpp_writer import FunctionCustomization
 from rawtypes.interpreted_types import *
 # from rawtypes import vcenv  # search setup vc path
@@ -128,8 +128,9 @@ class ImVec2WrapType(BaseType):
     def ctypes_type(self) -> str:
         return 'ImVec2'
 
-    def py_param(self, name: str, default_value: str, pyi: bool) -> str:
-        return f'{name}: Union[ImVec2, Tuple[float, float]]{default_value}'
+    @property
+    def pyi_types(self) -> Tuple[str, ...]:
+        return ('Tuple[float, float]', 'ImVec2', 'None')
 
     def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
         if default_value:
@@ -149,8 +150,9 @@ class ImVec4WrapType(BaseType):
     def ctypes_type(self) -> str:
         return 'ImVec4'
 
-    def py_param(self, name: str, default_value: str, pyi: bool) -> str:
-        return f'{name}: Union[ImVec4, Tuple[float, float, float, float]]{default_value}'
+    @property
+    def pyi_types(self) -> Tuple[str, ...]:
+        return ('Tuple[float, float, float, float]', 'ImVec4')
 
     def cpp_to_py(self, value: str) -> str:
         return f'Py_BuildValue("(ffff)", {value}.x, {value}.y, {value}.z, {value}.w)'

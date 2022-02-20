@@ -1,6 +1,6 @@
+from typing import Callable, List, Iterable, Optional
 from . import gui_app
 import asyncio
-from typing import Callable, List, Iterable
 import ctypes
 import dataclasses
 from pydear import imgui as ImGui
@@ -71,8 +71,9 @@ def _dockspace(name: str, toolbar_size=0):
 @dataclasses.dataclass
 class Dock:
     name: str
-    p_open: ctypes.Array
     drawable: Callable[[ctypes.Array], None]
+    # use: (ctypes.c_bool * 1)()
+    p_open: Optional[ctypes.Array] = None
 
     def draw(self):
         self.drawable(self.p_open)
@@ -132,7 +133,7 @@ def show_docks(views: Iterable[Dock],
 
 
 class DockingGui(gui_app.Gui):
-    def __init__(self, loop: asyncio.AbstractEventLoop, *, docks: List[Dock], menu, modal) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop, *, docks: List[Dock], menu=None, modal=None) -> None:
         def draw():
             show_docks(self.views, menu)
 

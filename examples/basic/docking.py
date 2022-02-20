@@ -22,11 +22,12 @@ def main():
             ImGui.ColorPicker4('color', app.clear_color)
         ImGui.End()
     views = [
-        dockspace.Dock('demo', (ctypes.c_bool * 1)
-                       (True), ImGui.ShowDemoWindow),
-        dockspace.Dock('metrics', (ctypes.c_bool * 1)
-                       (True), ImGui.ShowMetricsWindow),
-        dockspace.Dock('hello', (ctypes.c_bool * 1)(True), show_hello),
+        dockspace.Dock('demo', ImGui.ShowDemoWindow,
+                       (ctypes.c_bool * 1)(True)),
+        dockspace.Dock('metrics', ImGui.ShowMetricsWindow,
+                       (ctypes.c_bool * 1)(True)),
+        dockspace.Dock('hello', show_hello,
+                       (ctypes.c_bool * 1)(True)),
     ]
 
     def menu():
