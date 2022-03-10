@@ -4,6 +4,10 @@
 import pydear.imgui as ImGui
 ```
 
+```{toctree}
+table
+```
+
 ## layout children
 
 ## selectable
