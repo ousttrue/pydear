@@ -30,11 +30,11 @@ class Vao:
     def unbind(self):
         GL.glBindVertexArray(0)
 
-    def draw(self, count: int, offset: int = 0):
+    def draw(self, count: int, offset: int = 0, *, topology=GL.GL_TRIANGLES):
         self.bind()
         if self.ibo:
-            GL.glDrawElements(GL.GL_TRIANGLES, count,
+            GL.glDrawElements(topology, count,
                               self.ibo.format, ctypes.c_void_p(offset))
         else:
-            GL.glDrawArrays(GL.GL_TRIANGLES, offset, count)
+            GL.glDrawArrays(topology, offset, count)
         self.unbind()
