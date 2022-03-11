@@ -7,7 +7,10 @@ logger = logging.getLogger(__name__)
 
 
 class Gui:
-    def __init__(self, loop: asyncio.AbstractEventLoop, widgets: Optional[Callable[[], None]] = None) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop, *,
+                 widgets: Optional[Callable[[], None]] = None,
+                 modal: Optional[Callable[[], None]] = None
+                 ) -> None:
         self.loop = loop
         ImGui.CreateContext()
 
@@ -18,11 +21,14 @@ class Gui:
         from pydear.backends.impl_opengl3 import Renderer
         self.impl_opengl = Renderer()
 
+        def empty():
+            pass
         if not widgets:
-            def empty():
-                pass
             widgets = empty
         self._widgets: Callable[[], None] = widgets
+        if not modal:
+            modal = empty
+        self._modal: Callable[[], None] = modal
 
     def __del__(self):
         logging.debug('ImGui.DestroyContext')
@@ -37,6 +43,7 @@ class Gui:
         ImGui.NewFrame()
 
         self._widgets()
+        self._modal()
 
         ImGui.Render()
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0)

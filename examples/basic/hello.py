@@ -42,7 +42,7 @@ def main():
     # imgui
     #
     from pydear.utils import gui_app
-    gui = gui_app.Gui(app.loop, hello)
+    gui = gui_app.Gui(app.loop, widgets=hello)
 
     #
     # glfw_app => ImplGlfwInput => imgui

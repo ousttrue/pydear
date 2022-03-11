@@ -1,9 +1,6 @@
 name: Sphinx
 
 on:
-  push:
-    branches:
-      - master
   workflow_dispatch:
 
 jobs:
@@ -12,12 +9,16 @@ jobs:
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
       - run: pip install sphinx
       - run: pip install myst-parser
       - run: pip install furo
       - run: pip install gitinclude
       - run: pip install sphinxcontrib-actdiag sphinxcontrib-blockdiag sphinxcontrib-nwdiag sphinxcontrib-seqdiag
+      - run: sudo pip install -e .
+      - run: sphinx-apidoc --separate -o docs/autodoc src/pydear      
       - run: sphinx-build docs html
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

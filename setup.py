@@ -1,19 +1,13 @@
+from typing import List, Tuple
 from rawtypes.generator.cpp_writer import FunctionCustomization
 from rawtypes.interpreted_types import *
 # from rawtypes import vcenv  # search setup vc path
 from rawtypes.parser.header import Header
 from rawtypes.parser.struct_cursor import WrapFlags
-import os
 import pathlib
-
+import setuptools
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-
-import subprocess
-import setuptools
-import sys
-import pathlib
-from typing import List
 import logging
 logging.basicConfig(level=logging.DEBUG,
                     format='[%(levelname)s]%(name)s:%(lineno)s:%(message)s')
@@ -59,20 +53,11 @@ static ImVec2 get_ImVec2(PyObject *src)
 '''
 
 HEADERS: List[Header] = [
-    # Header(
-    #     EXTERNAL_DIR, 'tinygizmo/tinygizmo/tiny-gizmo.hpp',
-    #     include_dirs=[EXTERNAL_DIR / 'tinygizmo/tinygizmo'], prefix='tinygizmo_'),
     Header(
         EXTERNAL_DIR / 'imgui/imgui.h',
         include_dirs=[EXTERNAL_DIR / 'imgui'],
         begin=IMVECTOR,
         after_include=CPP_BEGIN),
-    # Header(
-    #     EXTERNAL_DIR / 'ImFileDialogWrap.h',
-    #     include_dirs=[EXTERNAL_DIR]),
-    # Header(
-    #     EXTERNAL_DIR, 'ImGuizmo/ImGuizmo.h',
-    #     include_dirs=[EXTERNAL_DIR / 'ImGuizmo'], prefix='ImGuizmo_'),
     Header(
         EXTERNAL_DIR / 'imnodes/imnodes.h',
         include_dirs=[EXTERNAL_DIR / 'imnodes']),
@@ -143,22 +128,9 @@ class ImVec2WrapType(BaseType):
     def ctypes_type(self) -> str:
         return 'ImVec2'
 
-    def param(self, name: str, default_value: str, pyi: bool) -> str:
-        return f'{name}: Union[ImVec2, Tuple[float, float]]{default_value}'
-
-    def cdef_param(self, indent: str, i: int, name: str) -> str:
-        return f'''{indent}# {self}
-{indent}cdef impl.ImVec2 p{i} = impl.ImVec2({name}[0], {name}[1]) if isinstance({name}, tuple) else impl.ImVec2({name}.x, {name}.y)
-'''
-
-    def result_typing(self, pyi: bool) -> str:
-        return 'Tuple[float, float]'
-
-    def cdef_result(self, indent: str, call: str) -> str:
-        return f'''{indent}# {self}
-{indent}cdef impl.ImVec2 value = {call}
-{indent}return (value.x, value.y)
-'''
+    @property
+    def pyi_types(self) -> Tuple[str, ...]:
+        return ('Tuple[float, float]', 'ImVec2', 'None')
 
     def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
         if default_value:
@@ -166,7 +138,7 @@ class ImVec2WrapType(BaseType):
         else:
             return f'{indent}ImVec2 p{i} = get_ImVec2(t{i});\n'
 
-    def py_value(self, value: str) -> str:
+    def cpp_to_py(self, value: str) -> str:
         return f'Py_BuildValue("(ff)", {value}.x, {value}.y)'
 
 
@@ -178,19 +150,11 @@ class ImVec4WrapType(BaseType):
     def ctypes_type(self) -> str:
         return 'ImVec4'
 
-    def param(self, name: str, default_value: str, pyi: bool) -> str:
-        return f'{name}: Union[ImVec4, Tuple[float, float, float, float]]{default_value}'
+    @property
+    def pyi_types(self) -> Tuple[str, ...]:
+        return ('Tuple[float, float, float, float]', 'ImVec4')
 
-    def result_typing(self, pyi: bool) -> str:
-        return 'Tuple[float, float, float, float]'
-
-    def cdef_result(self, indent: str, call: str) -> str:
-        return f'''{indent}# {self}
-{indent}cdef impl.ImVec4 value = {call}
-{indent}return (value.x, value.y, value.z, value.w)
-'''
-
-    def py_value(self, value: str) -> str:
+    def cpp_to_py(self, value: str) -> str:
         return f'Py_BuildValue("(ffff)", {value}.x, {value}.y, {value}.z, {value}.w)'
 
 
@@ -210,15 +174,6 @@ class VertexBufferType(BaseType):
     @property
     def ctypes_type(self) -> str:
         return 'VertexBuffer'
-
-    def result_typing(self, pyi: bool) -> str:
-        return 'Tuple[ctypes.c_void_p, int, ctypes.c_void_p, int]'
-
-    def cdef_result(self, indent: str, call: str) -> str:
-        return f'''{indent}# {self}
-{indent}cdef impl.VertexBuffer value = {call}
-{indent}return (ctypes.c_void_p(<uintptr_t>value.vertices), value.vertices_count, ctypes.c_void_p(<uintptr_t>value.indices), value.indices_count)
-'''
 
 
 #

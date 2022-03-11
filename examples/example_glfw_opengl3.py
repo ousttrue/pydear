@@ -95,7 +95,7 @@ def main():
     show_demo_window = (ctypes.c_bool * 1)(True)
 
     # 1. Show the big demo window (Most of the sample code is in ImGui.ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    demo = Dock('demo', show_demo_window, ImGui.ShowDemoWindow)
+    demo = Dock('demo', ImGui.ShowDemoWindow, show_demo_window)
 
     # 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     def draw_hello(p_open: ctypes.Array):
@@ -126,7 +126,7 @@ def main():
                 f"Application average {1000.0 / ImGui.GetIO().Framerate:.3f} ms/frame ({ImGui.GetIO().Framerate:.1f} FPS)".encode('utf-8'))
 
         ImGui.End()
-    window2 = Dock('hello', (ctypes.c_bool * 1)(True), draw_hello)
+    window2 = Dock('hello', draw_hello, (ctypes.c_bool * 1)(True))
 
     # 3. Show another simple window.
     def draw_another_window(p_open: ctypes.Array):
@@ -153,11 +153,11 @@ def main():
 
         ImGui.End()
     another_window = Dock(
-        'another_window', show_another_window, draw_another_window)
+        'another_window', draw_another_window, show_another_window)
 
     # 4.
-    metrics = Dock('metrics',
-                       (ctypes.c_bool * 1)(True), ImGui.ShowMetricsWindow)
+    metrics = Dock('metrics', ImGui.ShowMetricsWindow,
+                   (ctypes.c_bool * 1)(True))
 
     # 5.
     from pydear.utils.loghandler import ImGuiLogHandler
@@ -165,17 +165,17 @@ def main():
     log_handler.setFormatter(logging.Formatter(
         '%(name)s:%(lineno)s[%(levelname)s]%(message)s'))
     log_handler.register_root()
-    log = Dock('log', (ctypes.c_bool * 1)(True), log_handler.draw)
+    log = Dock('log', log_handler.draw, (ctypes.c_bool * 1)(True))
 
     views = [
         demo, another_window, window2, metrics, log
     ]
 
-    filedialog.initialize()
+    FILEDIALOG = 'FileOpen'
 
     def menu():
         if ImGui.BeginMenu(b"File", True):
-            filedialog.open_menu(b"Open")
+            filedialog.open(FILEDIALOG)
 
             if ImGui.MenuItem(b"Quit", None, False, True):
                 glfw.set_window_should_close(window, True)
@@ -219,7 +219,7 @@ def main():
         # if file:
         #     logger.info(f'open {file}')
         # file dialogs
-        result = filedialog.get_result()
+        result = filedialog.modal(FILEDIALOG)
         if result:
             logger.info(f'file open: {result}')
 

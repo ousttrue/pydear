@@ -41,7 +41,7 @@ def main():
     ImNodes.CreateContext()
 
     from pydear.utils import gui_app
-    gui = gui_app.Gui(app.loop, hello)
+    gui = gui_app.Gui(app.loop, widgets=hello)
     from pydear.backends import impl_glfw
     impl_glfw = impl_glfw.ImplGlfwInput(app.window)
     while app.clear():
