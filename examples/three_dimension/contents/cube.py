@@ -1,20 +1,21 @@
 '''
 simple triangle sample
 '''
-from typing import List
+from typing import List, NamedTuple, Tuple
 import logging
 import ctypes
 from OpenGL import GL
 import glm
 from pydear import glo
 from pydear.utils.item import Item, Input
-from .camera import Camera
+from pydear.scene.camera import Camera
 
 LOGGER = logging.getLogger(__name__)
 
 vs = '''#version 330
 in vec3 aPos;
 in vec3 aNormal;
+in vec3 aColor;
 out vec3 vColor;
 uniform mediump mat4 uView;
 uniform mediump mat4 uProjection;
@@ -25,10 +26,10 @@ void main()
     gl_Position = uProjection * uView * vec4(aPos, 1);
 
     // lambert
-    vec3 L = normalize(vec3(1, 2, 3));
+    vec3 L = normalize(vec3(-1, -2, -3));
     vec3 N = normalize(aNormal);
     float v = max(dot(N, L), 0.2);    
-    vColor = vec3(v, v, v);
+    vColor = aColor * v;
 }
 '''
 
@@ -54,6 +55,7 @@ class Vertex(ctypes.Structure):
     _fields_ = [
         ('position', Float3),
         ('normal', Float3),
+        ('color', Float3),
     ]
 
 
@@ -61,18 +63,18 @@ class MeshBuilder:
     def __init__(self) -> None:
         self.vertices: List[Vertex] = []
 
-    def push_triangle(self, p0: glm.vec3, p1: glm.vec3, p2: glm.vec3, n: glm.vec3):
+    def push_triangle(self, p0: glm.vec3, p1: glm.vec3, p2: glm.vec3, n: glm.vec3, color: glm.vec3):
         self.vertices.append(
-            Vertex(Float3(p0.x, p0.y, p0.z), Float3(n.x, n.y, n.z)))
+            Vertex(Float3(p0.x, p0.y, p0.z), Float3(n.x, n.y, n.z), Float3(color.x, color.y, color.z)))
         self.vertices.append(
-            Vertex(Float3(p1.x, p1.y, p1.z), Float3(n.x, n.y, n.z)))
+            Vertex(Float3(p1.x, p1.y, p1.z), Float3(n.x, n.y, n.z), Float3(color.x, color.y, color.z)))
         self.vertices.append(
-            Vertex(Float3(p2.x, p2.y, p2.z), Float3(n.x, n.y, n.z)))
+            Vertex(Float3(p2.x, p2.y, p2.z), Float3(n.x, n.y, n.z), Float3(color.x, color.y, color.z)))
 
-    def push_quad(self, p0, p1, p2, p3):
+    def push_quad(self, p0, p1, p2, p3, color):
         n = glm.cross(glm.normalize(p0-p1), glm.normalize(p2-p1))
-        self.push_triangle(p0, p1, p2, n)
-        self.push_triangle(p2, p3, p0, n)
+        self.push_triangle(p0, p1, p2, n, color)
+        self.push_triangle(p2, p3, p0, n, color)
 
     def create_vbo(self) -> glo.Vbo:
         vbo = glo.Vbo()
@@ -84,30 +86,46 @@ class MeshBuilder:
 '''
 OpenGL default is ccw
 
-front back
-0+-+3 4+-+7
- | |   | |
-1+-+2 5+-+6
++->
+|
+v
+  4 5
+  +-+
+ / /
++-+
+7 6
+  0 1
+  +-+
+ / /
++-+
+3 2
 '''
-SIZE = 0.6
+S = 0.6
 VERTICES = [
-    glm.vec3(-SIZE, SIZE, SIZE),
-    glm.vec3(-SIZE, -SIZE, SIZE),
-    glm.vec3(SIZE, -SIZE, SIZE),
-    glm.vec3(SIZE, SIZE, SIZE),
-    glm.vec3(-SIZE, SIZE, -SIZE),
-    glm.vec3(-SIZE, -SIZE, -SIZE),
-    glm.vec3(SIZE, -SIZE, -SIZE),
-    glm.vec3(SIZE, SIZE, -SIZE),
+    glm.vec3(-S, -S, -S),
+    glm.vec3(S, -S, -S),
+    glm.vec3(S, -S, S),
+    glm.vec3(-S, -S, S),
+    glm.vec3(-S, S, -S),
+    glm.vec3(S, S, -S),
+    glm.vec3(S, S, S),
+    glm.vec3(-S, S, S),
 ]
 
+
+class Face(NamedTuple):
+    indices: Tuple[int, int, int, int]
+    color: Tuple[float, float, float]
+
+
+# CCW
 QUADS = [
-    (0, 1, 2, 3),  # front
-    (3, 2, 6, 7),  # right
-    (7, 6, 5, 4),  # back
-    (4, 5, 1, 0),  # left
-    (4, 0, 3, 7),  # top
-    (2, 1, 5, 6),  # bottom
+    Face((7, 3, 2, 6), (0.5, 0.5, 1)),  # front
+    Face((5, 1, 0, 4), (0.5, 0.5, 1)),  # back
+    Face((6, 2, 1, 5), (1, 0.5, 0.5)),  # right
+    Face((4, 0, 3, 7), (1, 0.5, 0.5)),  # left
+    Face((4, 7, 6, 5), (0.5, 1, 0.5)),  # top
+    Face((0, 1, 2, 3), (0.5, 1, 0.5)),  # bottom
 ]
 
 
@@ -135,9 +153,9 @@ class Cube(Item):
         ]
 
         builder = MeshBuilder()
-        for i0, i1, i2, i3 in QUADS:
+        for (i0, i1, i2, i3), rgb in QUADS:
             builder.push_quad(VERTICES[i0], VERTICES[i1],
-                              VERTICES[i2], VERTICES[i3])
+                              VERTICES[i2], VERTICES[i3], glm.vec3(rgb))
         vbo = builder.create_vbo()
 
         self.vao = glo.Vao(

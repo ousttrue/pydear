@@ -24,7 +24,7 @@ class Orbit:
         self.inverse = glm.mat4(1)
         self.x = 0.0
         self.y = 0.0
-        self.distance = 2.0
+        self.distance = 5.0
         self.yaw = 0.0
         self.pitch = 0.0
         self.update_matrix()
