@@ -7,9 +7,15 @@ from .texture import Texture
 from .vertex_layout import AttributeLocation, VertexLayout
 from .vao import Vao
 from .fbo import Fbo, FboRenderer
+from .drawable import Drawable
 
 __all__ = [
     'FboRenderer',
+    'Shader',
+    'UniformLocation',
+    'ShaderProp',
+    'Drawable',
+    'Vbo', 'Ibo', 'Vao', 'VertexLayout'
 ]
 
 

@@ -1,7 +1,7 @@
 from typing import NamedTuple, Optional, Union
 from OpenGL import GL
 import logging
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class ShaderCompile:
@@ -20,7 +20,7 @@ class ShaderCompile:
             return True
         # error message
         info = GL.glGetShaderInfoLog(self.shader)
-        logging.error(info)
+        LOGGER.error(info)
         return False
 
     def __del__(self):
@@ -40,7 +40,7 @@ class Shader:
     def __exit__(self, exc_type, exc_value, traceback):
         self.unuse()
         if exc_type:
-            logger.warning(f'{exc_type}: {exc_value}: {traceback}')
+            LOGGER.warning(f'{exc_type}: {exc_value}: {traceback}')
 
     def link(self, vs, fs) -> bool:
         GL.glAttachShader(self.program, vs)
@@ -51,7 +51,7 @@ class Shader:
             return True
         # error message
         info = GL.glGetShaderInfoLog(self.program)
-        logger.error(info)
+        LOGGER.error(info)
         return False
 
     @staticmethod
@@ -82,7 +82,7 @@ class UniformLocation(NamedTuple):
     def create(program,  name: str) -> 'UniformLocation':
         location = GL.glGetUniformLocation(program, name)
         if location == -1:
-            logger.warn(f'{name}: -1')
+            LOGGER.warn(f'{name}: -1')
         return UniformLocation(name, location)
 
     def set_int(self, value: int):
