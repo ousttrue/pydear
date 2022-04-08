@@ -3,22 +3,34 @@ from .texture import Texture
 from OpenGL import GL
 import logging
 import ctypes
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class Fbo:
-    def __init__(self, width, height) -> None:
+    def __init__(self, width, height, *, use_depth=True) -> None:
         self. texture = Texture(width, height)
         self.fbo = GL.glGenFramebuffers(1)
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self.fbo)
         GL.glFramebufferTexture2D(
             GL.GL_FRAMEBUFFER, GL.GL_COLOR_ATTACHMENT0, GL.GL_TEXTURE_2D, self.texture.handle, 0)
         GL.glDrawBuffers([GL.GL_COLOR_ATTACHMENT0])
+
+        if use_depth:
+            self.depth = GL.glGenRenderbuffers(1)
+            GL.glBindRenderbuffer(GL.GL_RENDERBUFFER, self.depth)
+            GL.glRenderbufferStorage(
+                GL.GL_RENDERBUFFER, GL.GL_DEPTH_COMPONENT, width, height)
+            GL.glFramebufferRenderbuffer(
+                GL.GL_FRAMEBUFFER, GL.GL_DEPTH_ATTACHMENT, GL.GL_RENDERBUFFER, self.depth)
+        else:
+            self.depth = 0
+
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0)
-        logger.debug(f'fbo: {self.fbo}, texture: {self.texture}')
+        LOGGER.debug(
+            f'fbo: {self.fbo}, texture: {self.texture}, depth: {self.depth}')
 
     def __del__(self):
-        logger.debug(f'fbo: {self.fbo}')
+        LOGGER.debug(f'fbo: {self.fbo}')
         GL.glDeleteFramebuffers(1, [self.fbo])
 
     def bind(self):
@@ -29,6 +41,10 @@ class Fbo:
 
 
 class FboRenderer:
+    '''
+    https://qiita.com/edo_m18/items/95483cabf50494f53bb5
+    '''
+
     def __init__(self) -> None:
         self.fbo: Optional[Fbo] = None
 
@@ -50,6 +66,7 @@ class FboRenderer:
                         color[1] * color[3],
                         color[2] * color[3],
                         color[3])
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+        GL.glClearDepth(1.0)
+        GL.glDepthFunc(GL.GL_LESS)
         return ctypes.c_void_p(int(self.fbo.texture.handle))

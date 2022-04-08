@@ -41,12 +41,14 @@ def main():
                        ImGui.ImGuiWindowFlags_.NoScrollbar |
                        ImGui.ImGuiWindowFlags_.NoScrollWithMouse):
             w, h = ImGui.GetContentRegionAvail()
+
             texture = fbo_manager.clear(
                 int(w), int(h), clear_color)
             if texture:
                 selected = selector.selected
                 if selected:
                     # input handling
+                    # TODO imgui-1.87 input api
                     input = Input.get(state.hover, w, h)
                     if input:
                         selected.input(input)

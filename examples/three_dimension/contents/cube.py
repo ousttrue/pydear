@@ -4,9 +4,10 @@ simple triangle sample
 from typing import List
 import logging
 import ctypes
+from OpenGL import GL
+import glm
 from pydear import glo
 from pydear.utils.item import Item, Input
-import glm
 from .camera import Camera
 
 LOGGER = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ void main()
     // lambert
     vec3 L = normalize(vec3(1, 2, 3));
     vec3 N = normalize(aNormal);
-    float v = max(dot(N, L), 0.0);    
+    float v = max(dot(N, L), 0.2);    
     vColor = vec3(v, v, v);
 }
 '''
@@ -90,14 +91,14 @@ front back
 '''
 SIZE = 0.6
 VERTICES = [
-    glm.vec3(-SIZE, SIZE, -SIZE),
-    glm.vec3(-SIZE, -SIZE, -SIZE),
-    glm.vec3(SIZE, -SIZE, -SIZE),
-    glm.vec3(SIZE, SIZE, -SIZE),
     glm.vec3(-SIZE, SIZE, SIZE),
     glm.vec3(-SIZE, -SIZE, SIZE),
     glm.vec3(SIZE, -SIZE, SIZE),
     glm.vec3(SIZE, SIZE, SIZE),
+    glm.vec3(-SIZE, SIZE, -SIZE),
+    glm.vec3(-SIZE, -SIZE, -SIZE),
+    glm.vec3(SIZE, -SIZE, -SIZE),
+    glm.vec3(SIZE, SIZE, -SIZE),
 ]
 
 QUADS = [
@@ -165,6 +166,11 @@ class Cube(Item):
         self.camera.onMotion(input.x, input.y)
 
     def render(self):
+        # GL.glEnable(GL.GL_CULL_FACE)
+        # GL.glCullFace(GL.GL_BACK)
+        # GL.glFrontFace(GL.GL_CCW)
+        GL.glEnable(GL.GL_DEPTH_TEST)
+
         if not self.is_initialized:
             self.initialize()
             self.is_initialized = True
