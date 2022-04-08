@@ -8,6 +8,11 @@ from .vertex_layout import AttributeLocation, VertexLayout
 from .vao import Vao
 from .fbo import Fbo, FboRenderer
 
+__all__ = [
+    'FboRenderer',
+]
+
+
 def get_info():
     from OpenGL.GL import (glGetString, glGetIntegerv, GL_VENDOR, GL_VERSION,
                            GL_SHADING_LANGUAGE_VERSION, GL_RENDERER,

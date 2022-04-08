@@ -44,7 +44,7 @@
             "name": "viewer(2d)",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/two_dimension/_selector.py",
+            "program": "${workspaceFolder}/examples/two_dimension/main.py",
             "args": [],
             "console": "integratedTerminal",
             "justMyCode": false
@@ -72,6 +72,15 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/examples/basic/hello_nanovg.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "viewer(3d)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/three_dimension/main.py",
             "args": [],
             "console": "integratedTerminal",
             "justMyCode": false
