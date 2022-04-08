@@ -133,17 +133,17 @@ class Cube(Item):
     def __init__(self) -> None:
         super().__init__('cube')
         self.camera = Camera()
+        self.drawable = None
 
     def initialize(self) -> None:
-        self.shader = glo.Shader.load(vs, fs)
-        if not self.shader:
+        # shader
+        shader = glo.Shader.load(vs, fs)
+        if not shader:
             return
-
-        view = glo.UniformLocation.create(self.shader.program, "uView")
-
+        view = glo.UniformLocation.create(shader.program, "uView")
         projection = glo.UniformLocation.create(
-            self.shader.program, "uProjection")
-        self.props = [
+            shader.program, "uProjection")
+        props = [
             glo.ShaderProp(
                 lambda x: view.set_mat4(x),
                 lambda:glm.value_ptr(self.camera.view.matrix)),
@@ -152,14 +152,19 @@ class Cube(Item):
                 lambda:glm.value_ptr(self.camera.projection.matrix)),
         ]
 
+        # mesh
         builder = MeshBuilder()
         for (i0, i1, i2, i3), rgb in QUADS:
             builder.push_quad(VERTICES[i0], VERTICES[i1],
                               VERTICES[i2], VERTICES[i3], glm.vec3(rgb))
         vbo = builder.create_vbo()
 
-        self.vao = glo.Vao(
-            vbo, glo.VertexLayout.create_list(self.shader.program))
+        vao = glo.Vao(
+            vbo, glo.VertexLayout.create_list(shader.program))
+
+        from pydear.glo.drawable import Drawable
+        self.drawable = Drawable(vao)
+        self.drawable.push_submesh(shader, 36, props)
 
     def input(self, input: Input):
         self.camera.onResize(input.width, input.height)
@@ -193,9 +198,5 @@ class Cube(Item):
             self.initialize()
             self.is_initialized = True
 
-        if not self.shader:
-            return
-        with self.shader:
-            for prop in self.props:
-                prop.update()
-            self.vao.draw(36)
+        if self.drawable:
+            self.drawable.draw()
