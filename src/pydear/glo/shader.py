@@ -4,6 +4,26 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
+def GetGLErrorStr(err):
+    match(err):
+        case GL.GL_NO_ERROR: return "No error"
+        case GL.GL_INVALID_ENUM: return "Invalid enum"
+        case GL.GL_INVALID_VALUE: return "Invalid value"
+        case GL.GL_INVALID_OPERATION: return "Invalid operation"
+        case GL.GL_STACK_OVERFLOW: return "Stack overflow"
+        case GL.GL_STACK_UNDERFLOW: return "Stack underflow"
+        case GL.GL_OUT_OF_MEMORY: return "Out of memory"
+        case _: return "Unknown error"
+
+
+def CheckGLError():
+    while True:
+        err = GL.glGetError()
+        if GL.GL_NO_ERROR == err:
+            break
+        LOGGER.error(f"GL Error: {GetGLErrorStr(err)}")
+
+
 class ShaderCompile:
     def __init__(self, shader_type):
         '''
@@ -49,8 +69,9 @@ class Shader:
         error = GL.glGetProgramiv(self.program, GL.GL_LINK_STATUS)
         if error == GL.GL_TRUE:
             return True
+
         # error message
-        info = GL.glGetShaderInfoLog(self.program)
+        info = GL.glGetProgramInfoLog(self.program)
         LOGGER.error(info)
         return False
 
@@ -91,9 +112,9 @@ class UniformLocation(NamedTuple):
     def set_float2(self, value):
         GL.glUniform2fv(self.location, 1, value)
 
-    def set_mat4(self, value, transpose: bool = False):
+    def set_mat4(self, value, transpose: bool = False, count=1):
         GL.glUniformMatrix4fv(
-            self.location, 1, GL.GL_TRUE if transpose else GL.GL_FALSE, value)
+            self.location, count, GL.GL_TRUE if transpose else GL.GL_FALSE, value)
 
 
 class ShaderProp:

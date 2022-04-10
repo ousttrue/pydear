@@ -19,11 +19,11 @@ class Perspective:
 
 
 class Orbit:
-    def __init__(self, *, distance=5) -> None:
+    def __init__(self, *, distance=5, y=0) -> None:
         self.matrix = glm.mat4(1)
         self.inverse = glm.mat4(1)
         self.x = 0.0
-        self.y = 0.0
+        self.y = y
         self.distance = distance
         self.yaw = 0.0
         self.pitch = 0.0
@@ -58,9 +58,9 @@ class Orbit:
 
 
 class Camera:
-    def __init__(self, *, distance=5):
+    def __init__(self, *, distance=5, y=0):
         self.projection = Perspective()
-        self.view = Orbit(distance=distance)
+        self.view = Orbit(distance=distance, y=y)
         self.width = 1
         self.height = 1
         self.x = 0

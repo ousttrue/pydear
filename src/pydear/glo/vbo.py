@@ -50,6 +50,8 @@ class Ibo:
         match vertices._type_:
             case ctypes.c_ushort:
                 self.format = GL.GL_UNSIGNED_SHORT
+            case ctypes.c_uint:
+                self.format = GL.GL_UNSIGNED_INT
             case _:
                 raise NotImplementedError()
         self.bind()

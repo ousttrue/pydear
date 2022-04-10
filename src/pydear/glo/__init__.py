@@ -10,12 +10,19 @@ from .fbo import Fbo, FboRenderer
 from .drawable import Drawable
 
 __all__ = [
-    'FboRenderer',
+    'Vbo',
+    'Ibo',
     'Shader',
     'UniformLocation',
     'ShaderProp',
+    'UniformBlockIndex',
+    'Texture',
+    'AttributeLocation',
+    'VertexLayout',
+    'Vao',
+    'Fbo',
+    'FboRenderer',
     'Drawable',
-    'Vbo', 'Ibo', 'Vao', 'VertexLayout'
 ]
 
 
