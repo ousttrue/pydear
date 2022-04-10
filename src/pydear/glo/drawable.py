@@ -1,4 +1,5 @@
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Any
+from OpenGL import GL
 from .shader import Shader, ShaderProp
 from .vao import Vao
 
@@ -7,6 +8,7 @@ class Submesh(NamedTuple):
     shader: Shader
     draw_count: int
     properties: List[ShaderProp]
+    topology: Any
 
 
 class Drawable:
@@ -14,8 +16,8 @@ class Drawable:
         self.vao = vao
         self.submeshes: List[Submesh] = []
 
-    def push_submesh(self, shader: Shader, draw_count: int, properties: List[ShaderProp]):
-        self.submeshes.append(Submesh(shader, draw_count, properties))
+    def push_submesh(self, shader: Shader, draw_count: int, properties: List[ShaderProp], *, topology=GL.GL_TRIANGLES):
+        self.submeshes.append(Submesh(shader, draw_count, properties, topology))
 
     def draw(self):
         self.vao.bind()
@@ -23,5 +25,5 @@ class Drawable:
             with submesh.shader:
                 for prop in submesh.properties:
                     prop.update()
-                self.vao.draw(submesh.draw_count)
+                self.vao.draw(submesh.draw_count, topology=submesh.topology)
         self.vao.unbind()
