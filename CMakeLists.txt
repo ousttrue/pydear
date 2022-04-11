@@ -36,8 +36,13 @@ add_library(
   _external/ImGuizmo/ImGradient.cpp
   _external/ImGuizmo/ImSequencer.cpp
   _external/tinygizmo/tinygizmo/tiny-gizmo.cpp
-  _external/picovg/src/nanovg.cpp
-)
+  _external/picovg/src/nanovg.cpp)
+set (Python3_FIND_REGISTRY FIRST)  
+find_package(
+  Python3
+  REQUIRED
+  COMPONENTS Development
+  )
 target_include_directories(
   ${PROJECT_NAME}
   PRIVATE _external
@@ -48,13 +53,13 @@ target_include_directories(
           _external
           _external/imnodes
           _external/picovg/src
-          C:/Python310/Include)
+          ${Python3_INCLUDE_DIRS})
 target_compile_definitions(
   ${PROJECT_NAME} PRIVATE GLEW_BUILD GLEW_STATIC NANOVG_GL3_IMPLEMENTATION
                           _WIN32 NOMINMAX)
 target_link_libraries(${PROJECT_NAME} PUBLIC Advapi32.lib OPENGL32.lib
                                              GLU32.lib)
-target_link_directories(${PROJECT_NAME} PUBLIC C:/Python310/libs)
+target_link_directories(${PROJECT_NAME} PUBLIC ${Python3_LIBRARY_DIRS})
 
 if(WIN32)
   set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".pyd")

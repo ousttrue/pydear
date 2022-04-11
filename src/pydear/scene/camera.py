@@ -41,22 +41,6 @@ class Orbit:
         self.inverse = glm.inverse(self.matrix)
 
 
-# class FrameState(NamedTuple):
-#     '''
-#     RenderInfo for frame
-#     '''
-#     viewport: Float4
-#     mouse_x: int
-#     mouse_y: int
-#     mouse_left_down: bool
-#     mouse_right_down: bool
-#     mouse_middle_down: bool
-#     camera_view: Mat4
-#     camera_projection: Mat4
-#     ray: Ray
-#     light: Float4
-
-
 class Camera:
     def __init__(self, *, distance=5, y=0):
         self.projection = Perspective()
@@ -68,6 +52,32 @@ class Camera:
         self.left = False
         self.middle = False
         self.right = False
+
+    def update(self, width: int, height: int,
+               x: int, y: int,
+               left: bool, right: bool, middle: bool,
+               wheel: int
+               ):
+        self.onResize(width, height)
+
+        if left:
+            self.onLeftDown(x, y)
+        else:
+            self.onLeftUp(x, y)
+
+        if right:
+            self.onRightDown(x, y)
+        else:
+            self.onRightUp(x, y)
+
+        if middle:
+            self.onMiddleDown(x, y)
+        else:
+            self.onMiddleUp(x, y)
+
+        if wheel:
+            self.onWheel(-wheel)
+        self.onMotion(x, y)
 
     def onResize(self, w: int, h: int) -> bool:
         if self.width == w and self.height == h:

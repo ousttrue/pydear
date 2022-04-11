@@ -28,6 +28,9 @@ def main():
     import contents.cube
     selector.add(contents.cube.Cube())
 
+    import contents.teapot
+    selector.add(contents.teapot.TeaPot())
+
     def show_selector(p_open):
         if ImGui.Begin("selector", p_open):
             selector.show()
