@@ -38,7 +38,6 @@ def empty(*args):
 class Item:
     def __init__(self, name) -> None:
         self.name = name
-        self.is_initialized = False
 
     def render(self):
         pass

@@ -10,6 +10,11 @@ class Float3(ctypes.Structure):
         ('z', ctypes.c_float),
     ]
 
+    def __iter__(self):
+        yield self.x
+        yield self.y
+        yield self.z
+
 
 class Vertex(ctypes.Structure):
     _fields_ = [

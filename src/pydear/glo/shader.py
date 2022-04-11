@@ -89,7 +89,7 @@ class Shader:
         return shader
 
     @staticmethod
-    def get(name: str):
+    def get(name: str) -> Optional['Shader']:
         import pkgutil
         vs = pkgutil.get_data('pydear', f'{name}.vs')
         assert vs
