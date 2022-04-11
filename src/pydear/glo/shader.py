@@ -88,6 +88,15 @@ class Shader:
             return
         return shader
 
+    @staticmethod
+    def get(name: str):
+        import pkgutil
+        vs = pkgutil.get_data('pydear', f'{name}.vs')
+        assert vs
+        fs = pkgutil.get_data('pydear', f'{name}.fs')
+        assert fs
+        return Shader.load(vs, fs)
+
     def use(self):
         GL.glUseProgram(self.program)
 
