@@ -38,8 +38,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
+      - run: pip install rawtypes
       - run: python setup.py sdist --formats=gztar
-
       - uses: actions/download-artifact@v2
         with:
           name: artifact
