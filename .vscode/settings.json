@@ -12,9 +12,10 @@
         "cdef",
         "cindex",
         "cmake",
-        "pydear",
         "imgui",
-        "pointee"
+        "mediump",
+        "pointee",
+        "pydear"
     ],
     "cmake.generator": "Ninja",
     "files.associations": {

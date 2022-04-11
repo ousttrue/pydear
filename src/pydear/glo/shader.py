@@ -1,7 +1,27 @@
 from typing import NamedTuple, Optional, Union
 from OpenGL import GL
 import logging
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+
+
+def GetGLErrorStr(err):
+    match(err):
+        case GL.GL_NO_ERROR: return "No error"
+        case GL.GL_INVALID_ENUM: return "Invalid enum"
+        case GL.GL_INVALID_VALUE: return "Invalid value"
+        case GL.GL_INVALID_OPERATION: return "Invalid operation"
+        case GL.GL_STACK_OVERFLOW: return "Stack overflow"
+        case GL.GL_STACK_UNDERFLOW: return "Stack underflow"
+        case GL.GL_OUT_OF_MEMORY: return "Out of memory"
+        case _: return "Unknown error"
+
+
+def CheckGLError():
+    while True:
+        err = GL.glGetError()
+        if GL.GL_NO_ERROR == err:
+            break
+        LOGGER.error(f"GL Error: {GetGLErrorStr(err)}")
 
 
 class ShaderCompile:
@@ -20,7 +40,7 @@ class ShaderCompile:
             return True
         # error message
         info = GL.glGetShaderInfoLog(self.shader)
-        logging.error(info)
+        LOGGER.error(info)
         return False
 
     def __del__(self):
@@ -40,7 +60,7 @@ class Shader:
     def __exit__(self, exc_type, exc_value, traceback):
         self.unuse()
         if exc_type:
-            logger.warning(f'{exc_type}: {exc_value}: {traceback}')
+            LOGGER.warning(f'{exc_type}: {exc_value}: {traceback}')
 
     def link(self, vs, fs) -> bool:
         GL.glAttachShader(self.program, vs)
@@ -49,9 +69,10 @@ class Shader:
         error = GL.glGetProgramiv(self.program, GL.GL_LINK_STATUS)
         if error == GL.GL_TRUE:
             return True
+
         # error message
-        info = GL.glGetShaderInfoLog(self.program)
-        logger.error(info)
+        info = GL.glGetProgramInfoLog(self.program)
+        LOGGER.error(info)
         return False
 
     @staticmethod
@@ -82,7 +103,7 @@ class UniformLocation(NamedTuple):
     def create(program,  name: str) -> 'UniformLocation':
         location = GL.glGetUniformLocation(program, name)
         if location == -1:
-            logger.warn(f'{name}: -1')
+            LOGGER.warn(f'{name}: -1')
         return UniformLocation(name, location)
 
     def set_int(self, value: int):
@@ -91,9 +112,9 @@ class UniformLocation(NamedTuple):
     def set_float2(self, value):
         GL.glUniform2fv(self.location, 1, value)
 
-    def set_mat4(self, value, transpose: bool = False):
+    def set_mat4(self, value, transpose: bool = False, count=1):
         GL.glUniformMatrix4fv(
-            self.location, 1, GL.GL_TRUE if transpose else GL.GL_FALSE, value)
+            self.location, count, GL.GL_TRUE if transpose else GL.GL_FALSE, value)
 
 
 class ShaderProp:

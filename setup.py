@@ -130,7 +130,7 @@ class ImVec2WrapType(BaseType):
 
     @property
     def pyi_types(self) -> Tuple[str, ...]:
-        return ('Tuple[float, float]', 'ImVec2', 'None')
+        return ('ImVec2', 'Tuple[float, float]', 'None')
 
     def cpp_from_py(self, indent: str, i: int, default_value: str) -> str:
         if default_value:
@@ -152,7 +152,7 @@ class ImVec4WrapType(BaseType):
 
     @property
     def pyi_types(self) -> Tuple[str, ...]:
-        return ('Tuple[float, float, float, float]', 'ImVec4')
+        return ('ImVec4', 'Tuple[float, float, float, float]')
 
     def cpp_to_py(self, value: str) -> str:
         return f'Py_BuildValue("(ffff)", {value}.x, {value}.y, {value}.z, {value}.w)'

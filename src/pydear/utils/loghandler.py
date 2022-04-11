@@ -76,5 +76,8 @@ class ImGuiLogHandler(logging.Handler):
             ImGui.EndChild()
         ImGui.End()
 
-    def register_root(self):
-        logging.getLogger().handlers = [self]
+    def register_root(self, append=False):
+        if append:
+            logging.getLogger().handlers.append(self)
+        else:
+            logging.getLogger().handlers = [self]

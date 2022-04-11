@@ -15,7 +15,7 @@ def main():
         format='[%(levelname)s]%(name)s:%(funcName)s: %(message)s', level=logging.DEBUG)
 
     from pydear.utils import glfw_app
-    app = glfw_app.GlfwApp('samples')
+    app = glfw_app.GlfwApp('2D')
 
     from pydear import glo
     from pydear.utils import dockspace
@@ -25,12 +25,12 @@ def main():
     clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
     fbo_manager = glo.FboRenderer()
 
-    import triangle
-    selector.add(triangle.Triangle())
-    import view
-    selector.add(view.View())
-    import text
-    selector.add(text.TextRenderer())
+    import contents.triangle
+    selector.add(contents.triangle.Triangle())
+    import contents.view
+    selector.add(contents.view.View())
+    import contents.text
+    selector.add(contents.text.TextRenderer())
 
     def show_selector(p_open):
         if ImGui.Begin("selector", p_open):

@@ -36,7 +36,7 @@ class GlfwAppState(NamedTuple):
 class GlfwApp:
     def __init__(self, title: str, *,
                  width=None, height=None,
-                 gl_major=3, gl_minor=3, use_core_profile=True,
+                 gl_major=4, gl_minor=3, use_core_profile=True,
                  use_vsync=True, ini_file=pathlib.Path('glfw.ini')) -> None:
 
         self.loop = asyncio.get_event_loop()

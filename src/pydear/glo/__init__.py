@@ -7,6 +7,24 @@ from .texture import Texture
 from .vertex_layout import AttributeLocation, VertexLayout
 from .vao import Vao
 from .fbo import Fbo, FboRenderer
+from .drawable import Drawable
+
+__all__ = [
+    'Vbo',
+    'Ibo',
+    'Shader',
+    'UniformLocation',
+    'ShaderProp',
+    'UniformBlockIndex',
+    'Texture',
+    'AttributeLocation',
+    'VertexLayout',
+    'Vao',
+    'Fbo',
+    'FboRenderer',
+    'Drawable',
+]
+
 
 def get_info():
     from OpenGL.GL import (glGetString, glGetIntegerv, GL_VENDOR, GL_VERSION,
