@@ -29,10 +29,10 @@ jobs:
           CIBW_BUILD: cp310-win_amd64
       - run: pip install rawtypes
       - run: python setup.py sdist --formats=gztar
+      - run: cp dist/*.gz ./wheelhouse/
       - uses: actions/upload-artifact@v2
         with:
-          path: |
-            ./wheelhouse/*.whl
+          path: ./wheelhouse/*.whl
 
   upload_all:
     name: Upload if release
