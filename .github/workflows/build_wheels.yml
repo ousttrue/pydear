@@ -23,6 +23,7 @@ jobs:
         # to supply options, put them in 'env', like:
         env:
           CIBW_BUILD: cp310-win_amd64
+      - run: pip install rawtypes
       - run: python setup.py sdist --formats=gztar
       - uses: actions/upload-artifact@v2
         with:
