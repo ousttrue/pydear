@@ -85,7 +85,8 @@ WRAP_TYPES = [
     WrapFlags('imgui', 'ImFontConfig', fields=True, default_constructor=True),
     WrapFlags('imgui', 'ImFontAtlasCustomRect', fields=True),
     WrapFlags('imgui', 'ImFontAtlas', fields=True, methods=True),
-    WrapFlags('imgui', 'ImGuiIO', fields=True, custom_fields={
+    WrapFlags('imgui', 'ImGuiKeyData', fields=True),
+    WrapFlags('imgui', 'ImGuiIO', fields=True, methods=True, custom_fields={
         'Fonts': '''def Fonts(self)->'ImFontAtlas':
     return ctypes.cast(ctypes.c_void_p(self._Fonts), ctypes.POINTER(ImFontAtlas))[0]
 '''
