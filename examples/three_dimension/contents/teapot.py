@@ -25,8 +25,10 @@ class TeaPot(Item):
 
         if not self.drawable:
             # shader
-            import pydear.scene.mesh_shader
-            shader, props = pydear.scene.mesh_shader.get(self.camera)
+            shader = glo.Shader.load_from_pkg('pydear', 'assets/mesh')
+            assert isinstance(shader, glo.Shader)
+
+            props = shader.create_props(self.camera)
 
             # mesh
             from pydear.scene import teapot
