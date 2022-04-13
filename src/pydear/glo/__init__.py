@@ -2,7 +2,7 @@
 OpenGL Object Library
 '''
 from .vbo import Vbo, Ibo
-from .shader import Shader, UniformLocation, ShaderProp, UniformBlockIndex
+from .shader import Shader, UniformLocation, UniformBlockIndex
 from .texture import Texture
 from .vertex_layout import AttributeLocation, VertexLayout
 from .vao import Vao

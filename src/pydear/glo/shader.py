@@ -1,5 +1,6 @@
 from typing import NamedTuple, Optional, Union, Tuple
 from OpenGL import GL
+import glm
 import logging
 LOGGER = logging.getLogger(__name__)
 
@@ -104,6 +105,40 @@ class Shader:
             case _:
                 raise RuntimeError()
 
+    def create_props(self, camera, node=None):
+        from .. import glo
+
+        props = []
+
+        model = glo.UniformLocation.create(self.program, "uModel")
+        if model:
+            if node:
+                def update_model():
+                    model.set_mat4(glm.value_ptr(node.world_matrix))
+            else:
+                identity = glm.mat4(1)
+
+                def update_model():
+                    model.set_mat4(glm.value_ptr(identity))
+            props.append(update_model)
+
+        view = glo.UniformLocation.create(self.program, "uView")
+        if view:
+            def update_view():
+                view.set_mat4(glm.value_ptr(camera.view.matrix))
+
+            props.append(update_view)
+
+        projection = glo.UniformLocation.create(
+            self.program, "uProjection")
+        if projection:
+            def update_projection():
+                projection.set_mat4(glm.value_ptr(camera.projection.matrix))
+
+            props.append(update_projection)
+
+        return props
+
     def use(self):
         GL.glUseProgram(self.program)
 
@@ -131,15 +166,6 @@ class UniformLocation(NamedTuple):
     def set_mat4(self, value, transpose: bool = False, count=1):
         GL.glUniformMatrix4fv(
             self.location, count, GL.GL_TRUE if transpose else GL.GL_FALSE, value)
-
-
-class ShaderProp:
-    def __init__(self, setter, getter) -> None:
-        self.setter = setter
-        self.getter = getter
-
-    def update(self):
-        self.setter(self.getter())
 
 
 class UniformBlockIndex(NamedTuple):
