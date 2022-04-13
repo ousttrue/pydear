@@ -14,7 +14,7 @@
 /build/
 /dist/
 /.eggs/
-/imgui.ini
+imgui.ini
 /html/
 *.pdb
 /.venv/

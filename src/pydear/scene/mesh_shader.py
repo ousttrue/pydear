@@ -6,7 +6,7 @@ from .camera import Camera
 
 def get(camera: Camera) -> Tuple[glo.Shader, List[glo.ShaderProp]]:
 
-    shader = glo.Shader.get('assets/mesh')
+    shader = glo.Shader.load_from_pkg('pydear', 'assets/mesh')
     assert shader
     view = glo.UniformLocation.create(shader.program, "uView")
     projection = glo.UniformLocation.create(
