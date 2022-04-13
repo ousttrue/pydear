@@ -49,20 +49,20 @@ def main():
                 int(w), int(h), clear_color)
             if texture:
                 selected = selector.selected
-                if selected:
-                    # rendering
-                    selected.render(w, h)
 
                 ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, bg, tint)
-                if ImGui.IsItemActive():
-                    x, y = ImGui.GetWindowPos()
-                    y += ImGui.GetFrameHeight()
-                    io = ImGui.GetIO()
-                    if selected:
+                if selected:
+                    if ImGui.IsItemActive():
+                        x, y = ImGui.GetWindowPos()
+                        y += ImGui.GetFrameHeight()
+                        io = ImGui.GetIO()
                         selected.input(
                             int(io.MousePos.x-x), int(io.MousePos.y-y),
                             int(io.MouseDelta.x), int(io.MouseDelta.y),
                             io.MouseDown[0], io.MouseDown[1], io.MouseDown[2], int(io.MouseWheel))
+
+                    selected.render(w, h)
+
         ImGui.End()
         ImGui.PopStyleVar()
 
