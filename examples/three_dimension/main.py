@@ -2,6 +2,7 @@ import logging
 import dataclasses
 import ctypes
 from pydear import imgui as ImGui
+from pydear import imgui_internal as ImGuiInternal
 logger = logging.getLogger(__name__)
 
 
@@ -51,6 +52,8 @@ def main():
                 selected = selector.selected
 
                 ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, bg, tint)
+                ImGuiInternal.ButtonBehavior(ImGui.GetCurrentContext().LastItemRect, ImGui.GetCurrentContext().LastItemId, None, None,
+                                             ImGui.ImGuiButtonFlags_.MouseButtonMiddle | ImGui.ImGuiButtonFlags_.MouseButtonRight)
                 if selected:
                     if ImGui.IsItemActive():
                         x, y = ImGui.GetWindowPos()

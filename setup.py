@@ -59,6 +59,10 @@ HEADERS: List[Header] = [
         begin=IMVECTOR,
         after_include=CPP_BEGIN),
     Header(
+        EXTERNAL_DIR / 'imgui/imgui_internal.h',
+        include_dirs=[EXTERNAL_DIR / 'imgui_internal'],
+        if_include=lambda name: name in ('ButtonBehavior')),
+    Header(
         EXTERNAL_DIR / 'imnodes/imnodes.h',
         include_dirs=[EXTERNAL_DIR / 'imnodes']),
     Header(
