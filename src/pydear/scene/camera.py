@@ -47,19 +47,16 @@ class Camera:
         self.view = Orbit(distance=distance, y=y)
         self.width = 1
         self.height = 1
-        self.x = 0
-        self.y = 0
         self.left = False
         self.middle = False
         self.right = False
 
-    def update(self, width: int, height: int,
+    def update(self,
                x: int, y: int,
+               dx: int, dy: int,
                left: bool, right: bool, middle: bool,
                wheel: int
                ):
-        self.onResize(width, height)
-
         if left:
             self.onLeftDown(x, y)
         else:
@@ -77,7 +74,7 @@ class Camera:
 
         if wheel:
             self.onWheel(-wheel)
-        self.onMotion(x, y)
+        self.onMotion(dx, dy)
 
     def onResize(self, w: int, h: int) -> bool:
         if self.width == w and self.height == h:
@@ -95,8 +92,6 @@ class Camera:
         if self.left:
             return False
         self.left = True
-        self.x = x
-        self.y = y
         return False
 
     def onLeftUp(self, x: int, y: int) -> bool:
@@ -113,8 +108,6 @@ class Camera:
         if self.middle:
             return False
         self.middle = True
-        self.x = x
-        self.y = y
         return False
 
     def onMiddleUp(self, x: int, y: int) -> bool:
@@ -131,8 +124,6 @@ class Camera:
         if self.right:
             return False
         self.right = True
-        self.x = x
-        self.y = y
         return False
 
     def onRightUp(self, x: int, y: int) -> bool:
@@ -142,14 +133,14 @@ class Camera:
         self.right = False
         return False
 
-    def onMotion(self, x: int, y: int) -> bool:
+    def onMotion(self, dx: int, dy: int) -> bool:
         ''' 
         Mouse input. Returns whether redraw is required.
         '''
-        dx = x - self.x
-        self.x = x
-        dy = y - self.y
-        self.y = y
+        # dx = x - self.x
+        # self.x = x
+        # dy = y - self.y
+        # self.y = y
 
         redraw_is_required = False
         if self.right:

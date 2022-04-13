@@ -1,6 +1,6 @@
 from typing import Optional
 from OpenGL import GL
-from pydear.utils.item import Item, Input
+from pydear.utils.item import Item
 from pydear.scene.camera import Camera
 from pydear import glo
 
@@ -11,13 +11,15 @@ class TeaPot(Item):
         self.camera = Camera()
         self.drawable: Optional[glo.Drawable] = None
 
-    def input(self, input: Input):
-        self.camera.update(input.width, input.height,
-                           input.x, input.y,
-                           input.left, input.right, input.middle,
-                           input.wheel)
+    def input(self, x, y, dx, dy, left, right, middle, wheel):
+        self.camera.update(
+            x, y,
+            dx, dy,
+            left, right, middle,
+            wheel)
 
-    def render(self):
+    def render(self, w, h):
+        self.camera.onResize(w, h)
         # GL.glEnable(GL.GL_CULL_FACE)
         # GL.glCullFace(GL.GL_BACK)
         # GL.glFrontFace(GL.GL_CCW)

@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 @dataclasses.dataclass
 class State:
-    hover: bool
+    active: bool
 
 
 def main():
@@ -20,7 +20,6 @@ def main():
     from pydear import glo
     from pydear.utils import dockspace
     from pydear.utils.selector import Selector
-    from pydear.utils.item import Item, Input
     selector = Selector()
     clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
     fbo_manager = glo.FboRenderer()
@@ -36,7 +35,8 @@ def main():
             selector.show()
         ImGui.End()
 
-    state = State(False)
+    bg = ImGui.ImVec4(1, 1, 1, 1)
+    tint = ImGui.ImVec4(1, 1, 1, 1)
 
     def show_view(p_open):
         ImGui.PushStyleVar_2(ImGui.ImGuiStyleVar_.WindowPadding, (0, 0))
@@ -50,19 +50,19 @@ def main():
             if texture:
                 selected = selector.selected
                 if selected:
-                    # input handling
-                    # TODO imgui-1.87 input api
-                    input = Input.get(state.hover, w, h)
-                    if input:
-                        selected.input(input)
-
                     # rendering
-                    selected.render()
+                    selected.render(w, h)
 
-                ImGui.BeginChild("_image_")
-                ImGui.Image(texture, (w, h), (0, 1), (1, 0))
-                state.hover = ImGui.IsItemHovered()
-                ImGui.EndChild()
+                ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, bg, tint)
+                if ImGui.IsItemActive():
+                    x, y = ImGui.GetWindowPos()
+                    y += ImGui.GetFrameHeight()
+                    io = ImGui.GetIO()
+                    if selected:
+                        selected.input(
+                            int(io.MousePos.x-x), int(io.MousePos.y-y),
+                            int(io.MouseDelta.x), int(io.MouseDelta.y),
+                            io.MouseDown[0], io.MouseDown[1], io.MouseDown[2], int(io.MouseWheel))
         ImGui.End()
         ImGui.PopStyleVar()
 
