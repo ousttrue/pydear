@@ -12,6 +12,7 @@
         "cdef",
         "cindex",
         "cmake",
+        "glfw",
         "imgui",
         "mediump",
         "pointee",

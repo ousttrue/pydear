@@ -212,12 +212,6 @@ FUNCTION_CUSTOMIZE = [
          'end': CharPointerType(),
          }
     ),
-    # FunctionCustomization(
-    #     'nvgText',
-    #     {'string': CharPointerType(),
-    #      'end': CharPointerType(),
-    #      }
-    # ),
 ]
 
 generator.generate(PACKAGE_DIR, CPP_PATH, FUNCTION_CUSTOMIZE)
@@ -254,7 +248,7 @@ class build_ext_cmake(build_ext):
                     f'-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_{config.upper()}={ext_path.parent}',
                     f'-DCMAKE_BUILD_TYPE={config}'
                     ])
-        if not self.dry_run:
+        if not self.dry_run:  # type: ignore
             self.spawn(
                 ['cmake', '--build', str(build_temp), '--config', config])
 
@@ -271,7 +265,7 @@ setuptools.setup(
     url='https://github.com/ousttrue/pydear',
     package_dir={'': 'src'},
     include_package_data=True,
-    install_requires=["PyGLM"],
+    install_requires=["PyGLM", "glfw"],
     packages=[
         'pydear',
         'pydear.backends',
