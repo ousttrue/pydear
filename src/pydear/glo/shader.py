@@ -1,4 +1,4 @@
-from typing import NamedTuple, Optional, Union
+from typing import NamedTuple, Optional, Union, Tuple
 from OpenGL import GL
 import logging
 LOGGER = logging.getLogger(__name__)
@@ -32,16 +32,15 @@ class ShaderCompile:
         '''
         self.shader = GL.glCreateShader(shader_type)
 
-    def compile(self, src: Union[str, bytes]) -> bool:
+    def compile(self, src: Union[str, bytes]) -> Tuple[bool, str]:
         GL.glShaderSource(self.shader, src, None)
         GL.glCompileShader(self.shader)
         result = GL.glGetShaderiv(self.shader, GL.GL_COMPILE_STATUS)
         if result == GL.GL_TRUE:
-            return True
+            return True, ''
         # error message
         info = GL.glGetShaderInfoLog(self.shader)
-        LOGGER.error(info)
-        return False
+        return False, info.decode('ascii')
 
     def __del__(self):
         GL.glDeleteShader(self.shader)
@@ -62,40 +61,48 @@ class Shader:
         if exc_type:
             LOGGER.warning(f'{exc_type}: {exc_value}: {traceback}')
 
-    def link(self, vs, fs) -> bool:
+    def link(self, vs, fs) -> Tuple[bool, str]:
         GL.glAttachShader(self.program, vs)
         GL.glAttachShader(self.program, fs)
         GL.glLinkProgram(self.program)
         error = GL.glGetProgramiv(self.program, GL.GL_LINK_STATUS)
         if error == GL.GL_TRUE:
-            return True
+            return True, ''
 
         # error message
         info = GL.glGetProgramInfoLog(self.program)
-        LOGGER.error(info)
-        return False
+        return False, info.decode('ascii')
 
     @staticmethod
-    def load(vs_src: Union[str, bytes], fs_src: Union[str, bytes]) -> Optional['Shader']:
+    def load(vs_src: Union[str, bytes], fs_src: Union[str, bytes]) -> Union['Shader', str]:
         vs = ShaderCompile(GL.GL_VERTEX_SHADER)
-        if not vs.compile(vs_src):
-            return
+        success, info = vs.compile(vs_src)
+        if not success:
+            return 'vs: ' + info
         fs = ShaderCompile(GL.GL_FRAGMENT_SHADER)
-        if not fs.compile(fs_src):
-            return
+        success, info = fs.compile(fs_src)
+        if not success:
+            return 'fs: ' + info
         shader = Shader()
-        if not shader.link(vs.shader, fs.shader):
-            return
+        success, info = shader.link(vs.shader, fs.shader)
+        if not success:
+            return 'link: '+info
         return shader
 
     @staticmethod
-    def load_from_pkg(name: str) -> Optional['Shader']:
+    def load_from_pkg(pkg: str, name: str) -> Optional['Shader']:
         import pkgutil
-        vs = pkgutil.get_data('pydear', f'{name}.vs')
+        vs = pkgutil.get_data(pkg, f'{name}.vs')
         assert vs
-        fs = pkgutil.get_data('pydear', f'{name}.fs')
+        fs = pkgutil.get_data(pkg, f'{name}.fs')
         assert fs
-        return Shader.load(vs, fs)
+        match Shader.load(vs, fs):
+            case Shader() as shader:
+                return shader
+            case str() as info:
+                LOGGER.error(f'{pkg}#{name}: {info}')
+            case _:
+                raise RuntimeError()
 
     def use(self):
         GL.glUseProgram(self.program)
