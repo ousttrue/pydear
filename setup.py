@@ -52,14 +52,40 @@ static ImVec2 get_ImVec2(PyObject *src)
 }
 '''
 
+FUNCTIONS = {
+    # https://github.com/ocornut/imgui/issues/3885
+    'Custom_GetLastItemRect': '''
+#include <imgui_internal.h>
+static PyObject *Custom_GetLastItemRect(PyObject *self, PyObject *args) {
+  if (!PyArg_ParseTuple(args, "")) return NULL;
+
+  ImRect rect = ImGui::GetCurrentContext()->LastItemData.Rect;
+  // PyObject* py_value = Py_BuildValue("(ffff)", rect.Min.x, rect.Min.y, rect.Max.x, rect.Max.y);
+  PyObject* py_value = ctypes_copy(rect, "ImRect", "imgui_internal");
+  return py_value;
+}
+    ''',
+    'Custom_GetLastItemId': '''
+static PyObject *Custom_GetLastItemId(PyObject *self, PyObject *args) {
+  if (!PyArg_ParseTuple(args, "")) return NULL;
+
+  ImGuiID id = ImGui::GetCurrentContext()->LastItemData.ID;
+  PyObject *py_value = PyLong_FromUnsignedLong(id);
+  return py_value;
+}
+    ''',
+}
+
 HEADERS: List[Header] = [
     Header(
         EXTERNAL_DIR / 'imgui/imgui.h',
         include_dirs=[EXTERNAL_DIR / 'imgui'],
         begin=IMVECTOR,
-        after_include=CPP_BEGIN),
+        after_include=CPP_BEGIN,
+        additional_functions=FUNCTIONS),
     Header(
         EXTERNAL_DIR / 'imgui/imgui_internal.h',
+        begin='from .imgui import ImVec2\n',
         include_dirs=[EXTERNAL_DIR / 'imgui_internal'],
         if_include=lambda name: name in ('ButtonBehavior')),
     Header(
@@ -104,6 +130,8 @@ WRAP_TYPES = [
     WrapFlags('imgui', 'ImGuiViewport', fields=True, methods=True),
     WrapFlags('imgui', 'ImGuiStyle'),
     WrapFlags('imgui', 'ImGuiWindowClass'),
+    # internal
+    WrapFlags('imgui', 'ImRect', fields=True),
 
     # tinygizmo
     WrapFlags('tinygizmo', 'gizmo_context', fields=True, methods=True),
