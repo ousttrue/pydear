@@ -12,5 +12,8 @@ class Item:
     def show(self):
         pass
 
-    def input(self, x, y, dx, dy, left, right, middle, wheel):
+    def drag(self, x, y, dx, dy, left, right, middle):
+        pass
+
+    def input(self, wheel):
         pass

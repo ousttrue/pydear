@@ -18,11 +18,13 @@ class Cube(Item):
         self.camera = Camera()
         self.drawable: Optional[glo.Drawable] = None
 
-    def input(self, x, y, dx, dy, left, right, middle, wheel):
-        self.camera.update(x, y,
+    def drag(self, x, y, dx, dy, left, right, middle):
+        self.camera.drag(x, y,
                            dx, dy,
-                           left, right, middle,
-                           wheel)
+                           left, right, middle)
+
+    def input(self, wheel):
+        self.camera.onWheel(wheel)
 
     def render(self, w, h):
         self.camera.onResize(w, h)

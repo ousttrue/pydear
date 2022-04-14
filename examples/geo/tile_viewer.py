@@ -109,7 +109,7 @@ class XYZTile(Item):
                 x), lambda:glm.value_ptr(self.view)),
         ]
 
-    def input(self, input: Input):
+    def drag(self, input: Input):
         if not self.is_initialized:
             return
 
@@ -250,7 +250,7 @@ def main():
                 # input handling
                 input = Input.get(state.hover, w, h)
                 if input:
-                    view.input(input)
+                    view.drag(input)
 
                 # rendering
                 view.render()

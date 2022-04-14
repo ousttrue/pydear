@@ -195,7 +195,7 @@ class TextRenderer(Item):
         self.vao.vbo.update(vertices)
         self.index += 1
 
-    def input(self, input: Input):
+    def drag(self, input: Input):
         if self._input and not self._input.left and input.left:
             # pressed
             letter = self.letters[self.index]

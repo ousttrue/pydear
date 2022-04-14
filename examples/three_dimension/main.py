@@ -54,15 +54,18 @@ def main():
                 ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, bg, tint)
                 ImGuiInternal.ButtonBehavior(ImGui.Custom_GetLastItemRect(), ImGui.Custom_GetLastItemId(), None, None,
                                              ImGui.ImGuiButtonFlags_.MouseButtonMiddle | ImGui.ImGuiButtonFlags_.MouseButtonRight)
+                io = ImGui.GetIO()
                 if selected:
                     if ImGui.IsItemActive():
                         x, y = ImGui.GetWindowPos()
                         y += ImGui.GetFrameHeight()
-                        io = ImGui.GetIO()
-                        selected.input(
+                        selected.drag(
                             int(io.MousePos.x-x), int(io.MousePos.y-y),
                             int(io.MouseDelta.x), int(io.MouseDelta.y),
-                            io.MouseDown[0], io.MouseDown[1], io.MouseDown[2], int(io.MouseWheel))
+                            io.MouseDown[0], io.MouseDown[1], io.MouseDown[2])
+
+                    if ImGui.IsItemHovered():
+                        selected.input(int(io.MouseWheel))
 
                     selected.render(w, h)
 

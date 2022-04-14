@@ -51,12 +51,10 @@ class Camera:
         self.middle = False
         self.right = False
 
-    def update(self,
-               x: int, y: int,
-               dx: int, dy: int,
-               left: bool, right: bool, middle: bool,
-               wheel: int
-               ):
+    def drag(self,
+             x: int, y: int,
+             dx: int, dy: int,
+             left: bool, right: bool, middle: bool):
         if left:
             self.onLeftDown(x, y)
         else:
@@ -72,8 +70,6 @@ class Camera:
         else:
             self.onMiddleUp(x, y)
 
-        if wheel:
-            self.onWheel(-wheel)
         self.onMotion(dx, dy)
 
     def onResize(self, w: int, h: int) -> bool:
@@ -163,11 +159,11 @@ class Camera:
         ''' 
         Mouse input. Returns whether redraw is required.
         '''
-        if d > 0:
+        if d < 0:
             self.view.distance *= 1.1
             self.view.update_matrix()
             return True
-        elif d < 0:
+        elif d > 0:
             self.view.distance *= 0.9
             self.view.update_matrix()
             return True

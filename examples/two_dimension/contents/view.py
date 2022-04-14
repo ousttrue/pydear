@@ -86,7 +86,7 @@ class View(Item):
                 x), lambda:glm.value_ptr(self.view)),
         ]
 
-    def input(self, input: Input):
+    def drag(self, input: Input):
         self._input = input
 
         if input.wheel < 0:

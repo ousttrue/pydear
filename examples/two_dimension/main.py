@@ -53,7 +53,7 @@ def main():
                     # input handling
                     input = Input.get(state.hover, w, h)
                     if input:
-                        selected.input(input)
+                        selected.drag(input)
 
                     # rendering
                     selected.render()
