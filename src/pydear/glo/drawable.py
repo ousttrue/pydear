@@ -1,14 +1,16 @@
-from typing import NamedTuple, List, Any
+from typing import NamedTuple, List, Any, Optional, Callable
 from OpenGL import GL
 from .shader import Shader
 from .vao import Vao
 
 
-class Submesh(NamedTuple):
-    shader: Shader
-    draw_count: int
-    properties: list
-    topology: Any
+class Submesh:
+    def __init__(self, topology, *, draw_count=0, shader: Optional[Shader] = None, props: List[Callable[[], None]] = None) -> None:
+        self.topology = topology
+        self.draw_count = draw_count
+        assert (not shader) or isinstance(shader, Shader)
+        self.shader = shader
+        self.properties = props
 
 
 class Drawable:
@@ -17,8 +19,9 @@ class Drawable:
         self.submeshes: List[Submesh] = []
 
     def push_submesh(self, shader: Shader, draw_count: int, properties: list, *, topology=GL.GL_TRIANGLES):
+        assert isinstance(shader, Shader)
         self.submeshes.append(
-            Submesh(shader, draw_count, properties, topology))
+            Submesh(topology, shader=shader, draw_count=draw_count, props=properties))
 
     def draw(self):
         self.vao.bind()

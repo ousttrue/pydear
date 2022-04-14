@@ -7,7 +7,7 @@ from .texture import Texture
 from .vertex_layout import AttributeLocation, VertexLayout
 from .vao import Vao
 from .fbo import Fbo, FboRenderer
-from .drawable import Drawable
+from .drawable import Drawable, Submesh
 
 __all__ = [
     'Vbo',
@@ -23,6 +23,7 @@ __all__ = [
     'Fbo',
     'FboRenderer',
     'Drawable',
+    'Submesh',
 ]
 
 
