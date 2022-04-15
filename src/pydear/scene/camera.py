@@ -5,12 +5,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Perspective:
-    def __init__(self) -> None:
+    def __init__(self, *, near=0.1, far=1000) -> None:
         self.matrix = glm.mat4(1.0)
         self.fov_y = math.pi * 30 / 180
         self.aspect = 1.0
-        self.z_near = 0.1
-        self.z_far = 1000
+        self.z_near = near
+        self.z_far = far
         self.update_matrix()
 
     def update_matrix(self) -> None:
@@ -42,8 +42,8 @@ class Orbit:
 
 
 class Camera:
-    def __init__(self, *, distance=5, y=0):
-        self.projection = Perspective()
+    def __init__(self, *, near=0.01, far=1000, distance=5, y=0):
+        self.projection = Perspective(near=near, far=far)
         self.view = Orbit(distance=distance, y=y)
         self.width = 1
         self.height = 1
