@@ -9,9 +9,9 @@ class Selector():
         self.items = []
         self.selected = None
 
-        turntable_camera = Camera()
-        self.cameras = [turntable_camera]
-        self.selected_camera = turntable_camera
+        self.camera = Camera()
+        self.view_types = ['turntable', 'trackball']
+        self.selected_view_type = self.view_types[0]
 
     @property
     def view_name(self):
@@ -37,12 +37,12 @@ class Selector():
         ImGui.SetNextItemOpen(True, ImGui.ImGuiCond_.FirstUseEver)
         if ImGui.CollapsingHeader("cameras"):
             selected_camera = None
-            for camera in self.cameras:
-                if ImGui.Selectable(camera.name, camera == self.selected_camera):
-                    selected_camera = camera
+            for view_type in ('turn table', 'track bacll'):
+                if ImGui.Selectable(view_type, view_type == self.selected_view_type):
+                    selected_camera = view_type
 
             if selected_camera:
-                self.selected_camera = selected_camera
+                self.selected_view_type = selected_camera
 
         ImGui.SetNextItemOpen(True, ImGui.ImGuiCond_.FirstUseEver)
         if ImGui.CollapsingHeader("gizmos"):
