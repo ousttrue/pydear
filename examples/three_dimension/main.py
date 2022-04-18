@@ -50,6 +50,8 @@ def main():
                 int(w), int(h), clear_color)
             if texture:
                 selected = selector.selected
+                camera = selector.selected_camera
+                camera.onResize(w, h)
 
                 ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, bg, tint)
                 ImGuiInternal.ButtonBehavior(ImGui.Custom_GetLastItemRect(), ImGui.Custom_GetLastItemId(), None, None,
@@ -59,15 +61,15 @@ def main():
                     if ImGui.IsItemActive():
                         x, y = ImGui.GetWindowPos()
                         y += ImGui.GetFrameHeight()
-                        selected.drag(
+                        camera.drag(
                             int(io.MousePos.x-x), int(io.MousePos.y-y),
                             int(io.MouseDelta.x), int(io.MouseDelta.y),
                             io.MouseDown[0], io.MouseDown[1], io.MouseDown[2])
 
                     if ImGui.IsItemHovered():
-                        selected.input(int(io.MouseWheel))
+                        camera.onWheel(int(io.MouseWheel))
 
-                    selected.render(w, h)
+                    selected.render(camera)
 
         ImGui.End()
         ImGui.PopStyleVar()

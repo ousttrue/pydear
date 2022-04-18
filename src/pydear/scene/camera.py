@@ -42,7 +42,8 @@ class Orbit:
 
 
 class Camera:
-    def __init__(self, *, near=0.01, far=1000, distance=5, y=0):
+    def __init__(self, *, name='turntable', near=0.01, far=1000, distance=5, y=0):
+        self.name = name
         self.projection = Perspective(near=near, far=far)
         self.view = Orbit(distance=distance, y=y)
         self.width = 1
