@@ -1,6 +1,6 @@
 from typing import Optional
 from OpenGL import GL
-from pydear.utils.item import Item
+from pydear.utils.selector import Item
 from pydear.scene.camera import Camera
 from pydear import glo
 

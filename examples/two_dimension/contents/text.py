@@ -1,11 +1,11 @@
-from typing import NamedTuple, Dict, List, Tuple
+from typing import NamedTuple, Dict, List, Tuple, Optional
 import logging
 import ctypes
 import string
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
-from pydear.utils.item import Item, Input
+from pydear.utils.selector import Item
 from pydear import glo
 from OpenGL import GL
 import glm
@@ -89,7 +89,7 @@ class AsciiLetters:
         return image.tobytes('raw')
 
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 vs = '''#version 330
 layout (location=0) in vec2 aPos;
@@ -153,39 +153,19 @@ while i+6 < 65536:
 class TextRenderer(Item):
     def __init__(self) -> None:
         super().__init__('text')
-        self._input = None
+        self.left = False
         self.index = 0
         self.letters = []
         self.size = 10
-
-    def initialize(self):
-        image = AsciiLetters.create("verdana.ttf", 10, 256, 64, 3)
-        bytes = image.get_bytes()
-        self.letters = image.letters
-
-        self.shader = glo.Shader.load(vs, fs)
-        if not self.shader:
-            return
-
+        self.shader: Optional[glo.Shader] = None
+        self.props = []
+        self.vao: Optional[glo.Vao] = None
+        self.width = 1
+        self.height = 1
         self.view = glm.mat4()
-        view = glo.UniformLocation.create(self.shader.program, "V")
-        self.props = [
-            glo.ShaderProp(lambda x: view.set_mat4(
-                x), lambda:glm.value_ptr(self.view)),
-        ]
-
-        self.texture = glo.Texture(image.img.width, image.img.height, bytes)
-
-        vbo = glo.Vbo()
-        vbo.set_vertices(vertices, is_dynamic=True)
-        ibo = glo.Ibo()
-        ibo.set_indices(indices)
-        layout = glo.VertexLayout.create_list(self.shader.program)
-        logger.debug(layout)
-        self.vao = glo.Vao(
-            vbo, layout, ibo)
 
     def update_vertices(self, x, y, w, h, letter):
+        assert self.vao
         pos = self.index * 4
         l, r, b, t = letter.get_uv()
         vertices[pos] = Vertex(float(x-w), float(y-h), l, b)
@@ -195,41 +175,76 @@ class TextRenderer(Item):
         self.vao.vbo.update(vertices)
         self.index += 1
 
-    def drag(self, input: Input):
-        if self._input and not self._input.left and input.left:
-            # pressed
-            letter = self.letters[self.index]
-            logger.debug(f'{input}: {letter}')
-            self.update_vertices(
-                input.x, input.y, self.size, self.size, letter)
-        self._input = input
-        w = input.width
-        h = input.height
+    def resize(self, w: int, h: int):
+        self.width = w
+        self.height = h
 
-        if input.wheel < 0:
+    def wheel(self, d):
+        if d < 0:
             self.size -= 1
-        elif input.wheel > 0:
+        elif d > 0:
             self.size += 1
 
-        self.view = glm.ortho(
-            0, w,
-            h, 0,
-            0, 1)
+    def mouse_drag(self, x, y, dx, dy, left, right, middle):
+        if self.left and left:
+            # pressed
+            letter = self.letters[self.index]
+            LOGGER.debug(f'{letter}')
+            self.update_vertices(
+                x, y, self.size, self.size, letter)
+        self.left = left
+        w = self.width
+        h = self.height
+
+    def mouse_release(self):
+        pass
+
+    def show(self):
+        pass
 
     def render(self):
-        if not self.is_initialized:
-            self.initialize()
-            self.is_initialized = True
+        self.view = glm.ortho(
+            0, self.width,
+            self.height, 0,
+            0, 1)
 
         if not self.shader:
-            return
+            image = AsciiLetters.create("verdana.ttf", 10, 256, 64, 3)
+            bytes = image.get_bytes()
+            self.letters = image.letters
 
+            shader_or_error = glo.Shader.load(vs, fs)
+            if not isinstance(shader_or_error, glo.Shader):
+                LOGGER.error(shader_or_error)
+                return
+            self.shader = shader_or_error
+
+            self.view = glm.mat4()
+            view = glo.UniformLocation.create(self.shader.program, "V")
+
+            def set_V():
+                view.set_mat4(glm.value_ptr(self.view))
+            self.props = [set_V]
+
+            self.texture = glo.Texture(
+                image.img.width, image.img.height, bytes)
+
+            vbo = glo.Vbo()
+            vbo.set_vertices(vertices, is_dynamic=True)
+            ibo = glo.Ibo()
+            ibo.set_indices(indices)
+            layout = glo.VertexLayout.create_list(self.shader.program)
+            LOGGER.debug(layout)
+            self.vao = glo.Vao(
+                vbo, layout, ibo)
+
+        assert self.vao
         with self.shader:
             GL.glEnable(GL.GL_BLEND)
             # GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
             GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE)
             for prop in self.props:
-                prop.update()
+                prop()
             self.texture.bind()
             self.vao.draw(self.index * 6)
             self.texture.unbind()

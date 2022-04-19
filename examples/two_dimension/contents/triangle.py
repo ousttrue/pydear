@@ -1,12 +1,13 @@
 '''
 simple triangle sample
 '''
+from typing import Optional
 import logging
 import ctypes
 from pydear import glo
-from pydear.utils.item import Item
+from pydear.utils.selector import Item
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 vs = '''#version 330
 in vec2 vPos;
@@ -49,22 +50,36 @@ vertices = (Vertex * 3)(
 class Triangle(Item):
     def __init__(self) -> None:
         super().__init__('triangle')
+        self.shader: Optional[glo.Shader] = None
+        self.vao: Optional[glo.Vao] = None
 
-    def initialize(self) -> None:
-        self.shader = glo.Shader.load(vs, fs)
-        if not self.shader:
-            return
-        vbo = glo.Vbo()
-        vbo.set_vertices(vertices)
-        self.vao = glo.Vao(
-            vbo, glo.VertexLayout.create_list(self.shader.program))
+    def resize(self, w, h):
+        pass
+
+    def wheel(self, d):
+        pass
+
+    def mouse_drag(self, x, y, dx, dy, left, right, middle):
+        pass
+
+    def mouse_release(self):
+        pass
 
     def render(self):
-        if not self.is_initialized:
-            self.initialize()
-            self.is_initialized = True
-
         if not self.shader:
-            return
+            shader_or_error = glo.Shader.load(vs, fs)
+            if not isinstance(shader_or_error, glo.Shader):
+                LOGGER.error(shader_or_error)
+                return
+            self.shader = shader_or_error
+            vbo = glo.Vbo()
+            vbo.set_vertices(vertices)
+            self.vao = glo.Vao(
+                vbo, glo.VertexLayout.create_list(self.shader.program))
+
+        assert self.vao
         with self.shader:
             self.vao.draw(3)
+
+    def show(self):
+        pass

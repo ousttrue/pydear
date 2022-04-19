@@ -28,8 +28,8 @@ def main():
     import contents.cube
     selector.add(contents.cube.Cube())
 
-    import contents.teapot
-    selector.add(contents.teapot.TeaPot())
+    # import contents.teapot
+    # selector.add(contents.teapot.TeaPot())
 
     def show_selector(p_open):
         if ImGui.Begin("selector", p_open):
@@ -48,30 +48,30 @@ def main():
 
             texture = fbo_manager.clear(
                 int(w), int(h), clear_color)
-            if texture:
-                selected = selector.selected
+            selected = selector.selected
+            if texture and selected:
                 # camera = selector.selected_view_type
-                selector.camera.projection.resize(w, h)
+                selected.resize(w, h)
 
                 ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, bg, tint)
                 ImGuiInternal.ButtonBehavior(ImGui.Custom_GetLastItemRect(), ImGui.Custom_GetLastItemId(), None, None,
                                              ImGui.ImGuiButtonFlags_.MouseButtonMiddle | ImGui.ImGuiButtonFlags_.MouseButtonRight)
                 io = ImGui.GetIO()
-                if selected:
-                    if ImGui.IsItemActive():
-                        x, y = ImGui.GetWindowPos()
-                        y += ImGui.GetFrameHeight()
-                        selector.camera.drag(
-                            int(io.MousePos.x-x), int(io.MousePos.y-y),
-                            int(io.MouseDelta.x), int(io.MouseDelta.y),
-                            io.MouseDown[0], io.MouseDown[1], io.MouseDown[2])
-                    else:
-                        selector.camera.release()
+                if ImGui.IsItemActive():
+                    x, y = ImGui.GetWindowPos()
+                    y += ImGui.GetFrameHeight()
+                    selected.mouse_drag(
+                        int(io.MousePos.x-x), int(io.MousePos.y-y),
+                        int(io.MouseDelta.x), int(io.MouseDelta.y),
+                        io.MouseDown[0], io.MouseDown[1], io.MouseDown[2])
+                else:
+                    selected.mouse_release()
 
-                    if ImGui.IsItemHovered():
-                        selector.camera.orbit.wheel(int(io.MouseWheel))
+                if ImGui.IsItemHovered():
+                    pass
+                    # selected.camera.orbit.wheel(int(io.MouseWheel))
 
-                    selected.render(selector.camera)
+                selected.render()
 
         ImGui.End()
         ImGui.PopStyleVar()

@@ -1,17 +1,41 @@
-from typing import List, Callable, TypeVar, Generic
-from .item import Item
+from typing import Optional
+import abc
 from pydear import imgui as ImGui
-from pydear.scene.camera import Camera
+
+
+class Item(abc.ABC):
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    @abc.abstractmethod
+    def resize(self, w: int, h: int):
+        pass
+
+    @abc.abstractmethod
+    def wheel(self, d: int):
+        pass
+
+    @abc.abstractmethod
+    def mouse_drag(self, x: int, y: int, dx: int, dy: int, left: bool, right: bool, middle: bool):
+        pass
+
+    @abc.abstractmethod
+    def mouse_release(self):
+        pass
+
+    @abc.abstractmethod
+    def render(self):
+        pass
+
+    @abc.abstractmethod
+    def show(self):
+        pass
 
 
 class Selector():
     def __init__(self) -> None:
         self.items = []
-        self.selected = None
-
-        self.camera = Camera()
-        self.view_types = ['turntable', 'trackball']
-        self.selected_view_type = self.view_types[0]
+        self.selected: Optional[Item] = None
 
     @property
     def view_name(self):
@@ -25,25 +49,10 @@ class Selector():
 
     def show(self):
         ImGui.SetNextItemOpen(True, ImGui.ImGuiCond_.FirstUseEver)
-        if ImGui.CollapsingHeader("samples"):
-            selected = None
-            for item in self.items:
-                if ImGui.Selectable(item.name, item == self.selected):
-                    selected = item
+        selected = None
+        for item in self.items:
+            if ImGui.Selectable(item.name, item == self.selected):
+                selected = item
 
-            if selected:
-                self.selected = selected
-
-        ImGui.SetNextItemOpen(True, ImGui.ImGuiCond_.FirstUseEver)
-        if ImGui.CollapsingHeader("cameras"):
-            selected_camera = None
-            for view_type in ('turn table', 'track bacll'):
-                if ImGui.Selectable(view_type, view_type == self.selected_view_type):
-                    selected_camera = view_type
-
-            if selected_camera:
-                self.selected_view_type = selected_camera
-
-        ImGui.SetNextItemOpen(True, ImGui.ImGuiCond_.FirstUseEver)
-        if ImGui.CollapsingHeader("gizmos"):
-            pass
+        if selected:
+            self.selected = selected

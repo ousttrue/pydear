@@ -2,12 +2,8 @@ import logging
 import dataclasses
 import ctypes
 from pydear import imgui as ImGui
+from pydear import imgui_internal as ImGuiInternal
 logger = logging.getLogger(__name__)
-
-
-@dataclasses.dataclass
-class State:
-    hover: bool
 
 
 def main():
@@ -19,8 +15,7 @@ def main():
 
     from pydear import glo
     from pydear.utils import dockspace
-    from pydear.utils.selector import Selector
-    from pydear.utils.item import Item, Input
+    from pydear.utils.selector import Selector, Item
     selector = Selector()
     clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
     fbo_manager = glo.FboRenderer()
@@ -37,7 +32,8 @@ def main():
             selector.show()
         ImGui.End()
 
-    state = State(False)
+    bg = ImGui.ImVec4(1, 1, 1, 1)
+    tint = ImGui.ImVec4(1, 1, 1, 1)
 
     def show_view(p_open):
         ImGui.PushStyleVar_2(ImGui.ImGuiStyleVar_.WindowPadding, (0, 0))
@@ -47,21 +43,31 @@ def main():
             w, h = ImGui.GetContentRegionAvail()
             texture = fbo_manager.clear(
                 int(w), int(h), clear_color)
-            if texture:
-                selected = selector.selected
-                if selected:
-                    # input handling
-                    input = Input.get(state.hover, w, h)
-                    if input:
-                        selected.drag(input)
+            selected = selector.selected
+            if texture and selected:
 
-                    # rendering
-                    selected.render()
+                ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, bg, tint)
+                ImGuiInternal.ButtonBehavior(ImGui.Custom_GetLastItemRect(), ImGui.Custom_GetLastItemId(), None, None,
+                                             ImGui.ImGuiButtonFlags_.MouseButtonMiddle | ImGui.ImGuiButtonFlags_.MouseButtonRight)
+                io = ImGui.GetIO()
 
-                ImGui.BeginChild("_image_")
-                ImGui.Image(texture, (w, h), (0, 1), (1, 0))
-                state.hover = ImGui.IsItemHovered()
-                ImGui.EndChild()
+                selected.resize(w, h)
+
+                if ImGui.IsItemActive():
+                    x, y = ImGui.GetWindowPos()
+                    y += ImGui.GetFrameHeight()
+                    selected.mouse_drag(
+                        int(io.MousePos.x-x), int(io.MousePos.y-y),
+                        int(io.MouseDelta.x), int(io.MouseDelta.y),
+                        io.MouseDown[0], io.MouseDown[1], io.MouseDown[2])
+                else:
+                    selected.mouse_release()
+
+                if ImGui.IsItemHovered():
+                    selected.wheel(int(io.MouseWheel))
+
+                selected.render()
+
         ImGui.End()
         ImGui.PopStyleVar()
 
