@@ -103,20 +103,39 @@ class ArcBall:
         self.view = view
         self.shift = glm.vec3(0, 0, -5)
         self.rotation = glm.quat()
+        self.tmp_rotation = glm.quat()
+        self.x = None
+        self.y = None
+
+    def begin_drag(self, x, y, projection: Perspective):
+        LOGGER.debug(f'{x}, {y}')
+        self.x = x
+        self.y = y
+        self.va = get_arcball_vector(
+            x, y, projection.width, projection.height)
+
+    def end_drag(self):
+        LOGGER.debug('')
+        self.rotation = glm.normalize(self.tmp_rotation * self.rotation)
+        self.tmp_rotation = glm.quat()
+        self.update_matrix()
 
     def update_matrix(self) -> None:
         t = glm.translate(self.shift)
-        self.view.matrix = t * glm.mat4(self.rotation)
+        r = glm.normalize(self.tmp_rotation * self.rotation)
+        self.view.matrix = t * glm.mat4(r)
         self.view.inverse = glm.inverse(self.view.matrix)
 
-    def drag(self, x, y, dx, dy, projectin: Perspective) -> bool:
-        va = get_arcball_vector(
-            x-dx, y-dy, projectin.width, projectin.height)
-        vb = get_arcball_vector(x, y, projectin.width, projectin.height)
-        angle = math.acos(min(1.0, glm.dot(va, vb)))
-        axis_in_camera_coord = glm.cross(va, vb)
-        r = glm.angleAxis(angle, axis_in_camera_coord)
-        self.rotation = glm.normalize(r * self.rotation)
+    def drag(self, x, y, projection: Perspective) -> bool:
+        if x == self.x and y == self.y:
+            return False
+        LOGGER.debug(f'{x}, {y}')
+        self.x = x
+        self.y = y
+        vb = get_arcball_vector(x, y, projection.width, projection.height)
+        angle = math.acos(min(1.0, glm.dot(self.va, vb)))
+        axis_in_camera_coord = glm.cross(self.va, vb)
+        self.tmp_rotation = glm.angleAxis(angle, axis_in_camera_coord)
         self.update_matrix()
         return True
 
@@ -138,19 +157,24 @@ class Camera:
         if left:
             self.onLeftDown(x, y)
         else:
-            self.onLeftUp(x, y)
+            self.onLeftUp()
 
         if right:
             self.onRightDown(x, y)
         else:
-            self.onRightUp(x, y)
+            self.onRightUp()
 
         if middle:
             self.onMiddleDown(x, y)
         else:
-            self.onMiddleUp(x, y)
+            self.onMiddleUp()
 
         self.onMotion(x, y, dx, dy)
+
+    def release(self):
+        self.onLeftUp()
+        self.onRightUp()
+        self.onMiddleUp()
 
     def onLeftDown(self, x: int, y: int) -> bool:
         ''' 
@@ -161,7 +185,7 @@ class Camera:
         self.left = True
         return False
 
-    def onLeftUp(self, x: int, y: int) -> bool:
+    def onLeftUp(self) -> bool:
         ''' 
         Mouse input. Returns whether redraw is required.
         '''
@@ -177,7 +201,7 @@ class Camera:
         self.middle = True
         return False
 
-    def onMiddleUp(self, x: int, y: int) -> bool:
+    def onMiddleUp(self) -> bool:
         ''' 
         Mouse input. Returns whether redraw is required.
         '''
@@ -191,14 +215,18 @@ class Camera:
         if self.right:
             return False
         self.right = True
+        self.arcball.begin_drag(x, y, self.projection)
         return False
 
-    def onRightUp(self, x: int, y: int) -> bool:
+    def onRightUp(self) -> bool:
         ''' 
         Mouse input. Returns whether redraw is required.
         '''
+        if not self.right:
+            return False
+        self.arcball.end_drag()
         self.right = False
-        return False
+        return True
 
     def onMotion(self, x: int, y: int, dx: int, dy: int) -> bool:
         ''' 
@@ -206,7 +234,7 @@ class Camera:
         '''
         redraw_is_required = False
         if self.right:
-            if self.arcball.drag(x, y, dx, dy, self.projection):
+            if self.arcball.drag(x, y, self.projection):
                 redraw_is_required = True
 
         # if self.middle:

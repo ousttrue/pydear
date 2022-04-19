@@ -65,6 +65,8 @@ def main():
                             int(io.MousePos.x-x), int(io.MousePos.y-y),
                             int(io.MouseDelta.x), int(io.MouseDelta.y),
                             io.MouseDown[0], io.MouseDown[1], io.MouseDown[2])
+                    else:
+                        selector.camera.release()
 
                     if ImGui.IsItemHovered():
                         selector.camera.orbit.wheel(int(io.MouseWheel))
@@ -78,8 +80,6 @@ def main():
             selector.selected.show()
 
     views = [
-        dockspace.Dock('demo', ImGui.ShowDemoWindow,
-                       (ctypes.c_bool * 1)(True)),
         dockspace.Dock('metrics', ImGui.ShowMetricsWindow,
                        (ctypes.c_bool * 1)(True)),
         dockspace.Dock('samples', show_selector,
