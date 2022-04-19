@@ -50,7 +50,6 @@ def main():
                 int(w), int(h), clear_color)
             selected = selector.selected
             if texture and selected:
-                # camera = selector.selected_view_type
                 selected.resize(w, h)
 
                 ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, bg, tint)
@@ -68,8 +67,7 @@ def main():
                     selected.mouse_release()
 
                 if ImGui.IsItemHovered():
-                    pass
-                    # selected.camera.orbit.wheel(int(io.MouseWheel))
+                    selected.wheel(int(io.MouseWheel))
 
                 selected.render()
 

@@ -1,6 +1,7 @@
 import math
 import logging
 import glm
+import abc
 LOGGER = logging.getLogger(__name__)
 
 
@@ -31,55 +32,92 @@ class Perspective:
 
 class View:
     def __init__(self) -> None:
-        self.matrix = glm.mat4(1)
-        self.inverse = glm.mat4(1)
-
-
-class Orbit:
-    def __init__(self, view: View, *, distance=5, y=0) -> None:
-        self.view = view
-        self.shift = glm.vec3(0, y, -distance)
-        self.yaw = 0.0
-        self.pitch = 0.0
+        self.rotation = glm.quat()
+        self.shift = glm.vec3(0, 0, -5)
         self.update_matrix()
 
-    def __str__(self) -> str:
-        return f'({self.shift.x:.3f}, {self.shift.y:.3f}, {self.shift.distance:.3f})'
-
-    def update_matrix(self) -> None:
+    def update_matrix(self):
         t = glm.translate(self.shift)
-        yaw = glm.rotate(self.yaw, glm.vec3(0, 1, 0))
-        pitch = glm.rotate(self.pitch, glm.vec3(1, 0, 0))
-        self.view.matrix = t * pitch * yaw
-        self.view.inverse = glm.inverse(self.view.matrix)
+        r = glm.mat4(self.rotation)
+        self.matrix = t * r
+        self.inverse = glm.inverse(self.matrix)
 
-    def right_drag(self, dx, dy, _) -> bool:
-        self.yaw += dx * 0.01
-        self.pitch += dy * 0.01
-        self.update_matrix()
-        return True
 
-    def middle_drag(self, dx, dy, projection) -> bool:
+class DragInterface(abc.ABC):
+    @abc.abstractmethod
+    def begin(self, x, y):
+        pass
+
+    @abc.abstractmethod
+    def drag(self, x, y, dx, dy):
+        pass
+
+    @abc.abstractmethod
+    def end(self):
+        pass
+
+
+class ScreenShift(DragInterface):
+    def __init__(self, view: View, projection: Perspective, *, distance=5, y=0) -> None:
+        self.view = view
+        self.projection = projection
+        self.shift = glm.vec3(0, y, -distance)
+        self.update()
+
+    def update(self) -> None:
+        self.view.shift = self.shift
+        self.view.update_matrix()
+
+    def begin(self, x, y):
+        pass
+
+    def drag(self, x, y, dx: int, dy: int) -> bool:
         plane_height = math.tan(
-            projection.fov_y * 0.5) * self.shift.z * 2
-        self.shift.x -= dx / projection.height * plane_height
-        self.shift.y += dy / projection.height * plane_height
-        self.update_matrix()
+            self.projection.fov_y * 0.5) * self.shift.z * 2
+        self.shift.x -= dx / self.projection.height * plane_height
+        self.shift.y += dy / self.projection.height * plane_height
+        self.update()
         return True
+
+    def end(self):
+        pass
 
     def wheel(self, d: int) -> bool:
-        ''' 
-        Mouse input. Returns whether redraw is required.
-        '''
         if d < 0:
             self.shift.z *= 1.1
-            self.update_matrix()
+            self.update()
             return True
         elif d > 0:
             self.shift.z *= 0.9
-            self.update_matrix()
+            self.update()
             return True
         return False
+
+
+class TurnTable(DragInterface):
+    def __init__(self, view: View) -> None:
+        self.view = view
+        self.yaw = 0.0
+        self.pitch = 0.0
+        self.update()
+
+    def update(self) -> None:
+        yaw = glm.angleAxis(self.yaw, glm.vec3(0, 1, 0))
+        pitch = glm.angleAxis(self.pitch, glm.vec3(1, 0, 0))
+        self.view.rotation = pitch * yaw
+        self.view.update_matrix()
+
+    def begin(self, x, y):
+        pass
+
+    def drag(self, x, y, dx: int, dy: int) -> bool:
+        self.yaw += dx * 0.01
+        self.pitch += dy * 0.01
+        self.update()
+        return True
+
+    def end(self):
+        pass
 
 
 def get_arcball_vector(x, y, screen_width, screen_height):
@@ -98,150 +136,98 @@ def get_arcball_vector(x, y, screen_width, screen_height):
     return P
 
 
-class ArcBall:
-    def __init__(self, view: View) -> None:
+class ArcBall(DragInterface):
+    def __init__(self, view: View, projection: Perspective) -> None:
         self.view = view
-        self.shift = glm.vec3(0, 0, -5)
+        self.projection = projection
         self.rotation = glm.quat()
         self.tmp_rotation = glm.quat()
         self.x = None
         self.y = None
+        self.va = None
 
-    def begin_drag(self, x, y, projection: Perspective):
+    def update(self) -> None:
+        self.view.rotation = glm.normalize(self.tmp_rotation * self.rotation)
+        self.view.update_matrix()
+
+    def begin(self, x, y):
         LOGGER.debug(f'{x}, {y}')
+        self.rotation = self.view.rotation
         self.x = x
         self.y = y
         self.va = get_arcball_vector(
-            x, y, projection.width, projection.height)
+            x, y, self.projection.width, self.projection.height)
 
-    def end_drag(self):
+    def drag(self, x, y, dx, dy) -> bool:
+        if x == self.x and y == self.y:
+            return False
+        self.x = x
+        self.y = y
+        LOGGER.debug(f'{x}, {y}')
+        vb = get_arcball_vector(
+            x, y, self.projection.width, self.projection.height)
+        angle = math.acos(min(1.0, glm.dot(self.va, vb))) * 2
+        axis = glm.cross(self.va, vb)
+        self.tmp_rotation = glm.angleAxis(angle, axis)
+        self.update()
+        return True
+
+    def end(self):
         LOGGER.debug('')
         self.rotation = glm.normalize(self.tmp_rotation * self.rotation)
         self.tmp_rotation = glm.quat()
-        self.update_matrix()
-
-    def update_matrix(self) -> None:
-        t = glm.translate(self.shift)
-        r = glm.normalize(self.tmp_rotation * self.rotation)
-        self.view.matrix = t * glm.mat4(r)
-        self.view.inverse = glm.inverse(self.view.matrix)
-
-    def drag(self, x, y, projection: Perspective) -> bool:
-        if x == self.x and y == self.y:
-            return False
-        LOGGER.debug(f'{x}, {y}')
-        self.x = x
-        self.y = y
-        vb = get_arcball_vector(x, y, projection.width, projection.height)
-        angle = math.acos(min(1.0, glm.dot(self.va, vb)))
-        axis_in_camera_coord = glm.cross(self.va, vb)
-        self.tmp_rotation = glm.angleAxis(angle, axis_in_camera_coord)
-        self.update_matrix()
-        return True
+        self.update()
 
 
 class Camera:
     def __init__(self, *, near=0.01, far=1000, distance=5, y=0):
         self.projection = Perspective(near=near, far=far)
         self.view = View()
-        self.orbit = Orbit(self.view, distance=distance, y=y)
-        self.arcball = ArcBall(self.view)
+        # self.right_drag = TurnTable(self.view)
+        self.right_drag = ArcBall(self.view, self.projection)
+        self.middle_drag = ScreenShift(
+            self.view, self.projection, distance=distance, y=y)
+        self.on_wheel = self.middle_drag
+
         self.left = False
-        self.middle = False
         self.right = False
+        self.middle = False
 
     def drag(self,
              x: int, y: int,
              dx: int, dy: int,
              left: bool, right: bool, middle: bool):
-        if left:
-            self.onLeftDown(x, y)
-        else:
-            self.onLeftUp()
-
         if right:
-            self.onRightDown(x, y)
+            if not self.right:
+                self.right = True
+                self.right_drag.begin(x, y)
+            self.right_drag.drag(x, y, dx, dy)
         else:
-            self.onRightUp()
+            if self.right:
+                self.right = False
+                self.right_drag.end()
 
         if middle:
-            self.onMiddleDown(x, y)
+            if not self.middle:
+                self.middle = True
+                self.middle_drag.begin(x, y)
+            self.middle_drag.drag(x, y, dx, dy)
         else:
-            self.onMiddleUp()
-
-        self.onMotion(x, y, dx, dy)
+            if self.middle:
+                self.middle = False
+                self.middle_drag.end()
 
     def release(self):
-        self.onLeftUp()
-        self.onRightUp()
-        self.onMiddleUp()
+        if self.right:
+            self.right = False
+            self.right_drag.end()
 
-    def onLeftDown(self, x: int, y: int) -> bool:
-        ''' 
-        Mouse input. Returns whether redraw is required.
-        '''
-        if self.left:
-            return False
-        self.left = True
-        return False
-
-    def onLeftUp(self) -> bool:
-        ''' 
-        Mouse input. Returns whether redraw is required.
-        '''
-        self.left = False
-        return False
-
-    def onMiddleDown(self, x: int, y: int) -> bool:
-        ''' 
-        Mouse input. Returns whether redraw is required.
-        '''
         if self.middle:
-            return False
-        self.middle = True
-        return False
+            self.middle = False
+            self.middle_drag.end()
 
-    def onMiddleUp(self) -> bool:
-        ''' 
-        Mouse input. Returns whether redraw is required.
-        '''
-        self.middle = False
-        return False
-
-    def onRightDown(self, x: int, y: int) -> bool:
-        ''' 
-        Mouse input. Returns whether redraw is required.
-        '''
-        if self.right:
-            return False
-        self.right = True
-        self.arcball.begin_drag(x, y, self.projection)
-        return False
-
-    def onRightUp(self) -> bool:
-        ''' 
-        Mouse input. Returns whether redraw is required.
-        '''
-        if not self.right:
-            return False
-        self.arcball.end_drag()
-        self.right = False
-        return True
-
-    def onMotion(self, x: int, y: int, dx: int, dy: int) -> bool:
-        ''' 
-        Mouse input. Returns whether redraw is required.
-        '''
-        redraw_is_required = False
-        if self.right:
-            if self.arcball.drag(x, y, self.projection):
-                redraw_is_required = True
-
-        # if self.middle:
-        #     if self.orbit.middle_drag(dx, dy, self.projection):
-        #         redraw_is_required = True
-
-        return redraw_is_required
+    def wheel(self, d):
+        self.on_wheel.wheel(d)
 
     # def fit(self, p0: Float3, p1: Float3):
     #     if math.isnan(p0.x) or math.isnan(p0.y) or math.isnan(p0.z) or math.isnan(p1.x) or math.isnan(p1.y) or math.isnan(p1.z):
