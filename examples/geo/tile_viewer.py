@@ -1,22 +1,19 @@
 from typing import List
 import asyncio
 import logging
-import dataclasses
 import ctypes
-from pydear.utils.item import Item, Input
+from pydear.utils.selector import Item
 from pydear.utils import glfw_app
 from pydear import glo
 from pydear import imgui as ImGui
+from pydear import imgui_internal as ImGuiInternal
 import xyztile
 import glm
-import PIL.Image
-import PIL.ImageDraw
-import PIL.ImageFont
 from tile_texture_manager import TileTextureManager
 import pathlib
 HERE = pathlib.Path(__file__).absolute().parent
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 vs = '''#version 330
 in vec2 aPos;
@@ -77,6 +74,9 @@ class XYZTile(Item):
             HERE.parent.parent / 'tile_cache'
         )
 
+        self.shader = None
+        self.vao = None
+
     def add_tile(self, i: int, tile: xyztile.Tile):
         self.tiles.append(tile)
         rect = tile.rect
@@ -90,37 +90,18 @@ class XYZTile(Item):
         VERTICES[vpos+2] = Vertex(r, t, 1, 0)
         VERTICES[vpos+3] = Vertex(l, t, 0, 0)
 
-    def initialize(self):
-        self.shader = glo.Shader.load(vs, fs)
-        if not self.shader:
-            return
+    def resize(self, w: int, h: int):
+        self.map.view.aspect_ratio = w/h
 
-        vbo = glo.Vbo()
-        vbo.set_vertices(VERTICES, True)
-        ibo = glo.Ibo()
-        ibo.set_indices(INDICES)
-        self.vao = glo.Vao(
-            vbo, glo.VertexLayout.create_list(self.shader.program), ibo)
+    def wheel(self, d: int):
+        self.map.view.wheel(d)
 
-        self.view = glm.mat4()
-        view = glo.UniformLocation.create(self.shader.program, "V")
-        self.props = [
-            glo.ShaderProp(lambda x: view.set_mat4(
-                x), lambda:glm.value_ptr(self.view)),
-        ]
-
-    def drag(self, input: Input):
-        if not self.is_initialized:
-            return
-
-        self._input = input
-
-        if input.wheel:
-            self.map.view.wheel(input.wheel)
-        if input.middle:
+    def mouse_drag(self, x: int, y: int, dx: int, dy: int, left: bool, right: bool, middle: bool):
+        if middle:
             self.map.view.drag(input.height, input.dx, input.dy)
 
-        self.map.view.aspect_ratio = input.aspect_ratio
+    def mouse_release(self):
+        pass
 
     def show(self):
         if not self.p_open[0]:
@@ -180,10 +161,30 @@ class XYZTile(Item):
         ImGui.End()
 
     def render(self):
-        if not self.is_initialized:
-            self.initialize()
-            self.is_initialized = True
+        if not self.shader:
+            shader_or_error = glo.Shader.load(vs, fs)
+            if not isinstance(shader_or_error, glo.Shader):
+                LOGGER.error(shader_or_error)
+                return
+            self.shader = shader_or_error
 
+            vbo = glo.Vbo()
+            vbo.set_vertices(VERTICES, True)
+            ibo = glo.Ibo()
+            ibo.set_indices(INDICES)
+            self.vao = glo.Vao(
+                vbo, glo.VertexLayout.create_list(self.shader.program), ibo)
+
+            self.view = glm.mat4()
+            view = glo.UniformLocation.create(self.shader.program, "V")
+
+            def set_V():
+                view.set_mat4(glm.value_ptr(self.view))
+            self.props = [
+                set_V
+            ]
+
+        assert self.vao
         self.tiles.clear()
         for i, tile in enumerate(self.map.iter_visible()):
             # setup vertices
@@ -191,11 +192,9 @@ class XYZTile(Item):
         self.vao.vbo.update(VERTICES)
         self.view = self.map.view.get_matrix()
 
-        if not self.shader:
-            return
         with self.shader:
             for prop in self.props:
-                prop.update()
+                prop()
 
             offset = 0
             for tile in self.tiles:
@@ -204,11 +203,6 @@ class XYZTile(Item):
                     texture.bind()
                 self.vao.draw(6, offset)
                 offset += 6 * 2
-
-
-@dataclasses.dataclass
-class State:
-    hover: bool
 
 
 def main():
@@ -236,7 +230,9 @@ def main():
     url = 'http://tile.openstreetmap.org'
     # url = None
     view = XYZTile(app.loop, url)
-    state = State(False)
+
+    bg = ImGui.ImVec4(1, 1, 1, 1)
+    tint = ImGui.ImVec4(1, 1, 1, 1)
 
     def show_view(p_open):
         ImGui.PushStyleVar_2(ImGui.ImGuiStyleVar_.WindowPadding, (0, 0))
@@ -247,18 +243,27 @@ def main():
             texture = fbo_manager.clear(
                 int(w), int(h), clear_color)
             if texture:
-                # input handling
-                input = Input.get(state.hover, w, h)
-                if input:
-                    view.drag(input)
+
+                ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, bg, tint)
+                ImGuiInternal.ButtonBehavior(ImGui.Custom_GetLastItemRect(), ImGui.Custom_GetLastItemId(), None, None,
+                                             ImGui.ImGuiButtonFlags_.MouseButtonMiddle | ImGui.ImGuiButtonFlags_.MouseButtonRight)
+                io = ImGui.GetIO()
+                if ImGui.IsItemActive():
+                    x, y = ImGui.GetWindowPos()
+                    y += ImGui.GetFrameHeight()
+                    view.mouse_drag(
+                        int(io.MousePos.x-x), int(io.MousePos.y-y),
+                        int(io.MouseDelta.x), int(io.MouseDelta.y),
+                        io.MouseDown[0], io.MouseDown[1], io.MouseDown[2])
+                else:
+                    view.mouse_release()
+
+                if ImGui.IsItemHovered():
+                    view.wheel(int(io.MouseWheel))
 
                 # rendering
                 view.render()
 
-                ImGui.BeginChild("_image_")
-                ImGui.Image(texture, (w, h), (0, 1), (1, 0))
-                state.hover = ImGui.IsItemHovered()
-                ImGui.EndChild()
         ImGui.End()
         ImGui.PopStyleVar()
 

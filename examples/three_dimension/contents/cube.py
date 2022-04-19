@@ -24,10 +24,10 @@ class Cube(Item):
         self.camera.wheel(d)
 
     def mouse_drag(self, x: int, y: int, dx: int, dy: int, left: bool, right: bool, middle: bool):
-        self.camera.drag(x, y, dx, dy, left, right, middle)
+        self.camera.mouse_drag(x, y, dx, dy, left, right, middle)
 
     def mouse_release(self):
-        self.camera.release()
+        self.camera.mouse_release()
 
     def render(self):
         # GL.glEnable(GL.GL_CULL_FACE)

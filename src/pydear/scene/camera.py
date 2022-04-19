@@ -190,7 +190,7 @@ class Camera:
         self.right = False
         self.middle = False
 
-    def drag(self,
+    def mouse_drag(self,
              x: int, y: int,
              dx: int, dy: int,
              left: bool, right: bool, middle: bool):
@@ -214,7 +214,7 @@ class Camera:
                 self.middle = False
                 self.middle_drag.end()
 
-    def release(self):
+    def mouse_release(self):
         if self.right:
             self.right = False
             self.right_drag.end()
