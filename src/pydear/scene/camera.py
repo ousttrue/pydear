@@ -151,7 +151,6 @@ class ArcBall(DragInterface):
         self.view.update_matrix()
 
     def begin(self, x, y):
-        LOGGER.debug(f'{x}, {y}')
         self.rotation = self.view.rotation
         self.x = x
         self.y = y
@@ -163,7 +162,6 @@ class ArcBall(DragInterface):
             return False
         self.x = x
         self.y = y
-        LOGGER.debug(f'{x}, {y}')
         vb = get_arcball_vector(
             x, y, self.projection.width, self.projection.height)
         angle = math.acos(min(1.0, glm.dot(self.va, vb))) * 2
@@ -173,7 +171,6 @@ class ArcBall(DragInterface):
         return True
 
     def end(self):
-        LOGGER.debug('')
         self.rotation = glm.normalize(self.tmp_rotation * self.rotation)
         self.tmp_rotation = glm.quat()
         self.update()
