@@ -82,11 +82,51 @@ class Orbit:
         return False
 
 
+def get_arcball_vector(x, y, screen_width, screen_height):
+    '''
+    https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Tutorial_Arcball
+    '''
+    P = glm.vec3(x/screen_width*2 - 1.0,
+                 y/screen_height*2 - 1.0,
+                 0)
+    P.y = -P.y
+    OP_squared = P.x * P.x + P.y * P.y
+    if OP_squared <= 1:
+        P.z = math.sqrt(1 - OP_squared)  # Pythagoras
+    else:
+        P = glm.normalize(P)  # nearest point
+    return P
+
+
+class ArcBall:
+    def __init__(self, view: View) -> None:
+        self.view = view
+        self.shift = glm.vec3(0, 0, -5)
+        self.rotation = glm.quat()
+
+    def update_matrix(self) -> None:
+        t = glm.translate(self.shift)
+        self.view.matrix = t * glm.mat4(self.rotation)
+        self.view.inverse = glm.inverse(self.view.matrix)
+
+    def drag(self, x, y, dx, dy, projectin: Perspective) -> bool:
+        va = get_arcball_vector(
+            x-dx, y-dy, projectin.width, projectin.height)
+        vb = get_arcball_vector(x, y, projectin.width, projectin.height)
+        angle = math.acos(min(1.0, glm.dot(va, vb)))
+        axis_in_camera_coord = glm.cross(va, vb)
+        r = glm.angleAxis(angle, axis_in_camera_coord)
+        self.rotation = glm.normalize(r * self.rotation)
+        self.update_matrix()
+        return True
+
+
 class Camera:
     def __init__(self, *, near=0.01, far=1000, distance=5, y=0):
         self.projection = Perspective(near=near, far=far)
         self.view = View()
-        self.view_controller = Orbit(self.view, distance=distance, y=y)
+        self.orbit = Orbit(self.view, distance=distance, y=y)
+        self.arcball = ArcBall(self.view)
         self.left = False
         self.middle = False
         self.right = False
@@ -110,7 +150,7 @@ class Camera:
         else:
             self.onMiddleUp(x, y)
 
-        self.onMotion(dx, dy)
+        self.onMotion(x, y, dx, dy)
 
     def onLeftDown(self, x: int, y: int) -> bool:
         ''' 
@@ -160,18 +200,18 @@ class Camera:
         self.right = False
         return False
 
-    def onMotion(self, dx: int, dy: int) -> bool:
+    def onMotion(self, x: int, y: int, dx: int, dy: int) -> bool:
         ''' 
         Mouse input. Returns whether redraw is required.
         '''
         redraw_is_required = False
         if self.right:
-            if self.view_controller.right_drag(dx, dy, self.projection):
+            if self.arcball.drag(x, y, dx, dy, self.projection):
                 redraw_is_required = True
 
-        if self.middle:
-            if self.view_controller.middle_drag(dx, dy, self.projection):
-                redraw_is_required = True
+        # if self.middle:
+        #     if self.orbit.middle_drag(dx, dy, self.projection):
+        #         redraw_is_required = True
 
         return redraw_is_required
 

@@ -67,7 +67,7 @@ def main():
                             io.MouseDown[0], io.MouseDown[1], io.MouseDown[2])
 
                     if ImGui.IsItemHovered():
-                        selector.camera.view_controller.wheel(int(io.MouseWheel))
+                        selector.camera.orbit.wheel(int(io.MouseWheel))
 
                     selected.render(selector.camera)
 
