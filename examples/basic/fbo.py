@@ -1,7 +1,6 @@
 import logging
 import ctypes
-from pydear import glo
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def main():
@@ -13,6 +12,7 @@ def main():
     from pydear import imgui as ImGui
     from pydear.utils import dockspace
     clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
+    from pydear import glo
     fbo_manager = glo.FboRenderer()
 
     def show_hello(p_open):
@@ -21,6 +21,9 @@ def main():
             ImGui.SliderFloat4('clear color', clear_color, 0, 1)
             ImGui.ColorPicker4('color', clear_color)
         ImGui.End()
+
+    bg = ImGui.ImVec4(1, 1, 1, 1)
+    tint = ImGui.ImVec4(1, 1, 1, 1)
 
     def show_view(p_open):
         ImGui.PushStyleVar_2(ImGui.ImGuiStyleVar_.WindowPadding, (0, 0))
@@ -31,9 +34,33 @@ def main():
             texture = fbo_manager.clear(
                 int(w), int(h), clear_color)
             if texture:
-                ImGui.BeginChild("_image_")
-                ImGui.Image(texture, (w, h), (0, 1), (1, 0))
-                ImGui.EndChild()
+                ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, bg, tint)
+                from pydear import imgui_internal
+                imgui_internal.ButtonBehavior(ImGui.Custom_GetLastItemRect(), ImGui.Custom_GetLastItemId(), None, None,
+                                              ImGui.ImGuiButtonFlags_.MouseButtonMiddle | ImGui.ImGuiButtonFlags_.MouseButtonRight)
+                io = ImGui.GetIO()
+                if ImGui.IsItemActive():
+                    x, y = ImGui.GetWindowPos()
+                    y += ImGui.GetFrameHeight()
+
+                    clear_color[0] = (io.MousePos.x-x) / w
+                    clear_color[1] = (io.MousePos.y-y) / h
+                    # selected.mouse_drag(
+                    #     int(io.MousePos.x-x), int(io.MousePos.y-y),
+                    #     int(io.MouseDelta.x), int(io.MouseDelta.y),
+                    #     io.MouseDown[0], io.MouseDown[1], io.MouseDown[2])
+                    tint.x = 1.0
+                else:
+                    tint.x = 0.5
+                    # selected.mouse_release()
+
+                if ImGui.IsItemHovered():
+                    tint.z = 1.0
+                else:
+                    tint.z = 0.5
+
+                # selected.render()
+
         ImGui.End()
         ImGui.PopStyleVar()
 
