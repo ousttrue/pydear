@@ -1,8 +1,73 @@
+from typing import NamedTuple, Optional
 import math
 import logging
 import glm
 import abc
 LOGGER = logging.getLogger(__name__)
+
+
+kEpsilon = 1e-5
+
+
+class Ray(NamedTuple):
+    origin: glm.vec3
+    dir: glm.vec3
+
+    def intersect_triangle(self, v0: glm.vec3, v1: glm.vec3, v2: glm.vec3) -> Optional[float]:
+        '''
+        https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
+        '''
+        # compute plane's normal
+        v0v1 = v1 - v0
+        v0v2 = v2 - v0
+        # no need to normalize
+        N = glm.cross(v0v1, v0v2)  # N
+        # area2 = N.get_length()
+
+        # Step 1: finding P
+
+        # check if ray and plane are parallel ?
+        NdotRayDirection = glm.dot(N, self.dir)
+        if math.fabs(NdotRayDirection) < kEpsilon:  # almost 0
+            return  # they are parallel so they don't intersect !
+
+        # compute d parameter using equation 2
+        d = -glm.dot(N, v0)
+
+        # compute t (equation 3)
+        t = -(glm.dot(N, self.origin) + d) / NdotRayDirection
+        # check if the triangle is in behind the ray
+        if t < 0:
+            return  # the triangle is behind
+
+        # compute the intersection point using equation 1
+        P = self.origin + self.dir * t
+
+        # Step 2: inside-outside test
+        # Vec3f C  # vector perpendicular to triangle's plane
+
+        # edge 0
+        edge0 = v1 - v0
+        vp0 = P - v0
+        C = glm.cross(edge0, vp0)
+        if glm.dot(N, C) < 0:
+            return  # P is on the right side
+
+        # edge 1
+        edge1 = v2 - v1
+        vp1 = P - v1
+        C = glm.cross(edge1, vp1)
+        if glm.dot(N, C) < 0:
+            return  # P is on the right side
+
+        # edge 2
+        edge2 = v0 - v2
+        vp2 = P - v2
+        C = glm.cross(edge2, vp2)
+        if glm.dot(N, C) < 0:
+            return  # P is on the right side
+
+        return t  # this ray hits the triangle
 
 
 class Perspective:
@@ -191,9 +256,9 @@ class Camera:
         self.middle = False
 
     def mouse_drag(self,
-             x: int, y: int,
-             dx: int, dy: int,
-             left: bool, right: bool, middle: bool):
+                   x: int, y: int,
+                   dx: int, dy: int,
+                   left: bool, right: bool, middle: bool):
         if right:
             if not self.right:
                 self.right = True
@@ -245,20 +310,17 @@ class Camera:
     #         self.projection.z_far = self.view.distance*2
     #         self.projection.update_matrix()
 
-    # def get_mouse_ray(self):
-    #     origin = Float3(
-    #         self.view.inverse._41,
-    #         self.view.inverse._42,
-    #         self.view.inverse._43)
-    #     half_fov = self.projection.fov_y/2
-    #     dir = Float3(
-    #         (self.x/self.width * 2 - 1) *
-    #         math.tan(half_fov) * (self.projection.aspect),
-    #         -(self.y/self.height * 2 - 1) * math.tan(half_fov),
-    #         -1)
-    #     dir = self.view.inverse.apply(*dir, translate=False)
+    def get_mouse_ray(self, x, y) -> Ray:
+        origin = self.view.inverse[3].xyz
+        half_fov = self.projection.fov_y/2
+        dir = glm.vec3(
+            (x/self.projection.width * 2 - 1) *
+            math.tan(half_fov) * (self.projection.aspect),
+            -(y/self.projection.height * 2 - 1) * math.tan(half_fov),
+            -1)
+        dir = (self.view.inverse * glm.vec4(dir, 0)).xyz
 
-    #     return Ray(origin, dir.normalized())
+        return Ray(origin, glm.normalize(dir))
 
     # def get_state(self, light: Float4) -> FrameState:
     #     ray = self.get_mouse_ray()
