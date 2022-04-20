@@ -15,13 +15,6 @@ def main():
     from pydear import glo
     fbo_manager = glo.FboRenderer()
 
-    def show_hello(p_open):
-        if ImGui.Begin('hello', p_open):
-            ImGui.TextUnformatted('hello text')
-            ImGui.SliderFloat4('clear color', clear_color, 0, 1)
-            ImGui.ColorPicker4('color', clear_color)
-        ImGui.End()
-
     bg = ImGui.ImVec4(1, 1, 1, 1)
     tint = ImGui.ImVec4(1, 1, 1, 1)
 
@@ -68,8 +61,6 @@ def main():
         dockspace.Dock('demo', ImGui.ShowDemoWindow,
                        (ctypes.c_bool * 1)(True)),
         dockspace.Dock('metrics', ImGui.ShowMetricsWindow,
-                       (ctypes.c_bool * 1)(True)),
-        dockspace.Dock('hello', show_hello,
                        (ctypes.c_bool * 1)(True)),
         dockspace.Dock('view', show_view,
                        (ctypes.c_bool * 1)(True)),
