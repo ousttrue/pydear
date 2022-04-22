@@ -1,7 +1,7 @@
 '''
 simple triangle sample
 '''
-from typing import Optional
+from typing import Optional, NamedTuple
 import logging
 from OpenGL import GL
 import glm
@@ -10,6 +10,20 @@ from pydear.scene.camera import Camera
 from pydear.scene.gizmo import Gizmo, AABB
 
 LOGGER = logging.getLogger(__name__)
+
+
+class Bone(NamedTuple):
+    name: str
+    head: glm.vec3
+    tail: glm.vec3
+    up: glm.vec3
+
+
+BONES = [
+    Bone('bone1', glm.vec3(0, 0, 0), glm.vec3(0, 0.2, 0), glm.vec3(0, 0, -1)),
+    Bone('bone2', glm.vec3(0, 0.2, 0), glm.vec3(0, 0.4, 0), glm.vec3(0, 0, -1)),
+    Bone('bone3', glm.vec3(0, 0.4, 0), glm.vec3(0, 0.6, 0), glm.vec3(0, 0, -1)),
+]
 
 
 class GizmoScene(Item):
@@ -36,7 +50,7 @@ class GizmoScene(Item):
         self.y = y
 
     def mouse_release(self, x: int, y: int):
-        self.camera.mouse_release()
+        self.camera.mouse_release(x, y)
         self.left_down = False
         self.x = x
         self.y = y
@@ -52,13 +66,16 @@ class GizmoScene(Item):
                          self.camera.get_mouse_ray(self.x, self.y))
         self.gizmo.aabb(AABB(glm.vec3(5, 0, 0), glm.vec3(6, 1, 1)))
 
+        for bone in BONES:
+            selected = self.gizmo.bone_head_tail(
+                bone.name, bone.head, bone.tail, bone.up,  bone.name == self.selected)
+            if selected:
+                self.selected = bone.name
+            elif self.left_down:
+                self.selected = None
+
+        self.matrix = glm.mat4()
         self.gizmo.axis(1)
-        key = "bone1"
-        selected = self.gizmo.bone(key, 1, key == self.selected)
-        if selected:
-            self.selected = key
-        elif self.left_down:
-            self.selected = None
 
         self.gizmo.end()
 

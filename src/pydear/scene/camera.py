@@ -251,6 +251,9 @@ class Camera:
             self.view, self.projection, distance=distance, y=y)
         self.on_wheel = self.middle_drag
 
+        # mouse state
+        self.x = 0
+        self.y = 0
         self.left = False
         self.right = False
         self.middle = False
@@ -259,6 +262,8 @@ class Camera:
                    x: int, y: int,
                    dx: int, dy: int,
                    left: bool, right: bool, middle: bool):
+        self.x = x
+        self.y = y
         if right:
             if not self.right:
                 self.right = True
@@ -279,7 +284,10 @@ class Camera:
                 self.middle = False
                 self.middle_drag.end()
 
-    def mouse_release(self):
+    def mouse_release(self, x: int, y: int):
+        self.x = x
+        self.y = y
+
         if self.right:
             self.right = False
             self.right_drag.end()
@@ -310,7 +318,7 @@ class Camera:
     #         self.projection.z_far = self.view.distance*2
     #         self.projection.update_matrix()
 
-    def get_mouse_ray(self, x, y) -> Ray:
+    def get_mouse_ray(self, x: int, y: int) -> Ray:
         origin = self.view.inverse[3].xyz
         half_fov = self.projection.fov_y/2
         dir = self.view.inverse * glm.vec4(

@@ -27,7 +27,7 @@ class Cube(Item):
         self.camera.mouse_drag(x, y, dx, dy, left, right, middle)
 
     def mouse_release(self, x, y):
-        self.camera.mouse_release()
+        self.camera.mouse_release(x, y)
 
     def render(self):
         # GL.glEnable(GL.GL_CULL_FACE)

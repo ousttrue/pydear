@@ -359,3 +359,19 @@ class Gizmo:
                 any_hit = True
 
         return clicked
+
+    def bone_head_tail(self, key: str, head: glm.vec3, tail: glm.vec3, up: glm.vec3, is_selected=False) -> bool:
+        '''
+        '''
+        head_tail = tail - head
+        y = glm.normalize(head_tail)
+        x = glm.normalize(glm.cross(y, up))
+        z = glm.normalize(glm.cross(x, y))
+
+        self.matrix = glm.mat4(
+            glm.vec4(x, 0),
+            glm.vec4(y, 0),
+            glm.vec4(z, 0),
+            glm.vec4(head, 1))
+
+        return self.bone(key, glm.length(head_tail), is_selected)
