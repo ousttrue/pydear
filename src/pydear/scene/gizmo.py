@@ -94,6 +94,11 @@ class Vertex(ctypes.Structure):
         )
 
 
+class LineVertex(NamedTuple):
+    position: glm.vec3
+    color: glm.vec4
+
+
 class Gizmo:
     def __init__(self) -> None:
         # state
@@ -248,6 +253,43 @@ class Gizmo:
         self.line(origin, glm.vec3(0, 0, size))
         self.color = glm.vec4(0, 0, 0.5, 1)
         self.line(origin, glm.vec3(0, 0, -size))
+
+    def ground_mark(self):
+        # 足元の軸表示
+        WHITE = glm.vec4(1, 1, 1, 0.8)
+        S = 0.5
+        LINE_VERTICES = [
+            # X
+            LineVertex(glm.vec3(0, 0, 0), glm.vec4(1, 0, 0, 1)),
+            LineVertex(glm.vec3(S, 0, 0), glm.vec4(1, 0, 0, 1)),
+            LineVertex(glm.vec3(0, 0, 0), glm.vec4(0.5, 0, 0, 1)),
+            LineVertex(glm.vec3(-S, 0, 0), glm.vec4(0.5, 0, 0, 1)),
+            # Z
+            LineVertex(glm.vec3(0, 0, 0), glm.vec4(0, 0, 1, 1)),
+            LineVertex(glm.vec3(0, 0, S), glm.vec4(0, 0, 1, 1)),
+            LineVertex(glm.vec3(0, 0, 0), glm.vec4(0, 0, 0.5, 1)),
+            LineVertex(glm.vec3(0, 0, -S), glm.vec4(0, 0, 0.5, 1)),
+            # box
+            LineVertex(glm.vec3(-S, 0, -S), WHITE),
+            LineVertex(glm.vec3(S, 0, -S), WHITE),
+            LineVertex(glm.vec3(S, 0, -S), WHITE),
+            LineVertex(glm.vec3(S, 0, S), WHITE),
+            LineVertex(glm.vec3(S, 0, S), WHITE),
+            LineVertex(glm.vec3(-S, 0, S), WHITE),
+            LineVertex(glm.vec3(-S, 0, S), WHITE),
+            LineVertex(glm.vec3(-S, 0, -S), WHITE),
+            # front
+            LineVertex(glm.vec3(S, 0, S+0.1),
+                       WHITE), LineVertex(glm.vec3(0, 0, S+0.1+S), WHITE),
+            LineVertex(glm.vec3(0, 0, S+0.1+S),
+                       WHITE), LineVertex(glm.vec3(-S, 0, S+0.1), WHITE),
+            LineVertex(glm.vec3(-S, 0, S+0.1),
+                       WHITE), LineVertex(glm.vec3(S, 0, S+0.1), WHITE),
+        ]
+        for i in range(0, len(LINE_VERTICES), 2):
+            head, tail = LINE_VERTICES[i:i+2]
+            self.color = head.color
+            self.line(head.position, tail.position)
 
     def aabb(self, aabb: AABB):
         self.color = glm.vec4(1, 1, 1, 1)
