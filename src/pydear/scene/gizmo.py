@@ -94,12 +94,12 @@ class Vertex(ctypes.Structure):
         )
 
 
-class BoneGizmo:
+class Gizmo:
     def __init__(self) -> None:
         # state
         self.mouse_x = 0
         self.mouse_y = 0
-        self.mouse_left_down = False
+        self.mouse_down = False
         self.mouse_right_down = False
         self.mouse_middle_down = False
         self.camera_view = glm.mat4()
@@ -111,8 +111,6 @@ class BoneGizmo:
         self.color = glm.vec4(1, 1, 1, 1)
         # event
         self.click_left = False
-        self.click_middle = False
-        self.click_right = False
 
         self.line_shader: Optional[glo.Shader] = None
         self.line_props = []
@@ -129,24 +127,19 @@ class BoneGizmo:
         self.hover = None
         self.hover_last = None
 
-    def begin(self, x, y,
-              mouse_left_down, mouse_right_down, mouse_middle_down,
-              view: glm.mat4, projection: glm.mat4, ray):
+    def begin(self, x: int, y: int, mouse_down: bool,
+              view: glm.mat4, projection: glm.mat4, ray: Ray):
         # clear
         self.line_count = 0
         self.triangle_count = 0
         self.matrix = glm.mat4()
         self.color = glm.vec4(1, 1, 1, 1)
         # update
-        self.click_left = self.mouse_left_down and not mouse_left_down
-        self.click_right = self.mouse_right_down and not mouse_right_down
-        self.click_middle = self.mouse_middle_down and not mouse_middle_down
+        self.click_left = self.mouse_down and not mouse_down
 
         self.mouse_x = x
         self.mouse_y = y
-        self.mouse_left_down = mouse_left_down
-        self.mouse_right_down = mouse_right_down
-        self.mouse_middle_down = mouse_middle_down
+        self.mouse_down = mouse_down
         self.camera_view = view
         self.camera_projection = projection
         self.ray = Ray(glm.vec3(*ray.origin), glm.vec3(*ray.dir))
@@ -259,7 +252,13 @@ class BoneGizmo:
     def aabb(self, aabb: AABB):
         self.color = glm.vec4(1, 1, 1, 1)
         match aabb:
-            case AABB(glm.vec3(nx, ny, nz), glm.vec3(px, py, pz)):
+            case AABB(n, p):
+                nx = n.x
+                ny = n.y
+                nz = n.z
+                px = p.x
+                py = p.y
+                pz = p.z
                 t0 = glm.vec3(nx, py, nz)
                 t1 = glm.vec3(px, py, nz)
                 t2 = glm.vec3(px, py, pz)

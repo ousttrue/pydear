@@ -31,6 +31,9 @@ def main():
     import contents.teapot
     selector.add(contents.teapot.TeaPot())
 
+    import contents.gizmo
+    selector.add(contents.gizmo.GizmoScene())
+
     def show_selector(p_open):
         if ImGui.Begin("selector", p_open):
             selector.show()
