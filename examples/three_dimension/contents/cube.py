@@ -26,7 +26,7 @@ class Cube(Item):
     def mouse_drag(self, x: int, y: int, dx: int, dy: int, left: bool, right: bool, middle: bool):
         self.camera.mouse_drag(x, y, dx, dy, left, right, middle)
 
-    def mouse_release(self):
+    def mouse_release(self, x, y):
         self.camera.mouse_release()
 
     def render(self):

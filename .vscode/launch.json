@@ -120,5 +120,11 @@
             "console": "integratedTerminal",
             "justMyCode": false
         },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "test", // <----- this is for tests
+            "console": "integratedTerminal"
+        }
     ]
 }

@@ -17,10 +17,16 @@ class Item(abc.ABC):
 
     @abc.abstractmethod
     def mouse_drag(self, x: int, y: int, dx: int, dy: int, left: bool, right: bool, middle: bool):
+        '''
+        drag
+        '''
         pass
 
     @abc.abstractmethod
-    def mouse_release(self):
+    def mouse_release(self, x: int, y: int):
+        '''
+        hover
+        '''
         pass
 
     @abc.abstractmethod

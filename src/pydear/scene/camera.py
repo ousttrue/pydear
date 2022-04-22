@@ -313,14 +313,13 @@ class Camera:
     def get_mouse_ray(self, x, y) -> Ray:
         origin = self.view.inverse[3].xyz
         half_fov = self.projection.fov_y/2
-        dir = glm.vec3(
+        dir = self.view.inverse * glm.vec4(
             (x/self.projection.width * 2 - 1) *
             math.tan(half_fov) * (self.projection.aspect),
             -(y/self.projection.height * 2 - 1) * math.tan(half_fov),
-            -1)
-        dir = (self.view.inverse * glm.vec4(dir, 0)).xyz
-
-        return Ray(origin, glm.normalize(dir))
+            -1,
+            0)
+        return Ray(origin, glm.normalize(dir.xyz))
 
     # def get_state(self, light: Float4) -> FrameState:
     #     ray = self.get_mouse_ray()

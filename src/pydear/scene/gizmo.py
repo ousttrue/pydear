@@ -142,7 +142,7 @@ class Gizmo:
         self.mouse_down = mouse_down
         self.camera_view = view
         self.camera_projection = projection
-        self.ray = Ray(glm.vec3(*ray.origin), glm.vec3(*ray.dir))
+        self.ray = ray
 
         self.hover_last = self.hover
         self.hover = None

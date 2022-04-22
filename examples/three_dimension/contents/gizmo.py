@@ -21,7 +21,7 @@ class GizmoScene(Item):
         self.left_down = False
         self.x = 0
         self.y = 0
-        self.selected = False
+        self.selected = None
 
     def resize(self, w: int, h: int):
         self.camera.projection.resize(w, h)
@@ -32,10 +32,14 @@ class GizmoScene(Item):
     def mouse_drag(self, x: int, y: int, dx: int, dy: int, left: bool, right: bool, middle: bool):
         self.camera.mouse_drag(x, y, dx, dy, left, right, middle)
         self.left_down = left
+        self.x = x
+        self.y = y
 
-    def mouse_release(self):
+    def mouse_release(self, x: int, y: int):
         self.camera.mouse_release()
         self.left_down = False
+        self.x = x
+        self.y = y
 
     def render(self):
         # GL.glEnable(GL.GL_CULL_FACE)
@@ -49,7 +53,12 @@ class GizmoScene(Item):
         self.gizmo.aabb(AABB(glm.vec3(5, 0, 0), glm.vec3(6, 1, 1)))
 
         self.gizmo.axis(1)
-        self.selected = self.gizmo.bone("bone1", 1, self.selected)
+        key = "bone1"
+        selected = self.gizmo.bone(key, 1, key == self.selected)
+        if selected:
+            self.selected = key
+        elif self.left_down:
+            self.selected = None
 
         self.gizmo.end()
 
