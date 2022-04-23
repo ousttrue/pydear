@@ -1,9 +1,10 @@
+from typing import Optional
 import logging
 import dataclasses
 import ctypes
 from pydear import imgui as ImGui
 from pydear import imgui_internal as ImGuiInternal
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -42,6 +43,31 @@ def main():
     bg = ImGui.ImVec4(1, 1, 1, 1)
     tint = ImGui.ImVec4(1, 1, 1, 1)
 
+    from pydear.utils.mouseevent import MouseInput, MouseEvent
+    mouse_event = MouseEvent()
+
+    def on_mouse(current: MouseInput, last: Optional[MouseInput]):
+        selected = selector.selected
+        if selected:
+            selected.resize(current.width, current.height)
+
+            if current.is_active:
+                if last:
+                    selected.mouse_drag(
+                        current.x, current.y,
+                        current.x-last.x,  current.y-last.y,
+                        current.left_down, current.right_down, current.middle_down
+                    )
+            else:
+                selected.mouse_release(current.x, current.y)
+
+            if current.is_hover:
+                selected.wheel(current.wheel)
+
+            selected.render()
+
+    mouse_event += on_mouse
+
     def show_view(p_open):
         ImGui.PushStyleVar_2(ImGui.ImGuiStyleVar_.WindowPadding, (0, 0))
         if ImGui.Begin(selector.view_name, p_open,
@@ -51,9 +77,7 @@ def main():
 
             texture = fbo_manager.clear(
                 int(w), int(h), clear_color)
-            selected = selector.selected
-            if texture and selected:
-                selected.resize(w, h)
+            if texture:
 
                 ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, bg, tint)
                 ImGuiInternal.ButtonBehavior(ImGui.Custom_GetLastItemRect(), ImGui.Custom_GetLastItemId(), None, None,
@@ -61,19 +85,12 @@ def main():
                 io = ImGui.GetIO()
                 x, y = ImGui.GetWindowPos()
                 y += ImGui.GetFrameHeight()
-                if ImGui.IsItemActive():
-                    selected.mouse_drag(
-                        int(io.MousePos.x-x), int(io.MousePos.y-y),
-                        int(io.MouseDelta.x), int(io.MouseDelta.y),
-                        io.MouseDown[0], io.MouseDown[1], io.MouseDown[2])
-                else:
-                    selected.mouse_release(
-                        int(io.MousePos.x-x), int(io.MousePos.y-y))
 
-                if ImGui.IsItemHovered():
-                    selected.wheel(int(io.MouseWheel))
-
-                selected.render()
+                mouse_event.process(MouseInput(int(io.MousePos.x-x), int(io.MousePos.y-y), w, h,
+                                    io.MouseDown[0], io.MouseDown[1], io.MouseDown[2],
+                                    ImGui.IsItemActive(), ImGui.IsItemHovered(),
+                                    int(io.MouseWheel)
+                ))
 
         ImGui.End()
         ImGui.PopStyleVar()
