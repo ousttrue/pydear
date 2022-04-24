@@ -34,7 +34,7 @@ class ImGuiLogHandler(logging.Handler):
     def write(self, m):
         pass
 
-    def draw(self, p_open: ctypes.Array):
+    def show(self, p_open: ctypes.Array):
         if ImGui.Begin('log', p_open):
             # Options menu
             if ImGui.BeginPopup("Options"):

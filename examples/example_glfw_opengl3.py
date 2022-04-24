@@ -165,7 +165,7 @@ def main():
     log_handler.setFormatter(logging.Formatter(
         '%(name)s:%(lineno)s[%(levelname)s]%(message)s'))
     log_handler.register_root()
-    log = Dock('log', log_handler.draw, (ctypes.c_bool * 1)(True))
+    log = Dock('log', log_handler.show, (ctypes.c_bool * 1)(True))
 
     views = [
         demo, another_window, window2, metrics, log

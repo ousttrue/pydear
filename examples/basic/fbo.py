@@ -68,12 +68,18 @@ def main():
         ImGui.End()
         ImGui.PopStyleVar()
 
+    from pydear.utils.loghandler import ImGuiLogHandler
+    log_handler = ImGuiLogHandler()
+    log_handler.register_root(append=True)
+
     views = [
         dockspace.Dock('demo', ImGui.ShowDemoWindow,
                        (ctypes.c_bool * 1)(True)),
         dockspace.Dock('metrics', ImGui.ShowMetricsWindow,
                        (ctypes.c_bool * 1)(True)),
         dockspace.Dock('view', show_view,
+                       (ctypes.c_bool * 1)(True)),
+        dockspace.Dock('logger', log_handler.show,
                        (ctypes.c_bool * 1)(True)),
     ]
 
