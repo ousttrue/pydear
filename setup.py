@@ -6,9 +6,10 @@ from rawtypes.parser.header import Header
 from rawtypes.parser.struct_cursor import WrapFlags
 import pathlib
 import setuptools
-from setuptools import setup, Extension
+from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 import logging
+LOGGER = logging.getLogger()
 logging.basicConfig(level=logging.DEBUG,
                     format='[%(levelname)s]%(name)s:%(lineno)s:%(message)s')
 
@@ -213,6 +214,7 @@ class VertexBufferType(BaseType):
 # generate c++ source and relative py and pyi
 #
 from rawtypes.generator.generator import Generator  # noqa
+from rawtypes.parser.function_cursor import FunctionCursor
 generator = Generator(*HEADERS)
 
 generator.type_manager.WRAP_TYPES.extend(WRAP_TYPES)
@@ -246,7 +248,60 @@ FUNCTION_CUSTOMIZE = [
     ),
 ]
 
-generator.generate(PACKAGE_DIR, CPP_PATH, FUNCTION_CUSTOMIZE)
+EXCLUDE_TYPES = (
+    'va_list', # va_list is int in Linux
+    'ImGuiTextFilter',
+    'ImGuiStorage',
+    'ImGuiStorage *',
+)
+
+EXCLUDE_FUNCS = (
+    'CheckboxFlags',
+    'Combo',
+    'ListBox',
+    'PlotLines',
+    # avoid va_list,
+    'TextV',
+    'TextDisabledV',
+    'TextWrappedV',
+    'LabelTextV',
+    'BulletTextV',
+    'TreeNodeV',
+    'TreeNodeExV',
+    'SetTooltipV',
+    'LogTextV',
+    'TextColoredV',
+    # fp
+    'SaveIniSettingsToMemory',
+    'SaveEditorStateToIniString',
+    'SaveCurrentEditorStateToIniString',
+)
+
+def is_exclude_function(func: FunctionCursor) -> bool:        
+    cursor = func.cursor
+    if cursor.spelling in EXCLUDE_FUNCS:
+        return True
+    if cursor.spelling.startswith('operator'):
+        LOGGER.debug(f'exclude; {cursor.spelling}')
+        return True
+    if cursor.result_type.spelling in EXCLUDE_TYPES:
+        return True
+    params = [child for child in cursor.get_children() if child.kind == cindex.CursorKind.PARM_DECL]
+    for child in params:
+        if child.type.spelling in EXCLUDE_TYPES:
+            return True
+        if 'callback' in child.spelling:
+            # function pointer
+            return True
+        if 'func' in child.spelling:
+            # function pointer
+            return True
+        if '(*)' in child.type.spelling:
+            # function pointer
+            return True
+    return False
+
+generator.generate(PACKAGE_DIR, CPP_PATH, function_custom=FUNCTION_CUSTOMIZE, is_exclude_function=is_exclude_function)
 
 
 # https://stackoverflow.com/questions/42585210/extending-setuptools-extension-to-use-cmake-in-setup-py

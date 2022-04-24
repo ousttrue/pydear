@@ -37,12 +37,8 @@ add_library(
   _external/ImGuizmo/ImSequencer.cpp
   _external/tinygizmo/tinygizmo/tiny-gizmo.cpp
   _external/picovg/src/nanovg.cpp)
-set (Python3_FIND_REGISTRY FIRST)  
-find_package(
-  Python3
-  REQUIRED
-  COMPONENTS Development
-  )
+set(Python3_FIND_REGISTRY FIRST)
+find_package(Python3 REQUIRED COMPONENTS Development)
 target_include_directories(
   ${PROJECT_NAME}
   PRIVATE _external
@@ -55,12 +51,16 @@ target_include_directories(
           _external/picovg/src
           ${Python3_INCLUDE_DIRS})
 target_compile_definitions(
-  ${PROJECT_NAME} PRIVATE GLEW_BUILD GLEW_STATIC NANOVG_GL3_IMPLEMENTATION
-                          _WIN32 NOMINMAX)
-target_link_libraries(${PROJECT_NAME} PUBLIC Advapi32.lib OPENGL32.lib
-                                             GLU32.lib)
-target_link_directories(${PROJECT_NAME} PUBLIC ${Python3_LIBRARY_DIRS})
-
+  ${PROJECT_NAME}
+  PRIVATE GLEW_BUILD GLEW_STATIC NANOVG_GL3_IMPLEMENTATION
+          "$<$<CXX_COMPILER_ID:MSVC>:_WIN32>"
+          "$<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>")
 if(WIN32)
+  target_link_libraries(${PROJECT_NAME} PUBLIC Advapi32.lib OPENGL32.lib
+                                               GLU32.lib)
   set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".pyd")
+else(WIN32)
+  set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+  target_compile_options(${PROJECT_NAME} PRIVATE "-fpermissive")
 endif(WIN32)
+target_link_directories(${PROJECT_NAME} PUBLIC ${Python3_LIBRARY_DIRS})
