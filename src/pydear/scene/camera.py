@@ -264,6 +264,7 @@ class Camera:
                    left: bool, right: bool, middle: bool):
         self.x = x
         self.y = y
+        self.left = left
         if right:
             if not self.right:
                 self.right = True
@@ -287,6 +288,7 @@ class Camera:
     def mouse_release(self, x: int, y: int):
         self.x = x
         self.y = y
+        self.left = False
 
         if self.right:
             self.right = False
@@ -328,13 +330,3 @@ class Camera:
             -1,
             0)
         return Ray(origin, glm.normalize(dir.xyz))
-
-    # def get_state(self, light: Float4) -> FrameState:
-    #     ray = self.get_mouse_ray()
-    #     return FrameState(
-    #         Float4(0, 0, self.width, self.height),
-    #         self.x, self.y,
-    #         self.left, self.right, self.middle,
-    #         self.view.matrix, self.projection.matrix,
-    #         ray, light
-    #     )

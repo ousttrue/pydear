@@ -115,7 +115,7 @@ class Gizmo:
         self.matrix = glm.mat4()
         self.color = glm.vec4(1, 1, 1, 1)
         # event
-        self.click_left = False
+        self.mouse_clicked = False
 
         self.line_shader: Optional[glo.Shader] = None
         self.line_props = []
@@ -140,7 +140,7 @@ class Gizmo:
         self.matrix = glm.mat4()
         self.color = glm.vec4(1, 1, 1, 1)
         # update
-        self.click_left = self.mouse_down and not mouse_down
+        self.mouse_clicked = self.mouse_down and not mouse_down
 
         self.mouse_x = x
         self.mouse_y = y
@@ -379,7 +379,7 @@ class Gizmo:
             self.color = glm.vec4(0.7, 0.7, 0, 0.7)
         elif self.hover_last == key:
             self.color = glm.vec4(0, 0.7, 0, 0.7)
-            if self.click_left:
+            if self.mouse_clicked:
                 clicked = True
 
         triangles = (
@@ -403,8 +403,6 @@ class Gizmo:
         return clicked
 
     def bone_head_tail(self, key: str, head: glm.vec3, tail: glm.vec3, up: glm.vec3, is_selected=False) -> bool:
-        '''
-        '''
         head_tail = tail - head
         y = glm.normalize(head_tail)
         x = glm.normalize(glm.cross(y, up))
