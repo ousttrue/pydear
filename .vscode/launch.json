@@ -41,10 +41,19 @@
             "justMyCode": false
         },
         {
-            "name": "imnodes",
+            "name": "imnodes_basic",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/nodes/imnodes.py",
+            "program": "${workspaceFolder}/examples/nodes/imnodes_basic.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "imnodes_util",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/nodes/imnodes_util.py",
             "args": [],
             "console": "integratedTerminal",
             "justMyCode": false
