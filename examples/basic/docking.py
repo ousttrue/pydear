@@ -10,13 +10,13 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--ini')
+    parser.add_argument('--ini', type=pathlib.Path)
     args = parser.parse_args()
 
     setting = None
     if args.ini:
         from pydear.utils.setting import TomlSetting
-        setting = TomlSetting(pathlib.Path(args.ini))
+        setting = TomlSetting(args.ini)
 
     from pydear.utils import glfw_app
     app = glfw_app.GlfwApp(
@@ -67,7 +67,6 @@ def main():
         gui.save()
         app.save()
         setting.save()
-    del gui
 
 
 if __name__ == '__main__':

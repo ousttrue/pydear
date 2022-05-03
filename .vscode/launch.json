@@ -57,7 +57,10 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/examples/nodes/imnodes_util.py",
-            "args": [],
+            "args": [
+                "--ini",
+                "imnodes_util.toml",
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
         },

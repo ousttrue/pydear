@@ -1,26 +1,30 @@
+from typing import Optional
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
+from pydear.utils.setting import SettingInterface
 
 
 class NodeEditor:
-    def __init__(self, name: str, *, state: bytes = b'') -> None:
+    def __init__(self, name: str, *, state: bytes = b'', setting: Optional[SettingInterface] = None) -> None:
+        self.settting = setting
         self.name = name
         self.is_initialized = False
-        self.state = state
 
     def __del__(self):
         if self.is_initialized:
-            self.save()
             ImNodes.DestroyContext()
             self.is_initialized = False
 
     def save(self):
-        self.state = ImNodes.SaveCurrentEditorStateToIniString().encode('utf-8')
+        if self.settting:
+            self.settting.save(
+                ImNodes.SaveCurrentEditorStateToIniString().encode('utf-8'))
 
     def load(self):
-        if self.state:
-            ImNodes.LoadCurrentEditorStateFromIniString(
-                self.state, len(self.state))
+        if self.settting:
+            data = self.settting.load()
+            if data:
+                ImNodes.LoadCurrentEditorStateFromIniString(data, len(data))
 
     def show(self, p_open):
         if not p_open[0]:
