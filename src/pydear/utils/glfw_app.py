@@ -28,6 +28,9 @@ class GlfwAppState(NamedTuple):
         return GlfwAppState()
 
 
+SETTING_KEY = 'glfw'
+
+
 class GlfwApp:
     def __init__(self, title: str, *,
                  width=1024, height=768,
@@ -51,7 +54,7 @@ class GlfwApp:
             glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         # glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
 
-        data = self.setting.load() if self.setting else None
+        data = self.setting.load(SETTING_KEY) if self.setting else None
         state = GlfwAppState.load(
             data) if data else GlfwAppState(width, height)
 
@@ -86,7 +89,7 @@ class GlfwApp:
             state = GlfwAppState(self.width, self.height,
                                  self.is_maximized)
             logging.debug(f'save state: {state}')
-            self.setting.save(state.to_json().encode('utf-8'))
+            self.setting.save(SETTING_KEY, state.to_json().encode('utf-8'))
 
     def on_maximized(self, window, maximized):
         self.is_maximized = maximized

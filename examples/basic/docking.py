@@ -20,7 +20,7 @@ def main():
 
     from pydear.utils import glfw_app
     app = glfw_app.GlfwApp(
-        'hello_docking', setting=setting['glfw'] if setting else None)
+        'hello_docking', setting=setting if setting else None)
 
     from pydear.utils import dockspace
     from pydear import imgui as ImGui
@@ -55,7 +55,7 @@ def main():
             print(f'select: {selected}')
 
     gui = dockspace.DockingGui(
-        app.loop, docks=views, menu=menu, modal=modal, setting=setting['imgui'] if setting else None)
+        app.loop, docks=views, menu=menu, modal=modal, setting=setting if setting else None)
 
     from pydear.backends.impl_glfw import ImplGlfwInput
     impl_glfw = ImplGlfwInput(app.window)
@@ -66,7 +66,7 @@ def main():
     if setting:
         gui.save()
         app.save()
-        setting.save()
+        setting.write()
 
 
 if __name__ == '__main__':

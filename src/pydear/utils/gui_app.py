@@ -7,6 +7,8 @@ from OpenGL import GL
 from .setting import SettingInterface
 logger = logging.getLogger(__name__)
 
+SETTING_KEY = 'imgui'
+
 
 class Gui:
     def __init__(self, loop: asyncio.AbstractEventLoop, *,
@@ -21,7 +23,7 @@ class Gui:
         io = ImGui.GetIO()
         if self.setting:
             io.IniFilename = None  # type: ignore
-            data = self.setting.load()
+            data = self.setting.load(SETTING_KEY)
             if data:
                 ImGui.LoadIniSettingsFromMemory(data, len(data))
 
@@ -44,7 +46,7 @@ class Gui:
             p_size = (ctypes.c_int * 1)()
             data = ImGui.SaveIniSettingsToMemory(p_size)
             if p_size[0]:
-                self.setting.save(data.encode('utf-8'))
+                self.setting.save(SETTING_KEY, data.encode('utf-8'))
 
     def __del__(self):
         logging.debug('ImGui.DestroyContext')
