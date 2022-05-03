@@ -136,11 +136,11 @@ def show_docks(views: Iterable[Dock],
 
 
 class DockingGui(gui_app.Gui):
-    def __init__(self, loop: asyncio.AbstractEventLoop, *, docks: List[Dock], menu=None, modal=None, setting=None) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop, *, docks: List[Dock], menu=None, setting=None) -> None:
         def draw():
             show_docks(self.views, menu)
 
-        super().__init__(loop, widgets=draw, modal=modal, setting=setting)
+        super().__init__(loop, widgets=draw, setting=setting)
 
         io = ImGui.GetIO()
         io.ConfigFlags |= ImGui.ImGuiConfigFlags_.DockingEnable

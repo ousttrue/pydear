@@ -1,18 +1,20 @@
 from typing import Dict, Optional
+import asyncio
 import pathlib
 import ctypes
 import pydear.imgui as ImGui
 
 
 class Dialog:
-    def __init__(self, name: str, path: pathlib.Path):
+    def __init__(self, loop: asyncio.AbstractEventLoop, name: str, path: pathlib.Path):
+        self.future = loop.create_future()
         self.name = name
         self.path = path
         self.is_open = False
         self.selected = None
         self.p_open = (ctypes.c_bool * 1)(True)
 
-    def show(self):
+    def __call__(self):
         if not self.is_open:
             ImGui.OpenPopup(self.name)
             self.is_open = True
@@ -21,6 +23,7 @@ class Dialog:
         center = ImGui.GetMainViewport().GetCenter()
         ImGui.SetNextWindowPos(center, ImGui.ImGuiCond_.Appearing, (0.5, 0.5))
 
+        is_closed = False
         selected = None
         if ImGui.BeginPopupModal(self.name, self.p_open):
 
@@ -41,14 +44,31 @@ class Dialog:
             ImGui.NextColumn()
             ImGui.Separator()
 
-            selected = self.show_files()
+            selected = self._show_files()
 
             ImGui.EndChild()
 
             if ImGui.Button("Close", (120, 0)) or selected:
                 ImGui.CloseCurrentPopup()
+                is_closed = True
 
             ImGui.EndPopup()
+
+        if is_closed:
+            from .import modal
+            modal.remove(self)
+            self.future.set_result(selected)
+
+    def _show_files(self) -> Optional[pathlib.Path]:
+        selected = None
+        # parent
+        self._show_file(self.path.parent, '..')
+
+        # files
+        for f in self.path.iterdir():
+            match self._show_file(f):
+                case pathlib.Path() as selected:
+                    pass
 
         return selected
 
@@ -72,28 +92,14 @@ class Dialog:
         ImGui.NextColumn()
         return selected
 
-    def show_files(self) -> Optional[pathlib.Path]:
-        selected = None
-        # parent
-        self._show_file(self.path.parent, '..')
 
-        # files
-        for f in self.path.iterdir():
-            match self._show_file(f):
-                case pathlib.Path() as selected:
-                    pass
-
-        return selected
+FILE_DIALOG = 'ModalFileDialog'
 
 
-POPUP: Dict[str, Dialog] = {}
-
-
-def open(name: str, path: pathlib.Path = pathlib.Path('.').absolute()):
-    POPUP[name] = Dialog(name, path)
-
-
-def modal(name: str) -> Optional[pathlib.Path]:
-    state = POPUP.get(name)
-    if state:
-        return state.show()
+def open_async(loop: asyncio.AbstractEventLoop, path: Optional[pathlib.Path] = None):
+    if not path:
+        path = pathlib.Path('.').absolute()
+    dialog = Dialog(loop, FILE_DIALOG, path)
+    from . import modal
+    modal.push(dialog)
+    return dialog.future

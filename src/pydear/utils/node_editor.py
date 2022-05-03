@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple, TypedDict
+from typing import Optional, List, Tuple, TypedDict, Dict
 import ctypes
 import json
 from pydear import imgui as ImGui
@@ -190,11 +190,39 @@ class NodeEditor:
         self.start_attr = (ctypes.c_int * 1)()
         self.end_attr = (ctypes.c_int * 1)()
         self.graph = Graph()
+        self.input_pin_map: Dict[int, Tuple[Node, OutputPin]] = {}
+        self.output_pin_map: Dict[int, Tuple[Node, InputPin]] = {}
+        self.process_frame = 0
 
     def __del__(self):
         if self.is_initialized:
             ImNodes.DestroyContext()
             self.is_initialized = False
+
+    def find_output(self, output_id: int) -> Tuple[Node, OutputPin]:
+        for node in self.graph.nodes:
+            for output in node.outputs:
+                if output.id == output_id:
+                    return node, output
+        raise KeyError()
+
+    def find_input(self, input_id: int) -> Tuple[Node, InputPin]:
+        for node in self.graph.nodes:
+            for input in node.inputs:
+                if input.id == input_id:
+                    return node, input
+        raise KeyError()
+
+    def connect(self, output_id: int, input_id: int):
+        self.graph.links.append((output_id, input_id))
+        self.input_pin_map[input_id] = self.find_output(output_id)
+        self.output_pin_map[output_id] = self.find_input(input_id)
+
+    def disconnect(self, link_index: int):
+        output_id, input_id = self.graph.links[link_index]
+        del self.graph.links[link_index]
+        del self.input_pin_map[input_id]
+        del self.output_pin_map[output_id]
 
     def save(self):
         if self.settting:

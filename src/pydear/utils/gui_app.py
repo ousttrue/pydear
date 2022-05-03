@@ -13,7 +13,6 @@ SETTING_KEY = 'imgui'
 class Gui:
     def __init__(self, loop: asyncio.AbstractEventLoop, *,
                  widgets: Optional[Callable[[], None]] = None,
-                 modal: Optional[Callable[[], None]] = None,
                  setting: Optional[BinSetting] = None
                  ) -> None:
         self.setting = setting
@@ -37,9 +36,6 @@ class Gui:
         if not widgets:
             widgets = empty
         self._widgets: Callable[[], None] = widgets
-        if not modal:
-            modal = empty
-        self._modal: Callable[[], None] = modal
 
     def save(self):
         if self.setting:
@@ -61,7 +57,8 @@ class Gui:
         ImGui.NewFrame()
 
         self._widgets()
-        self._modal()
+        from .import modal
+        modal.show()
 
         ImGui.Render()
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0)

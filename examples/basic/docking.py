@@ -3,8 +3,6 @@ import pathlib
 import argparse
 logger = logging.getLogger(__name__)
 
-FILE_DIALOG = 'ModalFileDialog'
-
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
@@ -41,21 +39,18 @@ def main():
                        (ctypes.c_bool * 1)(True)),
     ]
 
-    from pydear.utils import filedialog
-
     def menu():
         if ImGui.BeginMenu(b"File", True):
             if ImGui.MenuItem('open'):
-                filedialog.open(FILE_DIALOG)
+                async def open_task():
+                    from pydear.utils import filedialog
+                    selected = await filedialog.open_async(app.loop)
+                    print(f'select: {selected}')
+                app.loop.create_task(open_task())
             ImGui.EndMenu()
 
-    def modal():
-        selected = filedialog.modal(FILE_DIALOG)
-        if selected:
-            print(f'select: {selected}')
-
     gui = dockspace.DockingGui(
-        app.loop, docks=views, menu=menu, modal=modal, setting=setting if setting else None)
+        app.loop, docks=views, menu=menu, setting=setting if setting else None)
 
     from pydear.backends.impl_glfw import ImplGlfwInput
     impl_glfw = ImplGlfwInput(app.window)
