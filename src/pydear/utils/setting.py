@@ -64,11 +64,13 @@ class TomlSetting:
     def save(self):
         LOGGER.debug(f'TomlSetting:save: {self.path}')
         data = {}
-        for k, v in self.data.items():
-            value = v.load()
-            if value:
-                data[k] = value.decode('utf-8')
-        self.path.write_text(toml.dumps(data), encoding='utf-8')
+        # self.path.write_text(toml.dumps(data), encoding='utf-8')
+        with self.path.open('w', encoding='utf-8') as w:
+            for k, v in self.data.items():
+                value = v.load()
+                if value:
+                    value = value.decode('utf-8')
+                    w.write(f"{k} = '''\n{value}\n'''\n\n")
 
     def __getitem__(self, key: str) -> BytesSetting:
         value = self.data.get(key)

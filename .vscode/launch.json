@@ -29,7 +29,7 @@
             "program": "${workspaceFolder}/examples/basic/docking.py",
             "args": [
                 "--ini",
-                "docking.ini",
+                "docking.toml",
             ],
             "console": "integratedTerminal",
             "justMyCode": false
