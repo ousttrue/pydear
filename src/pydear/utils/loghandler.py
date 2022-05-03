@@ -1,4 +1,4 @@
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Optional
 import logging
 import ctypes
 from pydear import imgui as ImGui
@@ -34,7 +34,10 @@ class ImGuiLogHandler(logging.Handler):
     def write(self, m):
         pass
 
-    def show(self, p_open: ctypes.Array):
+    def show(self, p_open: Optional[ctypes.Array]):
+        if p_open and not p_open[0]:
+            return
+
         if ImGui.Begin('log', p_open):
             # Options menu
             if ImGui.BeginPopup("Options"):

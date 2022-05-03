@@ -271,10 +271,6 @@ EXCLUDE_FUNCS = (
     'SetTooltipV',
     'LogTextV',
     'TextColoredV',
-    # fp
-    'SaveIniSettingsToMemory',
-    'SaveEditorStateToIniString',
-    'SaveCurrentEditorStateToIniString',
 )
 
 def is_exclude_function(func: FunctionCursor) -> bool:        

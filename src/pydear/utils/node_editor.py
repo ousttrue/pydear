@@ -177,10 +177,59 @@ class NodeEditor:
         }
 
     def before_node_editor(self):
-        pass
+        '''
+        this is sample
+        '''
+        ImGui.TextUnformatted("Right click -- add node")
+        ImGui.TextUnformatted("X -- delete selected node")
 
     def on_node_editor(self):
-        pass
+        '''
+        this is sample
+        '''
+        open_popup = False
+        if (ImGui.IsWindowFocused(ImGui.ImGuiFocusedFlags_.RootAndChildWindows) and
+                ImNodes.IsEditorHovered()):
+            if ImGui.IsMouseClicked(1):
+                open_popup = True
+
+        ImGui.PushStyleVar_2(ImGui.ImGuiStyleVar_.WindowPadding, (8, 8))
+        if not ImGui.IsAnyItemHovered() and open_popup:
+            ImGui.OpenPopup("add node")
+
+        if ImGui.BeginPopup("add node"):
+            click_pos = ImGui.GetMousePosOnOpeningCurrentPopup()
+            if ImGui.MenuItem("add"):
+                node = Node('add',
+                            [InputPin('a'), InputPin('b')],
+                            [OutputPin('value')])
+                self.nodes.append(node)
+                ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
+
+            if ImGui.MenuItem("multiply"):
+                node = Node('mult',
+                            [InputPin('a'), InputPin('b')],
+                            [OutputPin('value')])
+                self.nodes.append(node)
+                ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
+
+            if ImGui.MenuItem("output"):
+                node = Node('output', [InputPin('value')], [])
+                self.nodes.append(node)
+                ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
+
+            if ImGui.MenuItem("sine"):
+                node = Node('sine', [], [OutputPin('value')])
+                self.nodes.append(node)
+                ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
+
+            if ImGui.MenuItem("time"):
+                node = Node('time', [], [OutputPin('value')])
+                self.nodes.append(node)
+                ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
+
+            ImGui.EndPopup()
+        ImGui.PopStyleVar()
 
     def show(self, p_open):
         if not p_open[0]:
