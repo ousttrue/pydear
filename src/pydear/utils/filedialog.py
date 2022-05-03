@@ -22,6 +22,7 @@ class Dialog:
         # Always center this window when appearing
         center = ImGui.GetMainViewport().GetCenter()
         ImGui.SetNextWindowPos(center, ImGui.ImGuiCond_.Appearing, (0.5, 0.5))
+        ImGui.SetNextWindowSize((700, 500), ImGui.ImGuiCond_.FirstUseEver)
 
         is_closed = False
         selected = None
@@ -54,10 +55,11 @@ class Dialog:
 
             ImGui.EndPopup()
 
-        if is_closed:
+        if is_closed or not self.p_open[0]:
             from .import modal
             modal.remove(self)
             self.future.set_result(selected)
+            self.is_open = False
 
     def _show_files(self) -> Optional[pathlib.Path]:
         selected = None

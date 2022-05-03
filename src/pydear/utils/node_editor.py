@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple, TypedDict, Dict
+from typing import Optional, List, Tuple, TypedDict, Dict, Callable
 import ctypes
 import json
 from pydear import imgui as ImGui
@@ -35,13 +35,14 @@ class InputPin:
 
 
 class OutputPin:
-    def __init__(self, id: int, name: str) -> None:
+    def __init__(self, id: int, name: str, process: Callable[[InputPin], None]) -> None:
         self.id = id
         self.name = name
+        self.process = process
 
-    def show(self):
+    def show(self, indent: int):
         ImNodes.BeginOutputAttribute(self.id)
-        ImGui.Indent(40)
+        ImGui.Indent(indent)
         ImGui.Text(self.name)
         ImNodes.EndOutputAttribute()
 
@@ -53,6 +54,9 @@ class Node:
         self.inputs = inputs
         self.outputs = outputs
 
+    def get_right_indent(self) -> int:
+        return 40
+
     def contains(self, link: Tuple[int, int]) -> bool:
         for input in self.inputs:
             if input.id in link:
@@ -62,50 +66,25 @@ class Node:
                 return True
         return False
 
-    def show(self):
+    def show(self, graph):
         ImNodes.BeginNode(self.id)
 
         ImNodes.BeginNodeTitleBar()
         ImGui.TextUnformatted(self.title)
         ImNodes.EndNodeTitleBar()
 
-        self.show_content()
+        self.show_content(graph)
 
         for input in self.inputs:
             input.show()
 
         for output in self.outputs:
-            output.show()
+            output.show(self.get_right_indent())
 
         ImNodes.EndNode()
 
-    def show_content(self):
+    def show_content(self, graph):
         pass
-
-
-# class InputPin:
-#     def __init__(self, name: str) -> None:
-#         self.id = ID_GEN()
-#         self.name = name
-#         self.value: Any = None
-
-#     def show(self):
-#         ImNodes.BeginInputAttribute(self.id)
-#         ImGui.Text(self.name)
-#         ImNodes.EndInputAttribute()
-
-
-# class OutputPin:
-#     def __init__(self, name: str, process: Callable[[InputPin], None]) -> None:
-#         self.id = ID_GEN()
-#         self.name = name
-#         self.process = process
-
-#     def show(self):
-#         ImNodes.BeginOutputAttribute(self.id)
-#         ImGui.Indent(40)
-#         ImGui.Text(self.name)
-#         ImNodes.EndOutputAttribute()
 
 
 # class Node:
@@ -127,12 +106,10 @@ class Node:
 #             if output.id in ontput_pin_map:
 #                 return True
 #         return False
-
 #     def process(self, process_frame: int, input_pin_map: Dict[int, Tuple['Node', OutputPin]]):
 #         if process_frame == self.process_frame:
 #             return
 #         self.process_frame = process_frame
-
 #         # update upstream
 #         for in_pin in self.inputs:
 #             match input_pin_map.get(in_pin.id):
@@ -141,10 +118,8 @@ class Node:
 #                     out_pin.process(in_pin)
 #                 case _:
 #                     in_pin.value = None
-
 #         # self
 #         self.process_self()
-
 #     def process_self(self):
 #         pass
 #
@@ -325,7 +300,7 @@ class NodeEditor:
             self.on_node_editor()
 
             for node in self.graph.nodes:
-                node.show()
+                node.show(self.graph)
 
             for i, (begin, end) in enumerate(self.graph.links):
                 ImNodes.Link(i, begin, end)
