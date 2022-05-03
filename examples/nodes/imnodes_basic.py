@@ -1,6 +1,6 @@
 import logging
 from pydear import imgui as ImGui
-from pydear.impl import imnodes as ImNodes
+from pydear import imnodes as ImNodes
 logger = logging.getLogger(__name__)
 
 
@@ -8,7 +8,7 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
 
     from pydear.utils import glfw_app
-    app = glfw_app.GlfwApp('hello')
+    app = glfw_app.GlfwApp('imnodes_basic')
 
     def hello():
         ImGui.ShowDemoWindow()

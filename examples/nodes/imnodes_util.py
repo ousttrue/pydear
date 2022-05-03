@@ -1,6 +1,5 @@
 import logging
-from pydear import imgui as ImGui
-from pydear.impl import imnodes as ImNodes
+import ctypes
 logger = logging.getLogger(__name__)
 
 
@@ -8,46 +7,21 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
 
     from pydear.utils import glfw_app
-    app = glfw_app.GlfwApp('hello')
+    app = glfw_app.GlfwApp('imnodes_util')
 
-    def hello():
-        ImGui.ShowDemoWindow()
+    from node_editor import NodeEditor
+    node_editor = NodeEditor('nodes')
+    from pydear.utils import dockspace
+    docks = [
+        dockspace.Dock('', node_editor.show, (ctypes.c_bool * 1)(True))
+    ]
 
-        ImGui.ShowMetricsWindow()
-
-        if ImGui.Begin("simple node editor"):
-
-            ImNodes.BeginNodeEditor()
-            ImNodes.BeginNode(1)
-
-            ImNodes.BeginNodeTitleBar()
-            ImGui.TextUnformatted("simple node :)")
-            ImNodes.EndNodeTitleBar()
-
-            ImNodes.BeginInputAttribute(2)
-            ImGui.Text("input")
-            ImNodes.EndInputAttribute()
-
-            ImNodes.BeginOutputAttribute(3)
-            ImGui.Indent(40)
-            ImGui.Text("output")
-            ImNodes.EndOutputAttribute()
-
-            ImNodes.EndNode()
-            ImNodes.EndNodeEditor()
-
-        ImGui.End()
-
-    ImNodes.CreateContext()
-
-    from pydear.utils import gui_app
-    gui = gui_app.Gui(app.loop, widgets=hello)
+    gui = dockspace.DockingGui(app.loop, docks=docks)
     from pydear.backends import impl_glfw
     impl_glfw = impl_glfw.ImplGlfwInput(app.window)
     while app.clear():
         impl_glfw.process_inputs()
         gui.render()
-    ImNodes.DestroyContext()
     del gui
 
 
