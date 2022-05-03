@@ -15,8 +15,8 @@ def main():
 
     setting = None
     if args.ini:
-        from pydear.utils.setting import TomlSetting
-        setting = TomlSetting(args.ini)
+        from pydear.utils.setting import BinSetting
+        setting = BinSetting(args.ini)
 
     from pydear.utils import glfw_app
     app = glfw_app.GlfwApp(
@@ -66,7 +66,7 @@ def main():
     if setting:
         gui.save()
         app.save()
-        setting.write()
+        setting.save()
 
 
 if __name__ == '__main__':

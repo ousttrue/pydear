@@ -14,15 +14,15 @@ def main():
 
     setting = None
     if args.ini:
-        from pydear.utils.setting import TomlSetting
-        setting = TomlSetting(args.ini)
+        from pydear.utils.setting import BinSetting
+        setting = BinSetting(args.ini)
 
     from pydear.utils import glfw_app
     app = glfw_app.GlfwApp(
         'imnodes_util', setting=setting if setting else None)
 
     from pydear.utils.node_editor import NodeEditor
-    node_editor = NodeEditor('sample node editor',
+    node_editor = NodeEditor('imnodes_util_editor',
                              setting=setting if setting else None)
     from pydear.utils import dockspace
     docks = [
@@ -41,7 +41,7 @@ def main():
         node_editor.save()
         gui.save()
         app.save()
-        setting.write()
+        setting.save()
 
 
 if __name__ == '__main__':

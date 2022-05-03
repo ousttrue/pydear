@@ -1,65 +1,71 @@
 from typing import Optional, Dict
+import struct
 import logging
-import abc
 import pathlib
-import toml
+
 
 LOGGER = logging.getLogger(__name__)
 
 
-class SettingInterface(abc.ABC):
-    @abc.abstractmethod
-    def save(self, key: str, data: bytes):
-        pass
+class BinReader:
+    def __init__(self, data: bytes) -> None:
+        self.data = data
+        self.pos = 0
 
-    @abc.abstractmethod
-    def load(self, key: str) -> Optional[bytes]:
-        pass
+    def bytes(self, len: int) -> bytes:
+        data = self.data[self.pos:self.pos+len]
+        self.pos += len
+        return data
 
+    def str(self, len: int, encoding: str) -> str:
+        data = self.bytes(len)
+        return data.decode(encoding=encoding)
 
-class FileSetting(SettingInterface):
-    def __init__(self, path: pathlib.Path) -> None:
-        super().__init__()
-        self.path = path
-
-    def save(self, _: str, data: bytes):
-        LOGGER.debug(f'FileSetting:save')
-        self.path.write_bytes(data)
-
-    def load(self, _: str) -> Optional[bytes]:
-        LOGGER.debug(f'FileSetting:load')
-        if self.path.exists():
-            return self.path.read_bytes()
+    def int32(self) -> int:
+        data = self.bytes(4)
+        return struct.unpack('i', data)[0]
 
 
-class TomlSetting(SettingInterface):
+class BinSetting:
     def __init__(self, path: pathlib.Path) -> None:
         super().__init__()
         self.path = path
         self.data: Dict[str, bytes] = {}
+        self.load()
+
+    def save(self):
+        LOGGER.debug(f'TomlSetting:save: {self.path}')
+        data = {}
+        with self.path.open('wb') as w:
+            for k, v in self.data.items():
+                # key
+                key_bytes = k.encode('utf-8')
+                w.write(struct.pack('i', len(key_bytes)))
+                w.write(key_bytes)
+                # value
+                w.write(struct.pack('i', len(v)))
+                w.write(v)
+
+    def load(self):
         if self.path.exists():
             try:
-                data = toml.load(self.path)
-                LOGGER.debug(f'TomlSetting:load')
-                for k, v in data.items():
-                    assert isinstance(v, str)
-                    self.data[k] = v.encode('utf-8')
+                data = self.path.read_bytes()
+                LOGGER.debug(f'BinSetting:load')
+                r = BinReader(data)
+                while True:
+                    key_size = r.int32()
+                    key = r.str(key_size, encoding='utf-8')
+                    value_size = r.int32()
+                    value = r.bytes(value_size)
+                    self.data[key] = value
             except:
                 pass
 
-    def save(self, key: str, data: bytes):
+    def __setitem__(self, key: str, data: bytes):
         LOGGER.debug(f'FileSetting:save')
+        assert isinstance(data, bytes)
         self.data[key] = data
 
-    def load(self, key: str) -> Optional[bytes]:
+    def __getitem__(self, key: str) -> Optional[bytes]:
         LOGGER.debug(f'FileSetting:load')
         return self.data.get(key)
-
-    def write(self):
-        LOGGER.debug(f'TomlSetting:save: {self.path}')
-        data = {}
-        # self.path.write_text(toml.dumps(data), encoding='utf-8')
-        with self.path.open('w', encoding='utf-8') as w:
-            for k, v in self.data.items():
-                value = v.decode('utf-8')
-                w.write(f"{k} = '''\n{value}\n'''\n\n")

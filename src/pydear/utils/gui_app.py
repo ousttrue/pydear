@@ -4,7 +4,7 @@ import asyncio
 import logging
 from pydear import imgui as ImGui
 from OpenGL import GL
-from .setting import SettingInterface
+from .setting import BinSetting
 logger = logging.getLogger(__name__)
 
 SETTING_KEY = 'imgui'
@@ -14,7 +14,7 @@ class Gui:
     def __init__(self, loop: asyncio.AbstractEventLoop, *,
                  widgets: Optional[Callable[[], None]] = None,
                  modal: Optional[Callable[[], None]] = None,
-                 setting: Optional[SettingInterface] = None
+                 setting: Optional[BinSetting] = None
                  ) -> None:
         self.setting = setting
         self.loop = loop
@@ -23,7 +23,7 @@ class Gui:
         io = ImGui.GetIO()
         if self.setting:
             io.IniFilename = None  # type: ignore
-            data = self.setting.load(SETTING_KEY)
+            data = self.setting[SETTING_KEY]
             if data:
                 ImGui.LoadIniSettingsFromMemory(data, len(data))
 
@@ -46,7 +46,7 @@ class Gui:
             p_size = (ctypes.c_int * 1)()
             data = ImGui.SaveIniSettingsToMemory(p_size)
             if p_size[0]:
-                self.setting.save(SETTING_KEY, data.encode('utf-8'))
+                self.setting[SETTING_KEY] = data.encode('utf-8')
 
     def __del__(self):
         logging.debug('ImGui.DestroyContext')

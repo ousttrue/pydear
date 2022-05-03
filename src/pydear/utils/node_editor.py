@@ -3,7 +3,7 @@ import ctypes
 import json
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
-from pydear.utils.setting import SettingInterface
+from pydear.utils.setting import BinSetting
 
 
 class IdGenerator:
@@ -100,28 +100,83 @@ class Node:
                 return True
         return False
 
-    def show(self):
-        ImNodes.BeginNode(self.id)
 
-        ImNodes.BeginNodeTitleBar()
-        ImGui.TextUnformatted(self.title)
-        ImNodes.EndNodeTitleBar()
+# class InputPin:
+#     def __init__(self, name: str) -> None:
+#         self.id = ID_GEN()
+#         self.name = name
+#         self.value: Any = None
 
-        for input in self.inputs:
-            input.show()
-
-        for output in self.outputs:
-            output.show()
-
-        ImNodes.EndNode()
+#     def show(self):
+#         ImNodes.BeginInputAttribute(self.id)
+#         ImGui.Text(self.name)
+#         ImNodes.EndInputAttribute()
 
 
+# class OutputPin:
+#     def __init__(self, name: str, process: Callable[[InputPin], None]) -> None:
+#         self.id = ID_GEN()
+#         self.name = name
+#         self.process = process
+
+#     def show(self):
+#         ImNodes.BeginOutputAttribute(self.id)
+#         ImGui.Indent(40)
+#         ImGui.Text(self.name)
+#         ImNodes.EndOutputAttribute()
+
+
+# class Node:
+#     def __init__(self, name: str) -> None:
+#         self.process_frame = -1
+#         self.id = ID_GEN()
+#         self.name = name
+#         self.inputs: List[InputPin] = []
+#         self.outputs: List[OutputPin] = []
+
+#     def has_connected_input(self, input_pin_map: Dict[int, Tuple['Node', OutputPin]]) -> bool:
+#         for input in self.inputs:
+#             if input.id in input_pin_map:
+#                 return True
+#         return False
+
+#     def has_connected_output(self, ontput_pin_map: Dict[int, Tuple['Node', InputPin]]) -> bool:
+#         for output in self.outputs:
+#             if output.id in ontput_pin_map:
+#                 return True
+#         return False
+
+#     def process(self, process_frame: int, input_pin_map: Dict[int, Tuple['Node', OutputPin]]):
+#         if process_frame == self.process_frame:
+#             return
+#         self.process_frame = process_frame
+
+#         # update upstream
+#         for in_pin in self.inputs:
+#             match input_pin_map.get(in_pin.id):
+#                 case (out_node, out_pin):
+#                     out_node.process(process_frame, input_pin_map)
+#                     out_pin.process(in_pin)
+#                 case _:
+#                     in_pin.value = None
+
+#         # self
+#         self.process_self()
+
+#     def process_self(self):
+#         pass
+#
+#
 SETTING_KEY = 'imnodes'
 SETTING_GRAPH_KEY = 'imnodes_graph'
 
 
 class NodeEditor:
-    def __init__(self, name: str, *, setting: Optional[SettingInterface] = None) -> None:
+    '''
+    TODO: undo, redo
+    '''
+
+    def __init__(self, name: str, *, setting: Optional[BinSetting] = None) -> None:
         self.settting = setting
         self.name = name
         self.is_initialized = False
@@ -150,17 +205,17 @@ class NodeEditor:
 
     def save(self):
         if self.settting:
-            self.settting.save(SETTING_KEY,
-                               ImNodes.SaveCurrentEditorStateToIniString().encode('utf-8'))
-            self.settting.save(SETTING_GRAPH_KEY,
-                               json.dumps(self.dump_graph()).encode('utf-8'))
+            self.settting[SETTING_KEY] = ImNodes.SaveCurrentEditorStateToIniString().encode(
+                'utf-8')
+            self.settting[SETTING_GRAPH_KEY] = json.dumps(
+                self.dump_graph()).encode('utf-8')
 
     def load(self):
         if self.settting:
-            data = self.settting.load(SETTING_KEY)
+            data = self.settting[SETTING_KEY]
             if data:
                 ImNodes.LoadCurrentEditorStateFromIniString(data, len(data))
-            graph_data = self.settting.load(SETTING_GRAPH_KEY)
+            graph_data = self.settting[SETTING_GRAPH_KEY]
             if graph_data:
                 graph = json.loads(graph_data)
                 for node in graph.get('nodes', []):
@@ -251,7 +306,7 @@ class NodeEditor:
             self.on_node_editor()
 
             for node in self.nodes:
-                node.show()
+                self.show_node(node)
 
             for i, (begin, end) in enumerate(self.links):
                 ImNodes.Link(i, begin, end)
@@ -283,3 +338,23 @@ class NodeEditor:
                     self.remove_node(node_id)
 
         ImGui.End()
+
+    def show_node(self, node: Node):
+        ImNodes.BeginNode(node.id)
+
+        ImNodes.BeginNodeTitleBar()
+        ImGui.TextUnformatted(node.title)
+        ImNodes.EndNodeTitleBar()
+
+        self.show_node_content(node)
+
+        for input in node.inputs:
+            input.show()
+
+        for output in node.outputs:
+            output.show()
+
+        ImNodes.EndNode()
+
+    def show_node_content(self, node: Node):
+        pass

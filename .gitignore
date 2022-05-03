@@ -24,5 +24,4 @@
 /cpp_src/
 /docs/autodoc/
 *.ini
-docking.toml
-imnodes_util.toml
+*.dat

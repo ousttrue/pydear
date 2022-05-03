@@ -5,7 +5,7 @@ import logging
 import glfw
 from OpenGL import GL
 import ctypes
-from .setting import SettingInterface
+from .setting import BinSetting
 logger = logging.getLogger(__name__)
 
 
@@ -35,7 +35,7 @@ class GlfwApp:
     def __init__(self, title: str, *,
                  width=1024, height=768,
                  gl_major=4, gl_minor=3, use_core_profile=True,
-                 use_vsync=True, setting: Optional[SettingInterface] = None) -> None:
+                 use_vsync=True, setting: Optional[BinSetting] = None) -> None:
 
         self.setting = setting
         self.loop = asyncio.get_event_loop()
@@ -54,7 +54,7 @@ class GlfwApp:
             glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         # glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
 
-        data = self.setting.load(SETTING_KEY) if self.setting else None
+        data = self.setting[SETTING_KEY] if self.setting else None
         state = GlfwAppState.load(
             data) if data else GlfwAppState(width, height)
 
@@ -89,7 +89,7 @@ class GlfwApp:
             state = GlfwAppState(self.width, self.height,
                                  self.is_maximized)
             logging.debug(f'save state: {state}')
-            self.setting.save(SETTING_KEY, state.to_json().encode('utf-8'))
+            self.setting[SETTING_KEY] = state.to_json().encode('utf-8')
 
     def on_maximized(self, window, maximized):
         self.is_maximized = maximized
