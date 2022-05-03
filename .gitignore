@@ -15,7 +15,6 @@
 /build/
 /dist/
 /.eggs/
-imgui.ini
 /html/
 *.pdb
 /.venv/
@@ -23,5 +22,5 @@ imgui.ini
 /tile_cache/
 /.cache/
 /cpp_src/
-glfw.ini
 /docs/autodoc/
+*.ini

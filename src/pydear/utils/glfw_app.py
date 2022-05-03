@@ -1,11 +1,11 @@
 from typing import Tuple, NamedTuple, Optional
 import asyncio
 import json
-import pathlib
 import logging
 import glfw
 from OpenGL import GL
 import ctypes
+from .setting import SettingInterface
 logger = logging.getLogger(__name__)
 
 
@@ -14,31 +14,27 @@ class GlfwAppState(NamedTuple):
     height: int = 768
     is_maximized: bool = False
 
-    def save(self, ini_file: Optional[pathlib.Path]):
-        if not ini_file:
-            return
-        with ini_file.open('w') as w:
-            logger.debug(f'save: {ini_file}')
-            json.dump(self._asdict(), w)
+    def to_json(self) -> str:
+        return json.dumps(self._asdict())
 
     @staticmethod
-    def load(ini_file: pathlib.Path) -> 'GlfwAppState':
-        if ini_file.exists():
-            try:
-                state = GlfwAppState(**json.loads(ini_file.read_bytes()))
-                logger.debug(f'load: {ini_file}')
-                return state
-            except:
-                pass
+    def load(data: bytes) -> 'GlfwAppState':
+        try:
+            state = GlfwAppState(**json.loads(data))
+            logger.debug(f'load: ini')
+            return state
+        except:
+            pass
         return GlfwAppState()
 
 
 class GlfwApp:
     def __init__(self, title: str, *,
-                 width=None, height=None,
+                 width=1024, height=768,
                  gl_major=4, gl_minor=3, use_core_profile=True,
-                 use_vsync=True, ini_file=pathlib.Path('glfw.ini')) -> None:
+                 use_vsync=True, setting: Optional[SettingInterface] = None) -> None:
 
+        self.setting = setting
         self.loop = asyncio.get_event_loop()
 
         def glfw_error_callback(error: int, description: str):
@@ -55,8 +51,9 @@ class GlfwApp:
             glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         # glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
 
-        self.ini_file = ini_file
-        state = GlfwAppState.load(ini_file)
+        data = self.setting.load() if self.setting else None
+        state = GlfwAppState.load(
+            data) if data else GlfwAppState(width, height)
 
         self.window: glfw._GLFWwindow = glfw.create_window(
             state.width, state.height, title, None, None)
@@ -83,20 +80,13 @@ class GlfwApp:
         logging.debug(GL.glGetString(GL.GL_VERSION))
         self.clear_color = (ctypes.c_float * 4)(0.5, 0.5, 0.8, 1)
 
-    def __del__(self):
-        # save state
-        state = GlfwAppState(self.width, self.height,
-                             self.is_maximized)
-        logging.debug(f'save state: {state}')
-        state.save(self.ini_file)
-        # Called first for some reason. Can't be released
-        # glfw.destroy_window(self.window)
-        # glfw.terminate()
-
-    # def on_size(self, window, w, h):
-    #     logger.debug(f'on_size: {w} x {h}')
-    #     self.width = w
-    #     self.height = h
+    def save(self):
+        if self.setting:
+            # save state
+            state = GlfwAppState(self.width, self.height,
+                                 self.is_maximized)
+            logging.debug(f'save state: {state}')
+            self.setting.save(state.to_json().encode('utf-8'))
 
     def on_maximized(self, window, maximized):
         self.is_maximized = maximized

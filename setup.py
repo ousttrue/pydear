@@ -352,7 +352,7 @@ setuptools.setup(
     url='https://github.com/ousttrue/pydear',
     package_dir={'': 'src'},
     include_package_data=True,
-    install_requires=["PyGLM", "glfw"],
+    install_requires=["PyGLM", "glfw", "toml"],
     packages=[
         'pydear',
         'pydear.backends',

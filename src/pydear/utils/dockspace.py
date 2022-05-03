@@ -71,7 +71,7 @@ def _dockspace(name: str, toolbar_size=0):
 @dataclasses.dataclass
 class Dock:
     name: str
-    drawable: Callable[[ctypes.Array], None]
+    drawable: Callable[[Optional[ctypes.Array]], None]
     # use: (ctypes.c_bool * 1)()
     p_open: Optional[ctypes.Array] = None
 
@@ -83,8 +83,8 @@ TOOLBAR_SIZE = 50
 
 
 def show_docks(views: Iterable[Dock],
-               menu: Callable[[], None] = None,
-               toolbar: Callable[[], None] = None,
+               menu: Optional[Callable[[], None]] = None,
+               toolbar: Optional[Callable[[], None]] = None,
                ):
     menubar_height = _dockspace(
         '__DOCKING_SPACE__', TOOLBAR_SIZE if toolbar else 0)
@@ -136,11 +136,11 @@ def show_docks(views: Iterable[Dock],
 
 
 class DockingGui(gui_app.Gui):
-    def __init__(self, loop: asyncio.AbstractEventLoop, *, docks: List[Dock], menu=None, modal=None) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop, *, docks: List[Dock], menu=None, modal=None, setting=None) -> None:
         def draw():
             show_docks(self.views, menu)
 
-        super().__init__(loop, widgets=draw, modal=modal)
+        super().__init__(loop, widgets=draw, modal=modal, setting=setting)
 
         io = ImGui.GetIO()
         io.ConfigFlags |= ImGui.ImGuiConfigFlags_.DockingEnable

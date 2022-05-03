@@ -27,7 +27,10 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/examples/basic/docking.py",
-            "args": [],
+            "args": [
+                "--ini",
+                "docking.ini",
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
         },
