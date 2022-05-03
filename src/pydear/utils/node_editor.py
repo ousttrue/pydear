@@ -68,12 +68,11 @@ class OutputPin:
 
 
 class Node:
-    def __init__(self, title: str, *, id=None, inputs=None, outputs=None) -> None:
+    def __init__(self, title: str, inputs: List[InputPin], outputs: List[OutputPin], *, id=None) -> None:
         self.id = id if isinstance(id, int) else NEXT_ID()
         self.title = title
-        self.inputs: List[InputPin] = inputs if inputs else [InputPin('input')]
-        self.outputs: List[OutputPin] = outputs if outputs else [
-            OutputPin('output')]
+        self.inputs = inputs
+        self.outputs = outputs
 
     @staticmethod
     def load(value: NodeData) -> 'Node':
@@ -122,7 +121,7 @@ SETTING_GRAPH_KEY = 'imnodes_graph'
 
 
 class NodeEditor:
-    def __init__(self, name: str, *, state: bytes = b'', setting: Optional[SettingInterface] = None) -> None:
+    def __init__(self, name: str, *, setting: Optional[SettingInterface] = None) -> None:
         self.settting = setting
         self.name = name
         self.is_initialized = False
@@ -177,46 +176,11 @@ class NodeEditor:
             'next_id': NEXT_ID.next_id,
         }
 
-    def popup_menu(self):
-        open_popup = False
-        if (ImGui.IsWindowFocused(ImGui.ImGuiFocusedFlags_.RootAndChildWindows) and
-                ImNodes.IsEditorHovered()):
-            if ImGui.IsMouseClicked(1):
-                open_popup = True
+    def before_node_editor(self):
+        pass
 
-        ImGui.PushStyleVar_2(ImGui.ImGuiStyleVar_.WindowPadding, (8, 8))
-        if not ImGui.IsAnyItemHovered() and open_popup:
-            ImGui.OpenPopup("add node")
-
-        if ImGui.BeginPopup("add node"):
-            click_pos = ImGui.GetMousePosOnOpeningCurrentPopup()
-            if ImGui.MenuItem("add"):
-                node = Node('add')
-                self.nodes.append(node)
-                ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
-
-            if ImGui.MenuItem("multiply"):
-                node = Node('multiply')
-                self.nodes.append(node)
-                ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
-
-            if ImGui.MenuItem("output"):
-                node = Node('output')
-                self.nodes.append(node)
-                ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
-
-            if ImGui.MenuItem("sine"):
-                node = Node('sine')
-                self.nodes.append(node)
-                ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
-
-            if ImGui.MenuItem("time"):
-                node = Node('time')
-                self.nodes.append(node)
-                ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
-
-            ImGui.EndPopup()
-        ImGui.PopStyleVar()
+    def on_node_editor(self):
+        pass
 
     def show(self, p_open):
         if not p_open[0]:
@@ -231,11 +195,11 @@ class NodeEditor:
                 self.load()
                 self.is_initialized = True
 
-            ImGui.TextUnformatted("Right click -- add node")
-            ImGui.TextUnformatted("X -- delete selected node")
+            self.before_node_editor()
 
             ImNodes.BeginNodeEditor()
-            self.popup_menu()
+
+            self.on_node_editor()
 
             for node in self.nodes:
                 node.show()
@@ -246,13 +210,24 @@ class NodeEditor:
             ImNodes.EndNodeEditor()
 
             if ImNodes.IsLinkCreated(self.start_attr, self.end_attr):
+                # add link
                 self.links.append((self.start_attr[0], self.end_attr[0]))
 
             if ImNodes.IsLinkDestroyed(self.start_attr):
+                # remove unlink
                 del self.links[self.start_attr[0]]
 
+            num_selected = ImNodes.NumSelectedLinks()
+            if num_selected and ImGui.IsKeyPressed(ImGui.ImGuiKey_.X):
+                # remove selected link
+                selected_links = (ctypes.c_int * num_selected)()
+                ImNodes.GetSelectedLinks(selected_links)
+                self.links = [link for i, link in enumerate(
+                    self.links) if (i not in selected_links)]
+
             num_selected = ImNodes.NumSelectedNodes()
-            if num_selected and ImGui.IsKeyDown(ImGui.ImGuiKey_.X):
+            if num_selected and ImGui.IsKeyPressed(ImGui.ImGuiKey_.X):
+                # remove selected node
                 selected_nodes = (ctypes.c_int * num_selected)()
                 ImNodes.GetSelectedNodes(selected_nodes)
                 for node_id in selected_nodes:
