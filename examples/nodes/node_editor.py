@@ -231,6 +231,9 @@ class NodeEditor:
                 self.load()
                 self.is_initialized = True
 
+            ImGui.TextUnformatted("Right click -- add node")
+            ImGui.TextUnformatted("X -- delete selected node")
+
             ImNodes.BeginNodeEditor()
             self.popup_menu()
 
