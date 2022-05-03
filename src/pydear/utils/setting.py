@@ -12,6 +12,9 @@ class BinReader:
         self.data = data
         self.pos = 0
 
+    def is_end(self) -> bool:
+        return self.pos >= len(self.data)
+
     def bytes(self, len: int) -> bytes:
         data = self.data[self.pos:self.pos+len]
         self.pos += len
@@ -26,6 +29,9 @@ class BinReader:
         return struct.unpack('i', data)[0]
 
 
+MAGIC = b'PYDEARKV'
+
+
 class BinSetting:
     def __init__(self, path: pathlib.Path) -> None:
         super().__init__()
@@ -35,8 +41,8 @@ class BinSetting:
 
     def save(self):
         LOGGER.debug(f'TomlSetting:save: {self.path}')
-        data = {}
         with self.path.open('wb') as w:
+            w.write(MAGIC)
             for k, v in self.data.items():
                 # key
                 key_bytes = k.encode('utf-8')
@@ -52,14 +58,15 @@ class BinSetting:
                 data = self.path.read_bytes()
                 LOGGER.debug(f'BinSetting:load')
                 r = BinReader(data)
-                while True:
+                assert r.bytes(8) == MAGIC
+                while not r.is_end():
                     key_size = r.int32()
                     key = r.str(key_size, encoding='utf-8')
                     value_size = r.int32()
                     value = r.bytes(value_size)
                     self.data[key] = value
             except:
-                pass
+                LOGGER.warn('fail to read settings')
 
     def __setitem__(self, key: str, data: bytes):
         LOGGER.debug(f'FileSetting:save')
