@@ -1,26 +1,8 @@
-from typing import Optional, List, Tuple, TypedDict, Dict, Callable
+from typing import Optional, List, Tuple, Dict, TypeAlias
 import ctypes
-import json
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
 from pydear.utils.setting import BinSetting
-
-
-class InputPinData(TypedDict):
-    id: int
-    name: str
-
-
-class OutputPinData(TypedDict):
-    id: int
-    name: str
-
-
-class NodeData(TypedDict):
-    id: int
-    title: str
-    inputs: List[InputPinData]
-    outputs: List[OutputPinData]
 
 
 class InputPin:
@@ -35,16 +17,35 @@ class InputPin:
 
 
 class OutputPin:
-    def __init__(self, id: int, name: str, process: Callable[[InputPin], None]) -> None:
+    def __init__(self, id: int, name: str) -> None:
         self.id = id
         self.name = name
-        self.process = process
+        self.value = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Don't pickle baz
+        if "value" in state:
+            del state["value"]
+        return state
 
     def show(self, indent: int):
         ImNodes.BeginOutputAttribute(self.id)
         ImGui.Indent(indent)
         ImGui.Text(self.name)
         ImNodes.EndOutputAttribute()
+
+    def process(self, node: 'Node'):
+        pass
+
+
+InputPinMap: TypeAlias = Dict[int, Tuple['Node', OutputPin]]
+OutputPinMap: TypeAlias = Dict[int, Tuple['Node', InputPin]]
+
+
+class NodeRuntime:
+    def __init__(self) -> None:
+        self.process_frame = -1
 
 
 class Node:
@@ -53,6 +54,20 @@ class Node:
         self.title = title
         self.inputs = inputs
         self.outputs = outputs
+        self.runtime = NodeRuntime()
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Don't pickle baz
+        del state["runtime"]
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.runtime = self._restore_runtime()
+
+    def _restore_runtime(self):
+        return NodeRuntime()
 
     def get_right_indent(self) -> int:
         return 40
@@ -86,44 +101,35 @@ class Node:
     def show_content(self, graph):
         pass
 
+    def has_connected_input(self, input_pin_map: InputPinMap) -> bool:
+        for input in self.inputs:
+            if input.id in input_pin_map:
+                return True
+        return False
 
-# class Node:
-#     def __init__(self, name: str) -> None:
-#         self.process_frame = -1
-#         self.id = ID_GEN()
-#         self.name = name
-#         self.inputs: List[InputPin] = []
-#         self.outputs: List[OutputPin] = []
+    def has_connected_output(self, ontput_pin_map: OutputPinMap) -> bool:
+        for output in self.outputs:
+            if output.id in ontput_pin_map:
+                return True
+        return False
 
-#     def has_connected_input(self, input_pin_map: Dict[int, Tuple['Node', OutputPin]]) -> bool:
-#         for input in self.inputs:
-#             if input.id in input_pin_map:
-#                 return True
-#         return False
+    def process(self, process_frame: int, input_pin_map: InputPinMap):
+        if process_frame == self.runtime.process_frame:
+            return
+        self.runtime.process_frame = process_frame
+        # update upstream
+        for in_pin in self.inputs:
+            match input_pin_map.get(in_pin.id):
+                case (out_node, out_pin):
+                    out_node.process(process_frame, input_pin_map)
+                    out_pin.process(out_node)
+        # self
+        self.process_self()
 
-#     def has_connected_output(self, ontput_pin_map: Dict[int, Tuple['Node', InputPin]]) -> bool:
-#         for output in self.outputs:
-#             if output.id in ontput_pin_map:
-#                 return True
-#         return False
-#     def process(self, process_frame: int, input_pin_map: Dict[int, Tuple['Node', OutputPin]]):
-#         if process_frame == self.process_frame:
-#             return
-#         self.process_frame = process_frame
-#         # update upstream
-#         for in_pin in self.inputs:
-#             match input_pin_map.get(in_pin.id):
-#                 case (out_node, out_pin):
-#                     out_node.process(process_frame, input_pin_map)
-#                     out_pin.process(in_pin)
-#                 case _:
-#                     in_pin.value = None
-#         # self
-#         self.process_self()
-#     def process_self(self):
-#         pass
-#
-#
+    def process_self(self):
+        pass
+
+
 SETTING_KEY = 'imnodes'
 SETTING_GRAPH_KEY = 'imnodes_graph'
 
@@ -133,11 +139,38 @@ class Graph:
         self.next_id = 1
         self.nodes: List[Node] = []
         self.links: List[Tuple[int, int]] = []
+        self.input_pin_map: InputPinMap = {}
+        self.output_pin_map: OutputPinMap = {}
 
     def get_next_id(self) -> int:
         value = self.next_id
         self.next_id += 1
         return value
+
+    def find_output(self, output_id: int) -> Tuple[Node, OutputPin]:
+        for node in self.nodes:
+            for output in node.outputs:
+                if output.id == output_id:
+                    return node, output
+        raise KeyError()
+
+    def find_input(self, input_id: int) -> Tuple[Node, InputPin]:
+        for node in self.nodes:
+            for input in node.inputs:
+                if input.id == input_id:
+                    return node, input
+        raise KeyError()
+
+    def connect(self, output_id: int, input_id: int):
+        self.links.append((output_id, input_id))
+        self.input_pin_map[input_id] = self.find_output(output_id)
+        self.output_pin_map[output_id] = self.find_input(input_id)
+
+    def disconnect(self, link_index: int):
+        output_id, input_id = self.links[link_index]
+        del self.links[link_index]
+        del self.input_pin_map[input_id]
+        del self.output_pin_map[output_id]
 
     def remove_link(self, node: Node):
         self.links = [link for link in self.links if not node.contains(link)]
@@ -152,6 +185,43 @@ class Graph:
         if not self.nodes:
             self.next_id = 1
 
+    def process(self, process_frame: int):
+        for node in self.nodes:
+            if not node.has_connected_output(self.output_pin_map):
+                node.process(process_frame, self.input_pin_map)
+
+    def show(self):
+        for node in self.nodes:
+            node.show(self)
+
+        for i, (begin, end) in enumerate(self.links):
+            ImNodes.Link(i, begin, end)
+
+    def update(self, start_attr, end_attr):
+        if ImNodes.IsLinkCreated(start_attr, end_attr):
+            # add link
+            self.connect(start_attr[0], end_attr[0])
+
+        if ImNodes.IsLinkDestroyed(start_attr):
+            # remove unlink
+            self.disconnect(start_attr[0])
+
+        num_selected = ImNodes.NumSelectedLinks()
+        if num_selected and ImGui.IsKeyPressed(ImGui.ImGuiKey_.X):
+            # remove selected link
+            selected_links = (ctypes.c_int * num_selected)()
+            ImNodes.GetSelectedLinks(selected_links)
+            for i in reversed(selected_links):
+                self.disconnect(i)
+
+        num_selected = ImNodes.NumSelectedNodes()
+        if num_selected and ImGui.IsKeyPressed(ImGui.ImGuiKey_.X):
+            # remove selected node
+            selected_nodes = (ctypes.c_int * num_selected)()
+            ImNodes.GetSelectedNodes(selected_nodes)
+            for node_id in selected_nodes:
+                self.remove_node(node_id)
+
 
 class NodeEditor:
     '''
@@ -165,39 +235,12 @@ class NodeEditor:
         self.start_attr = (ctypes.c_int * 1)()
         self.end_attr = (ctypes.c_int * 1)()
         self.graph = Graph()
-        self.input_pin_map: Dict[int, Tuple[Node, OutputPin]] = {}
-        self.output_pin_map: Dict[int, Tuple[Node, InputPin]] = {}
         self.process_frame = 0
 
     def __del__(self):
         if self.is_initialized:
             ImNodes.DestroyContext()
             self.is_initialized = False
-
-    def find_output(self, output_id: int) -> Tuple[Node, OutputPin]:
-        for node in self.graph.nodes:
-            for output in node.outputs:
-                if output.id == output_id:
-                    return node, output
-        raise KeyError()
-
-    def find_input(self, input_id: int) -> Tuple[Node, InputPin]:
-        for node in self.graph.nodes:
-            for input in node.inputs:
-                if input.id == input_id:
-                    return node, input
-        raise KeyError()
-
-    def connect(self, output_id: int, input_id: int):
-        self.graph.links.append((output_id, input_id))
-        self.input_pin_map[input_id] = self.find_output(output_id)
-        self.output_pin_map[output_id] = self.find_input(input_id)
-
-    def disconnect(self, link_index: int):
-        output_id, input_id = self.graph.links[link_index]
-        del self.graph.links[link_index]
-        del self.input_pin_map[input_id]
-        del self.output_pin_map[output_id]
 
     def save(self):
         if self.settting:
@@ -281,54 +324,31 @@ class NodeEditor:
         ImGui.PopStyleVar()
 
     def show(self, p_open):
+        process_frame = self.process_frame
+        self.process_frame += 1
+        self.graph.process(process_frame)
+
         if not p_open[0]:
             return
+
         if ImGui.Begin(self.name):
 
             if not self.is_initialized:
+                # init
                 ImNodes.CreateContext()
                 ImNodes.PushAttributeFlag(
                     ImNodes.ImNodesAttributeFlags_.EnableLinkDetachWithDragClick)
-
                 self.load()
                 self.is_initialized = True
 
+            # show
             self.before_node_editor()
-
             ImNodes.BeginNodeEditor()
-
             self.on_node_editor()
-
-            for node in self.graph.nodes:
-                node.show(self.graph)
-
-            for i, (begin, end) in enumerate(self.graph.links):
-                ImNodes.Link(i, begin, end)
-
+            self.graph.show()
             ImNodes.EndNodeEditor()
 
-            if ImNodes.IsLinkCreated(self.start_attr, self.end_attr):
-                # add link
-                self.graph.links.append((self.start_attr[0], self.end_attr[0]))
-
-            if ImNodes.IsLinkDestroyed(self.start_attr):
-                # remove unlink
-                del self.graph.links[self.start_attr[0]]
-
-            num_selected = ImNodes.NumSelectedLinks()
-            if num_selected and ImGui.IsKeyPressed(ImGui.ImGuiKey_.X):
-                # remove selected link
-                selected_links = (ctypes.c_int * num_selected)()
-                ImNodes.GetSelectedLinks(selected_links)
-                self.graph.links = [link for i, link in enumerate(
-                    self.graph.links) if (i not in selected_links)]
-
-            num_selected = ImNodes.NumSelectedNodes()
-            if num_selected and ImGui.IsKeyPressed(ImGui.ImGuiKey_.X):
-                # remove selected node
-                selected_nodes = (ctypes.c_int * num_selected)()
-                ImNodes.GetSelectedNodes(selected_nodes)
-                for node_id in selected_nodes:
-                    self.graph.remove_node(node_id)
+            # update
+            self.graph.update(self.start_attr, self.end_attr)
 
         ImGui.End()
