@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple, Dict, TypeAlias
+from typing import Optional, List, Tuple, Dict, TypeAlias, Any
 import ctypes
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
@@ -9,6 +9,14 @@ class InputPin:
     def __init__(self, id: int, name: str) -> None:
         self.id = id
         self.name = name
+        self.value: Optional[Any] = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Don't pickle baz
+        if "value" in state:
+            del state["value"]
+        return state
 
     def show(self):
         ImNodes.BeginInputAttribute(self.id)
@@ -20,14 +28,6 @@ class OutputPin:
     def __init__(self, id: int, name: str) -> None:
         self.id = id
         self.name = name
-        self.value = None
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        # Don't pickle baz
-        if "value" in state:
-            del state["value"]
-        return state
 
     def show(self, indent: int):
         ImNodes.BeginOutputAttribute(self.id)
@@ -35,7 +35,7 @@ class OutputPin:
         ImGui.Text(self.name)
         ImNodes.EndOutputAttribute()
 
-    def process(self, node: 'Node'):
+    def process(self, node: 'Node', in_pin: InputPin):
         pass
 
 
@@ -47,6 +47,17 @@ class NodeRuntime:
     def __init__(self) -> None:
         self.process_frame = -1
 
+    def process(self, node: 'Node'):
+        pass
+
+    def __getstate__(self):
+        # all fields are not pickle
+        return {}
+
+    def __setstate__(self, state):
+        # call __init__ manually
+        self.__init__()
+
 
 class Node:
     def __init__(self, id: int, title: str, inputs: List[InputPin], outputs: List[OutputPin]) -> None:
@@ -56,28 +67,15 @@ class Node:
         self.outputs = outputs
         self.runtime = NodeRuntime()
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        # Don't pickle baz
-        del state["runtime"]
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.runtime = self._restore_runtime()
-
-    def _restore_runtime(self):
-        return NodeRuntime()
-
     def get_right_indent(self) -> int:
         return 40
 
     def contains(self, link: Tuple[int, int]) -> bool:
-        for input in self.inputs:
-            if input.id in link:
+        for in_pin in self.inputs:
+            if in_pin.id in link:
                 return True
-        for output in self.outputs:
-            if output.id in link:
+        for out_pin in self.outputs:
+            if out_pin.id in link:
                 return True
         return False
 
@@ -90,11 +88,11 @@ class Node:
 
         self.show_content(graph)
 
-        for input in self.inputs:
-            input.show()
+        for in_pin in self.inputs:
+            in_pin.show()
 
-        for output in self.outputs:
-            output.show(self.get_right_indent())
+        for out_pin in self.outputs:
+            out_pin.show(self.get_right_indent())
 
         ImNodes.EndNode()
 
@@ -102,14 +100,14 @@ class Node:
         pass
 
     def has_connected_input(self, input_pin_map: InputPinMap) -> bool:
-        for input in self.inputs:
-            if input.id in input_pin_map:
+        for in_pin in self.inputs:
+            if in_pin.id in input_pin_map:
                 return True
         return False
 
     def has_connected_output(self, ontput_pin_map: OutputPinMap) -> bool:
-        for output in self.outputs:
-            if output.id in ontput_pin_map:
+        for out_pin in self.outputs:
+            if out_pin.id in ontput_pin_map:
                 return True
         return False
 
@@ -122,12 +120,9 @@ class Node:
             match input_pin_map.get(in_pin.id):
                 case (out_node, out_pin):
                     out_node.process(process_frame, input_pin_map)
-                    out_pin.process(out_node)
+                    out_pin.process(out_node, in_pin)
         # self
-        self.process_self()
-
-    def process_self(self):
-        pass
+        self.runtime.process(self)
 
 
 SETTING_KEY = 'imnodes'
@@ -149,16 +144,16 @@ class Graph:
 
     def find_output(self, output_id: int) -> Tuple[Node, OutputPin]:
         for node in self.nodes:
-            for output in node.outputs:
-                if output.id == output_id:
-                    return node, output
+            for out_pin in node.outputs:
+                if out_pin.id == output_id:
+                    return node, out_pin
         raise KeyError()
 
     def find_input(self, input_id: int) -> Tuple[Node, InputPin]:
         for node in self.nodes:
-            for input in node.inputs:
-                if input.id == input_id:
-                    return node, input
+            for in_pin in node.inputs:
+                if in_pin.id == input_id:
+                    return node, in_pin
         raise KeyError()
 
     def connect(self, output_id: int, input_id: int):
