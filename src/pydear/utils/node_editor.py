@@ -121,6 +121,8 @@ class Node:
                 case (out_node, out_pin):
                     out_node.process(process_frame, input_pin_map)
                     out_pin.process(out_node, in_pin)
+                case _:
+                    in_pin.value = None
         # self
         self.runtime.process(self)
 
@@ -133,6 +135,7 @@ class Graph:
     def __init__(self) -> None:
         self.next_id = 1
         self.nodes: List[Node] = []
+        self.keep_remove = []
         self.links: List[Tuple[int, int]] = []
         self.input_pin_map: InputPinMap = {}
         self.output_pin_map: OutputPinMap = {}
@@ -175,17 +178,38 @@ class Graph:
             if node.id == node_id:
                 self.remove_link(node)
                 self.nodes.remove(node)
+                # delay __del__
+                self.keep_remove.append(node)
                 break
 
         if not self.nodes:
             self.next_id = 1
 
     def process(self, process_frame: int):
+        in_pin_list = set()
+        out_pin_list = set()
         for node in self.nodes:
+            for in_pin in node.inputs:
+                in_pin_list.add(in_pin.id)
+            for out_pin in node.outputs:
+                out_pin_list.add(out_pin.id)
             if not node.has_connected_output(self.output_pin_map):
                 node.process(process_frame, self.input_pin_map)
 
+        def pin_exists(out_pin: int, in_pin: int):
+            if out_pin not in out_pin_list:
+                return False
+            if in_pin not in in_pin_list:
+                return False
+            return True
+
+        self.links = [link for link in self.links if pin_exists(*link)]
+
     def show(self):
+        if not isinstance(self.keep_remove, list):
+            self.keep_remove = []
+        self.keep_remove.clear()
+
         for node in self.nodes:
             node.show(self)
 
