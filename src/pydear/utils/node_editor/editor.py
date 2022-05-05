@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict, Type
 import ctypes
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
@@ -35,6 +35,10 @@ class NodeEditor:
                 'utf-8')
             self.settting[SETTING_GRAPH_KEY] = self.graph.to_bytes()
 
+    def get_klass_map(self) -> Dict[str, Type]:
+        from .node import KLASS_MAP
+        return KLASS_MAP
+
     def load(self):
         if self.settting:
             data = self.settting[SETTING_KEY]
@@ -42,8 +46,7 @@ class NodeEditor:
                 ImNodes.LoadCurrentEditorStateFromIniString(data, len(data))
             graph_data = self.settting[SETTING_GRAPH_KEY]
             if graph_data:
-                from .node import KLASS_MAP
-                self.graph = Graph.from_bytes(KLASS_MAP, graph_data)
+                self.graph = Graph.from_bytes(self.get_klass_map(), graph_data)
 
     def before_node_editor(self):
         '''

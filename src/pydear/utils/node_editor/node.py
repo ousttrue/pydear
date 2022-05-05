@@ -92,12 +92,14 @@ class Node:
                      })
 
     @staticmethod
-    def from_json(klass_map, klass: str, id: int, title: str, inputs, outputs, **kw):
-        inputs = [InputPin.from_json(klass_map, klass, **in_args)
-                  for klass, in_args in inputs]
-        outputs = [OutputPin.from_json(klass_map, klass, **out_args)
-                   for klass, out_args in outputs]
-        return klass_map[klass](id, title, inputs, outputs, **kw)
+    def from_json(klass_map, klass: str, **kw):
+        if 'inputs' in kw:
+            kw['inputs'] = [InputPin.from_json(klass_map, klass, **in_args)
+                            for klass, in_args in kw['inputs']]
+        if 'outputs' in kw:
+            kw['outputs'] = [OutputPin.from_json(klass_map, klass, **out_args)
+                             for klass, out_args in kw['outputs']]
+        return klass_map[klass](**kw)
 
     def get_right_indent(self) -> int:
         return 40
