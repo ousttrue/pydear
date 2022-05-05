@@ -14,6 +14,18 @@
             "justMyCode": false
         },
         {
+            "name": "nerdfont",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/basic/nerdfont.py",
+            "args": [
+                "--nerdfont",
+                "${env:USERPROFILE}\\AppData\\Local\\Microsoft\\Windows\\Fonts\\HackGenNerdConsole-Regular.ttf"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "tree",
             "type": "python",
             "request": "launch",

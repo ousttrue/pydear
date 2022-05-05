@@ -1,7 +1,6 @@
 import logging
-import asyncio
 from pydear import imgui as ImGui
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def main():
@@ -26,17 +25,6 @@ def main():
             ImGui.SliderFloat4('clear color', app.clear_color, 0, 1)
             ImGui.ColorPicker4('color', app.clear_color)
         ImGui.End()
-
-    #
-    # async coroutine
-    #
-    async def async_task():
-        count = 1
-        while True:
-            await asyncio.sleep(1)
-            logger.debug(f'count: {count}')
-            count += 1
-    app.loop.create_task(async_task())
 
     #
     # imgui
