@@ -60,29 +60,13 @@ InputPinMap: TypeAlias = Dict[int, Tuple['Node', OutputPin]]
 OutputPinMap: TypeAlias = Dict[int, Tuple['Node', InputPin]]
 
 
-class NodeRuntime:
-    def __init__(self) -> None:
-        self.process_frame = -1
-
-    def process(self, node: 'Node'):
-        pass
-
-    def __getstate__(self):
-        # all fields are not pickle
-        return {}
-
-    def __setstate__(self, state):
-        # call __init__ manually
-        self.__init__()
-
-
 class Node:
     def __init__(self, id: int, title: str, inputs: List[InputPin], outputs: List[OutputPin]) -> None:
         self.id = id
         self.title = title
         self.inputs = inputs
         self.outputs = outputs
-        self.runtime = NodeRuntime()
+        self.process_frame = -1
 
     def to_json(self) -> Serialized:
         return Serialized(
@@ -146,9 +130,9 @@ class Node:
         return False
 
     def process(self, process_frame: int, input_pin_map: InputPinMap):
-        if process_frame == self.runtime.process_frame:
+        if process_frame == self.process_frame:
             return
-        self.runtime.process_frame = process_frame
+        self.process_frame = process_frame
         # update upstream
         for in_pin in self.inputs:
             match input_pin_map.get(in_pin.id):
@@ -158,7 +142,10 @@ class Node:
                 case _:
                     in_pin.value = None
         # self
-        self.runtime.process(self)
+        self.process_self()
+
+    def process_self(self):
+        pass
 
 
 KLASS_MAP = {
