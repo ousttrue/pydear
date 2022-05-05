@@ -42,7 +42,8 @@ class NodeEditor:
                 ImNodes.LoadCurrentEditorStateFromIniString(data, len(data))
             graph_data = self.settting[SETTING_GRAPH_KEY]
             if graph_data:
-                self.graph = Graph.from_bytes(graph_data)
+                from .node import KLASS_MAP
+                self.graph = Graph.from_bytes(KLASS_MAP, graph_data)
 
     def before_node_editor(self):
         '''

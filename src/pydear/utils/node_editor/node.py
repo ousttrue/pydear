@@ -1,6 +1,11 @@
-from typing import Optional, Any, TypeAlias, Dict, Tuple, List
+from typing import Optional, Any, TypeAlias, Dict, Tuple, List, NamedTuple
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
+
+
+class Serialized(NamedTuple):
+    klass: str
+    args: Dict[str, Any]
 
 
 class InputPin:
@@ -8,6 +13,13 @@ class InputPin:
         self.id = id
         self.name = name
         self.value: Optional[Any] = None
+
+    def to_json(self) -> Serialized:
+        return Serialized('InputPin', {'id': self.id, 'name': self.name})
+
+    @staticmethod
+    def from_json(klass_map, klass, **kw) -> 'InputPin':
+        return klass_map[klass](**kw)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -26,6 +38,13 @@ class OutputPin:
     def __init__(self, id: int, name: str) -> None:
         self.id = id
         self.name = name
+
+    def to_json(self) -> Serialized:
+        return Serialized('OutputPin', {'id': self.id, 'name': self.name})
+
+    @staticmethod
+    def from_json(klass_map, klass, **kw) -> 'OutputPin':
+        return klass_map[klass](**kw)
 
     def show(self, indent: int):
         ImNodes.BeginOutputAttribute(self.id)
@@ -64,6 +83,21 @@ class Node:
         self.inputs = inputs
         self.outputs = outputs
         self.runtime = NodeRuntime()
+
+    def to_json(self) -> Serialized:
+        return Serialized(
+            'Node', {'id': self.id, 'title': self.title,
+                     'inputs': [input_pin.to_json() for input_pin in self.inputs],
+                     'outputs': [output_pin.to_json() for output_pin in self.outputs]
+                     })
+
+    @staticmethod
+    def from_json(klass_map, klass: str, id: int, title: str, inputs, outputs, **kw):
+        inputs = [InputPin.from_json(klass_map, klass, **in_args)
+                  for klass, in_args in inputs]
+        outputs = [OutputPin.from_json(klass_map, klass, **out_args)
+                   for klass, out_args in outputs]
+        return klass_map[klass](id, title, inputs, outputs, **kw)
 
     def get_right_indent(self) -> int:
         return 40
@@ -123,3 +157,10 @@ class Node:
                     in_pin.value = None
         # self
         self.runtime.process(self)
+
+
+KLASS_MAP = {
+    'InputPin': InputPin,
+    'OutputPin': OutputPin,
+    'Node': Node,
+}

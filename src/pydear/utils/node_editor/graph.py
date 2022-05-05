@@ -1,8 +1,11 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Type
+import logging
 import ctypes
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
 from .node import Node, InputPin, OutputPin, InputPinMap, OutputPinMap
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Graph:
@@ -15,16 +18,28 @@ class Graph:
         self.output_pin_map: OutputPinMap = {}
 
     def to_bytes(self) -> bytes:
-        import pickle
-        return pickle.dumps(self)
+        graph = {
+            'nodes': [node.to_json() for node in self.nodes],
+            'links': self.links,
+            'next_id': self.next_id,
+        }
+        import json
+        return json.dumps(graph).encode('utf-8')
 
     @staticmethod
-    def from_bytes(data: bytes) -> 'Graph':
+    def from_bytes(class_map: Dict[str, Type], data: bytes) -> 'Graph':
+        graph = Graph()
         try:
-            import pickle
-            return pickle.loads(data)
-        except:
-            return Graph()
+            import json
+            parsed = json.loads(data)
+            for klass, args in parsed['nodes']:
+                graph.nodes.append(Node.from_json(class_map, klass, **args))
+            for begin, end in parsed['links']:
+                graph.connect(begin, end)
+            graph.next_id = parsed['next_id']
+        except Exception as ex:
+            LOGGER.error(ex)
+        return graph
 
     def get_next_id(self) -> int:
         value = self.next_id
