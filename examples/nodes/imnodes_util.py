@@ -21,7 +21,7 @@ def main():
     app = glfw_app.GlfwApp(
         'imnodes_util', setting=setting if setting else None)
 
-    from pydear.utils.node_editor import NodeEditor
+    from pydear.utils.node_editor.editor import NodeEditor
     node_editor = NodeEditor('imnodes_util_editor',
                              setting=setting if setting else None)
     from pydear.utils import dockspace
