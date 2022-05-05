@@ -33,8 +33,7 @@ class NodeEditor:
         if self.settting:
             self.settting[SETTING_KEY] = ImNodes.SaveCurrentEditorStateToIniString().encode(
                 'utf-8')
-            import pickle
-            self.settting[SETTING_GRAPH_KEY] = pickle.dumps(self.graph)
+            self.settting[SETTING_GRAPH_KEY] = self.graph.to_bytes()
 
     def load(self):
         if self.settting:
@@ -43,11 +42,7 @@ class NodeEditor:
                 ImNodes.LoadCurrentEditorStateFromIniString(data, len(data))
             graph_data = self.settting[SETTING_GRAPH_KEY]
             if graph_data:
-                try:
-                    import pickle
-                    self.graph = pickle.loads(graph_data)
-                except:
-                    self.graph = Graph()
+                self.graph = Graph.from_bytes(graph_data)
 
     def before_node_editor(self):
         '''

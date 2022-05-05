@@ -14,6 +14,18 @@ class Graph:
         self.input_pin_map: InputPinMap = {}
         self.output_pin_map: OutputPinMap = {}
 
+    def to_bytes(self) -> bytes:
+        import pickle
+        return pickle.dumps(self)
+
+    @staticmethod
+    def from_bytes(data: bytes) -> 'Graph':
+        try:
+            import pickle
+            return pickle.loads(data)
+        except:
+            return Graph()
+
     def get_next_id(self) -> int:
         value = self.next_id
         self.next_id += 1
