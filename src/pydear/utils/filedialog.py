@@ -1,18 +1,21 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Callable, TypeAlias
 import asyncio
 import pathlib
 import ctypes
 import pydear.imgui as ImGui
 
+FilterCallback: TypeAlias = Callable[[pathlib.Path], bool]
+
 
 class Dialog:
-    def __init__(self, loop: asyncio.AbstractEventLoop, name: str, path: pathlib.Path):
+    def __init__(self, loop: asyncio.AbstractEventLoop, name: str, path: pathlib.Path, filter: Optional[FilterCallback] = None):
         self.future = loop.create_future()
         self.name = name
         self.path = path
         self.is_open = False
         self.selected = None
         self.p_open = (ctypes.c_bool * 1)(True)
+        self.filter = filter
 
     def __call__(self):
         if not self.is_open:
@@ -68,6 +71,8 @@ class Dialog:
 
         # files
         for f in self.path.iterdir():
+            if self.filter and not self.filter(f):
+                continue
             match self._show_file(f):
                 case pathlib.Path() as selected:
                     pass
@@ -98,10 +103,20 @@ class Dialog:
 FILE_DIALOG = 'ModalFileDialog'
 
 
-def open_async(loop: asyncio.AbstractEventLoop, path: Optional[pathlib.Path] = None):
+def open_async(loop: asyncio.AbstractEventLoop, path: Optional[pathlib.Path] = None, *, filter: Optional[FilterCallback] = None):
     if not path:
         path = pathlib.Path('.').absolute()
-    dialog = Dialog(loop, FILE_DIALOG, path)
+    dialog = Dialog(loop, FILE_DIALOG, path, filter=filter)
     from . import modal
     modal.push(dialog)
     return dialog.future
+
+
+class Filter:
+    def __init__(self, *extensions: str) -> None:
+        self.extensions = set(e.lower() for e in extensions)
+
+    def __call__(self, f: pathlib.Path) -> bool:
+        if not f.is_file():
+            return True
+        return f.suffix.lower() in self.extensions

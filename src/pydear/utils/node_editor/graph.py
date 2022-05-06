@@ -1,4 +1,5 @@
-from typing import List, Tuple, Dict, Type
+from typing import List, Tuple, Dict, Type, Optional
+import pathlib
 import logging
 import ctypes
 from pydear import imgui as ImGui
@@ -16,6 +17,7 @@ class Graph:
         self.links: List[Tuple[int, int]] = []
         self.input_pin_map: InputPinMap = {}
         self.output_pin_map: OutputPinMap = {}
+        self.current_dir: Optional[pathlib.Path] = None
 
     def to_bytes(self) -> bytes:
         graph = {
@@ -26,20 +28,23 @@ class Graph:
         import json
         return json.dumps(graph).encode('utf-8')
 
-    @staticmethod
-    def from_bytes(class_map: Dict[str, Type], data: bytes) -> 'Graph':
-        graph = Graph()
+    def from_bytes(self, class_map: Dict[str, Type], data: bytes):
+        # clear
+        self.nodes.clear()
+        self.links.clear()
+        self.next_id = 1
+
+        # load
         try:
             import json
             parsed = json.loads(data)
             for klass, args in parsed['nodes']:
-                graph.nodes.append(Node.from_json(class_map, klass, **args))
+                self.nodes.append(Node.from_json(class_map, klass, **args))
             for begin, end in parsed['links']:
-                graph.connect(begin, end)
-            graph.next_id = parsed['next_id']
+                self.connect(begin, end)
+            self.next_id = parsed['next_id']
         except Exception as ex:
             LOGGER.error(ex)
-        return graph
 
     def get_next_id(self) -> int:
         value = self.next_id
@@ -61,6 +66,7 @@ class Graph:
         raise KeyError()
 
     def connect(self, output_id: int, input_id: int):
+        # TODO: remove multi input
         self.links.append((output_id, input_id))
         self.input_pin_map[input_id] = self.find_output(output_id)
         self.output_pin_map[output_id] = self.find_input(input_id)
