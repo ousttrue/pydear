@@ -38,11 +38,11 @@ class Graph:
         try:
             import json
             parsed = json.loads(data)
+            self.next_id = parsed['next_id']
             for klass, args in parsed['nodes']:
                 self.nodes.append(Node.from_json(class_map, klass, **args))
             for begin, end in parsed['links']:
                 self.connect(begin, end)
-            self.next_id = parsed['next_id']
         except Exception as ex:
             LOGGER.error(ex)
 
