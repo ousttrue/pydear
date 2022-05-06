@@ -23,6 +23,8 @@ class NodeEditor:
         self.end_attr = (ctypes.c_int * 1)()
         self.graph = Graph()
         self.process_frame = 0
+        from .node import KLASS_MAP
+        self.type_map = {k: v for k, v in KLASS_MAP.items()}
 
     def __del__(self):
         if self.is_initialized:
@@ -35,9 +37,9 @@ class NodeEditor:
                 'utf-8')
             self.settting[SETTING_GRAPH_KEY] = self.graph.to_bytes()
 
-    def get_klass_map(self) -> Dict[str, Type]:
-        from .node import KLASS_MAP
-        return KLASS_MAP
+    def register_type(self, t: Type):
+        k = t.__name__
+        self.type_map[k] = t
 
     def load(self):
         if self.settting:
@@ -46,7 +48,7 @@ class NodeEditor:
                 ImNodes.LoadCurrentEditorStateFromIniString(data, len(data))
             graph_data = self.settting[SETTING_GRAPH_KEY]
             if graph_data:
-                self.graph.from_bytes(self.get_klass_map(), graph_data)
+                self.graph.from_bytes(self.type_map, graph_data)
 
     def before_node_editor(self):
         '''

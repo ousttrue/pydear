@@ -114,9 +114,6 @@ class Node:
 
         ImNodes.EndNode()
 
-    def show_content(self, graph):
-        pass
-
     def has_connected_input(self, input_pin_map: InputPinMap) -> bool:
         for in_pin in self.inputs:
             if in_pin.id in input_pin_map:
@@ -143,6 +140,9 @@ class Node:
                     in_pin.value = None
         # self
         self.process_self()
+
+    def show_content(self, graph):
+        pass
 
     def process_self(self):
         pass
