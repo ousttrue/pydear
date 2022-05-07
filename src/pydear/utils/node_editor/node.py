@@ -1,10 +1,18 @@
-from typing import Optional, Any, TypeAlias, Dict, Tuple, List, NamedTuple, TypeVar, Generic
+from typing import Optional, Any, TypeAlias, Dict, Tuple, List, NamedTuple, TypeVar, Generic, get_args
 import abc
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
 
 
 T = TypeVar('T')
+
+
+def color_int(r, g, b):
+    return (255<<24) + (b << 16) + (g << 8) + (r << 0)
+
+
+PIN_COLOR = color_int(255, 255, 128)
+SHAPE_MAP = {}
 
 
 class Serialized(NamedTuple):
@@ -20,6 +28,11 @@ class InputPin(Generic[T], metaclass=abc.ABCMeta):
     def to_json(self) -> Serialized:
         return Serialized(self.__class__.__name__, {'id': self.id, 'name': self.name})
 
+    def is_acceptable(self, out: 'OutputPin') -> bool:
+        src = get_args(self.__orig_bases__[0])[0]  # type: ignore
+        dst = get_args(out.__orig_bases__[0])[0]  # type: ignore
+        return src == dst
+
     @staticmethod
     def from_json(klass_map, klass, **kw) -> 'InputPin':
         return klass_map[klass](**kw)
@@ -29,7 +42,11 @@ class InputPin(Generic[T], metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     def show(self):
-        ImNodes.BeginInputAttribute(self.id)
+        t = get_args(self.__orig_bases__[0])[0]  # type: ignore
+        shape, color = SHAPE_MAP.get(
+            t, (ImNodes.ImNodesPinShape_.CircleFilled, PIN_COLOR))
+        ImNodes.PushColorStyle(ImNodes.ImNodesCol_.Pin, color)
+        ImNodes.BeginInputAttribute(self.id, shape)
         ImGui.Text(self.name)
         ImNodes.EndInputAttribute()
 
@@ -51,14 +68,18 @@ class OutputPin(Generic[T], metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     def show(self, indent: int):
-        ImNodes.BeginOutputAttribute(self.id)
+        t = get_args(self.__orig_bases__[0])[0]  # type: ignore
+        shape, color = SHAPE_MAP.get(
+            t, (ImNodes.ImNodesPinShape_.CircleFilled, PIN_COLOR))
+        ImNodes.PushColorStyle(ImNodes.ImNodesCol_.Pin, color)
+        ImNodes.BeginOutputAttribute(self.id, shape)
         ImGui.Indent(indent)
         ImGui.Text(self.name)
         ImNodes.EndOutputAttribute()
 
 
-InputPinMap: TypeAlias = Dict[int, Tuple['Node', OutputPin]]
-OutputPinMap: TypeAlias = Dict[int, Tuple['Node', InputPin]]
+OutputFromInput: TypeAlias = Dict[int, Tuple['Node', OutputPin]]
+InputFromOutput: TypeAlias = Dict[int, Tuple['Node', InputPin]]
 
 
 class Node:
@@ -115,19 +136,19 @@ class Node:
 
         ImNodes.EndNode()
 
-    def has_connected_input(self, input_pin_map: InputPinMap) -> bool:
+    def has_connected_input(self, input_pin_map: OutputFromInput) -> bool:
         for in_pin in self.inputs:
             if in_pin.id in input_pin_map:
                 return True
         return False
 
-    def has_connected_output(self, ontput_pin_map: OutputPinMap) -> bool:
+    def has_connected_output(self, ontput_pin_map: InputFromOutput) -> bool:
         for out_pin in self.outputs:
             if out_pin.id in ontput_pin_map:
                 return True
         return False
 
-    def process(self, process_frame: int, input_pin_map: InputPinMap):
+    def process(self, process_frame: int, input_pin_map: OutputFromInput):
         if process_frame == self.process_frame:
             return
         self.process_frame = process_frame
@@ -138,7 +159,7 @@ class Node:
                     out_node.process(process_frame, input_pin_map)
                     in_pin.set_value(out_pin.get_value(out_node))
                 case _:
-                    in_pin.set_value(None)
+                    in_pin.set_value(None)  # or default value ?
         # self
         self.process_self()
 

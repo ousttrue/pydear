@@ -4,7 +4,7 @@ import logging
 import ctypes
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
-from .node import Node, InputPin, OutputPin, InputPinMap, OutputPinMap
+from .node import Node, InputPin, OutputPin, OutputFromInput, InputFromOutput
 
 LOGGER = logging.getLogger(__name__)
 
@@ -15,8 +15,8 @@ class Graph:
         self.nodes: List[Node] = []
         self.keep_remove = []
         self.links: List[Tuple[int, int]] = []
-        self.input_pin_map: InputPinMap = {}
-        self.output_pin_map: OutputPinMap = {}
+        self.output_from_input: OutputFromInput = {}
+        self.input_from_output: InputFromOutput = {}
         self.current_dir: Optional[pathlib.Path] = None
 
     def to_bytes(self) -> bytes:
@@ -66,18 +66,23 @@ class Graph:
         raise KeyError()
 
     def connect(self, output_id: int, input_id: int):
+        out_node, out_pin = self.find_output(output_id)
+        in_node, in_pin = self.find_input(input_id)
+        if not in_pin.is_acceptable(out_pin):
+            return
+
         # remove link that has same input_id
         self.links = [(o, i) for o, i in self.links if i != input_id]
 
         self.links.append((output_id, input_id))
-        self.input_pin_map[input_id] = self.find_output(output_id)
-        self.output_pin_map[output_id] = self.find_input(input_id)
+        self.output_from_input[input_id] = (out_node, out_pin)
+        self.input_from_output[output_id] = (in_node, in_pin)
 
     def disconnect(self, link_index: int):
         output_id, input_id = self.links[link_index]
         del self.links[link_index]
-        del self.input_pin_map[input_id]
-        del self.output_pin_map[output_id]
+        del self.output_from_input[input_id]
+        del self.input_from_output[output_id]
 
     def remove_link(self, node: Node):
         self.links = [link for link in self.links if not node.contains(link)]
@@ -102,8 +107,8 @@ class Graph:
                 in_pin_list.add(in_pin.id)
             for out_pin in node.outputs:
                 out_pin_list.add(out_pin.id)
-            if not node.has_connected_output(self.output_pin_map):
-                node.process(process_frame, self.input_pin_map)
+            if not node.has_connected_output(self.input_from_output):
+                node.process(process_frame, self.output_from_input)
 
         def pin_exists(out_pin: int, in_pin: int):
             if out_pin not in out_pin_list:

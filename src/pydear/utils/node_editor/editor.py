@@ -4,7 +4,7 @@ from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
 from pydear.utils.setting import BinSetting
 from .graph import Graph
-from .node import Node, InputPin, OutputPin, Serialized
+from .node import Node, InputPin, OutputPin, Serialized, SHAPE_MAP, color_int
 
 
 SETTING_KEY = 'imnodes'
@@ -21,15 +21,16 @@ class FloatOutputPin(OutputPin[float]):
 
 
 class FloatValueNode(Node):
-    def __init__(self, id: int, out_id: int) -> None:
+    def __init__(self, id: int, out_id: int, value=0) -> None:
         self.out = FloatOutputPin(out_id, 'value')
         super().__init__(id, 'value', [], [self.out])
-        self._array = (ctypes.c_float*1)()
+        self._array = (ctypes.c_float*1)(value)
 
     def to_json(self) -> Serialized:
         return Serialized(self.__class__.__name__, {
             'id': self.id,
             'out_id': self.out.id,
+            'value': self._array[0]
         })
 
     def show_content(self, graph):
@@ -44,7 +45,8 @@ class FloatInputPin(InputPin[float]):
         self.value = 0
 
     def set_value(self, value: float):
-        self.value = value
+        if isinstance(value, (int, float)):
+            self.value = value
 
 
 class RgbMuxerPin(OutputPin[Tuple[float, float, float]]):
@@ -85,7 +87,8 @@ class Float3InputPin(InputPin[Tuple[float, float, float]]):
         self.value: Tuple[float, float, float] = (0, 0, 0)
 
     def set_value(self, value: Tuple[float, float, float]):
-        self.value = value
+        if value:
+            self.value = value
 
 
 class ColorOutNode(Node):
@@ -102,9 +105,10 @@ class ColorOutNode(Node):
 
     def show_content(self, graph):
         if self.in_color.value:
-            self._array[0] = self.in_color.value[0]
-            self._array[1] = self.in_color.value[1]
-            self._array[2] = self.in_color.value[2]
+            if self.in_color.value:
+                self._array[0] = self.in_color.value[0]
+                self._array[1] = self.in_color.value[1]
+                self._array[2] = self.in_color.value[2]
         ImGui.SetNextItemWidth(200)
         ImGui.ColorPicker3(f'color##{id}', self._array)
 
@@ -166,6 +170,8 @@ class NodeEditor:
                     ImNodes.ImNodesAttributeFlags_.EnableLinkDetachWithDragClick)
 
                 # register befor load
+                SHAPE_MAP[Tuple[float, float, float]
+                          ] = (ImNodes.ImNodesPinShape_.QuadFilled, color_int(255, 128, 128))
                 self.register_type(FloatInputPin)
                 self.register_type(FloatValueNode)
                 self.register_type(FloatInputPin)
