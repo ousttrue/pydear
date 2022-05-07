@@ -1,13 +1,112 @@
-from typing import Optional, Dict, Type
+from typing import Optional, Dict, Type, Tuple
 import ctypes
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
 from pydear.utils.setting import BinSetting
 from .graph import Graph
+from .node import Node, InputPin, OutputPin, Serialized
 
 
 SETTING_KEY = 'imnodes'
 SETTING_GRAPH_KEY = 'imnodes_graph'
+
+
+class FloatOutputPin(OutputPin[float]):
+    def __init__(self, id: int, name: str):
+        super().__init__(id, name)
+        self.value = 0.0
+
+    def get_value(self, node: 'Node') -> float:
+        return self.value
+
+
+class FloatValueNode(Node):
+    def __init__(self, id: int, out_id: int) -> None:
+        self.out = FloatOutputPin(out_id, 'value')
+        super().__init__(id, 'value', [], [self.out])
+        self._array = (ctypes.c_float*1)()
+
+    def to_json(self) -> Serialized:
+        return Serialized(self.__class__.__name__, {
+            'id': self.id,
+            'out_id': self.out.id,
+        })
+
+    def show_content(self, graph):
+        ImGui.SetNextItemWidth(200)
+        ImGui.SliderFloat(f'value##{id}', self._array, 0, 1)
+        self.out.value = self._array[0]
+
+
+class FloatInputPin(InputPin[float]):
+    def __init__(self, id: int, name: str):
+        super().__init__(id, name)
+        self.value = 0
+
+    def set_value(self, value: float):
+        self.value = value
+
+
+class RgbMuxerPin(OutputPin[Tuple[float, float, float]]):
+    def __init__(self, id: int):
+        super().__init__(id, 'muxer')
+        self.value = (0.0, 0.0, 0.0)
+
+    def get_value(self, node: 'RgbMuxerNode') -> Tuple[float, float, float]:
+        return node.get_mux()
+
+
+class RgbMuxerNode(Node):
+    def __init__(self, id: int, r_id, g_id, b_id, out_id):
+        self.r_input = FloatInputPin(r_id, 'r')
+        self.g_input = FloatInputPin(g_id, 'g')
+        self.b_input = FloatInputPin(b_id, 'b')
+        self.out = RgbMuxerPin(out_id)
+        super().__init__(id, 'muxer',
+                         [self.r_input, self.g_input, self.b_input],
+                         [self.out])
+
+    def to_json(self) -> Serialized:
+        return Serialized(self.__class__.__name__, {
+            'id': self.id,
+            'r_id': self.r_input.id,
+            'g_id': self.g_input.id,
+            'b_id': self.b_input.id,
+            'out_id': self.out.id,
+        })
+
+    def get_mux(self) -> Tuple[float, float, float]:
+        return (self.r_input.value, self.g_input.value, self.b_input.value)
+
+
+class Float3InputPin(InputPin[Tuple[float, float, float]]):
+    def __init__(self, id: int, name: str):
+        super().__init__(id, name)
+        self.value: Tuple[float, float, float] = (0, 0, 0)
+
+    def set_value(self, value: Tuple[float, float, float]):
+        self.value = value
+
+
+class ColorOutNode(Node):
+    def __init__(self, id: int, color_id) -> None:
+        self.in_color = Float3InputPin(color_id, 'color')
+        self._array = (ctypes.c_float * 3)()
+        super().__init__(id, 'color', [self.in_color], [])
+
+    def to_json(self) -> Serialized:
+        return Serialized(self.__class__.__name__, {
+            'id': self.id,
+            'color_id': self.in_color.id,
+        })
+
+    def show_content(self, graph):
+        if self.in_color.value:
+            self._array[0] = self.in_color.value[0]
+            self._array[1] = self.in_color.value[1]
+            self._array[2] = self.in_color.value[2]
+        ImGui.SetNextItemWidth(200)
+        ImGui.ColorPicker3(f'color##{id}', self._array)
 
 
 class NodeEditor:
@@ -50,6 +149,46 @@ class NodeEditor:
             if graph_data:
                 self.graph.from_bytes(self.type_map, graph_data)
 
+    def show(self, p_open):
+        process_frame = self.process_frame
+        self.process_frame += 1
+        self.graph.process(process_frame)
+
+        if not p_open[0]:
+            return
+
+        if ImGui.Begin(self.name):
+
+            if not self.is_initialized:
+                # init
+                ImNodes.CreateContext()
+                ImNodes.PushAttributeFlag(
+                    ImNodes.ImNodesAttributeFlags_.EnableLinkDetachWithDragClick)
+
+                # register befor load
+                self.register_type(FloatInputPin)
+                self.register_type(FloatValueNode)
+                self.register_type(FloatInputPin)
+                self.register_type(RgbMuxerPin)
+                self.register_type(RgbMuxerNode)
+                self.register_type(Float3InputPin)
+                self.register_type(ColorOutNode)
+                self.load()
+
+                self.is_initialized = True
+
+            # show
+            self.before_node_editor()
+            ImNodes.BeginNodeEditor()
+            self.on_node_editor()
+            self.graph.show()
+            ImNodes.EndNodeEditor()
+
+            # update
+            self.graph.update(self.start_attr, self.end_attr)
+
+        ImGui.End()
+
     def before_node_editor(self):
         '''
         this is sample
@@ -74,69 +213,28 @@ class NodeEditor:
         if ImGui.BeginPopup("add node"):
             click_pos = ImGui.GetMousePosOnOpeningCurrentPopup()
             next_id = self.graph.get_next_id
-            from .node import Node, InputPin, OutputPin
 
             if ImGui.MenuItem("input"):
-                node = Node(next_id(), 'input', [], [
-                            OutputPin(next_id(), 'value')])
+                node = FloatValueNode(next_id(), next_id())
                 self.graph.nodes.append(node)
                 ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
 
             ImGui.MenuItem("----")
 
             if ImGui.MenuItem("output"):
-                node = Node(next_id(), 'output', [
-                            InputPin(next_id(), 'value')], [])
+                node = ColorOutNode(next_id(), next_id())
                 self.graph.nodes.append(node)
                 ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
 
             ImGui.MenuItem("----")
 
-            if ImGui.MenuItem("add"):
-                node = Node(next_id(), 'add',
-                            [InputPin(next_id(), 'a'),
-                             InputPin(next_id(), 'b')],
-                            [OutputPin(next_id(), 'value')])
-                self.graph.nodes.append(node)
-                ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
-
-            if ImGui.MenuItem("multiply"):
-                node = Node(next_id(), 'mult',
-                            [InputPin(next_id(), 'a'),
-                             InputPin(next_id(), 'b')],
-                            [OutputPin(next_id(), 'value')])
+            if ImGui.MenuItem("muxer"):
+                node = RgbMuxerNode(
+                    next_id(),
+                    next_id(), next_id(), next_id(),
+                    next_id())
                 self.graph.nodes.append(node)
                 ImNodes.SetNodeScreenSpacePos(node.id, click_pos)
 
             ImGui.EndPopup()
         ImGui.PopStyleVar()
-
-    def show(self, p_open):
-        process_frame = self.process_frame
-        self.process_frame += 1
-        self.graph.process(process_frame)
-
-        if not p_open[0]:
-            return
-
-        if ImGui.Begin(self.name):
-
-            if not self.is_initialized:
-                # init
-                ImNodes.CreateContext()
-                ImNodes.PushAttributeFlag(
-                    ImNodes.ImNodesAttributeFlags_.EnableLinkDetachWithDragClick)
-                self.load()
-                self.is_initialized = True
-
-            # show
-            self.before_node_editor()
-            ImNodes.BeginNodeEditor()
-            self.on_node_editor()
-            self.graph.show()
-            ImNodes.EndNodeEditor()
-
-            # update
-            self.graph.update(self.start_attr, self.end_attr)
-
-        ImGui.End()

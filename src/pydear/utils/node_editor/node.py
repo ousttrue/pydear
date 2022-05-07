@@ -1,6 +1,10 @@
-from typing import Optional, Any, TypeAlias, Dict, Tuple, List, NamedTuple
+from typing import Optional, Any, TypeAlias, Dict, Tuple, List, NamedTuple, TypeVar, Generic
+import abc
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
+
+
+T = TypeVar('T')
 
 
 class Serialized(NamedTuple):
@@ -8,25 +12,21 @@ class Serialized(NamedTuple):
     args: Dict[str, Any]
 
 
-class InputPin:
+class InputPin(Generic[T], metaclass=abc.ABCMeta):
     def __init__(self, id: int, name: str) -> None:
         self.id = id
         self.name = name
-        self.value: Optional[Any] = None
 
     def to_json(self) -> Serialized:
-        return Serialized('InputPin', {'id': self.id, 'name': self.name})
+        return Serialized(self.__class__.__name__, {'id': self.id, 'name': self.name})
 
     @staticmethod
     def from_json(klass_map, klass, **kw) -> 'InputPin':
         return klass_map[klass](**kw)
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        # Don't pickle baz
-        if "value" in state:
-            del state["value"]
-        return state
+    @abc.abstractmethod
+    def set_value(self, value: T):
+        raise NotImplementedError()
 
     def show(self):
         ImNodes.BeginInputAttribute(self.id)
@@ -34,26 +34,27 @@ class InputPin:
         ImNodes.EndInputAttribute()
 
 
-class OutputPin:
+class OutputPin(Generic[T], metaclass=abc.ABCMeta):
     def __init__(self, id: int, name: str) -> None:
         self.id = id
         self.name = name
 
     def to_json(self) -> Serialized:
-        return Serialized('OutputPin', {'id': self.id, 'name': self.name})
+        return Serialized(self.__class__.__name__, {'id': self.id, 'name': self.name})
 
     @staticmethod
     def from_json(klass_map, klass, **kw) -> 'OutputPin':
         return klass_map[klass](**kw)
+
+    @abc.abstractmethod
+    def get_value(self, node: 'Node') -> T:
+        raise NotImplementedError()
 
     def show(self, indent: int):
         ImNodes.BeginOutputAttribute(self.id)
         ImGui.Indent(indent)
         ImGui.Text(self.name)
         ImNodes.EndOutputAttribute()
-
-    def process(self, node: 'Node', in_pin: InputPin):
-        pass
 
 
 InputPinMap: TypeAlias = Dict[int, Tuple['Node', OutputPin]]
@@ -135,9 +136,9 @@ class Node:
             match input_pin_map.get(in_pin.id):
                 case (out_node, out_pin):
                     out_node.process(process_frame, input_pin_map)
-                    out_pin.process(out_node, in_pin)
+                    in_pin.set_value(out_pin.get_value(out_node))
                 case _:
-                    in_pin.value = None
+                    in_pin.set_value(None)
         # self
         self.process_self()
 
