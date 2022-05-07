@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict, Type, Optional
+from typing import List, Tuple, Dict, Type, Optional, NamedTuple
 import pathlib
 import logging
 import ctypes
@@ -7,6 +7,11 @@ from pydear import imnodes as ImNodes
 from .node import Node, InputPin, OutputPin, OutputFromInput, InputFromOutput
 
 LOGGER = logging.getLogger(__name__)
+
+
+class PinStyle:
+    shape: ImNodes.ImNodesPinShape_
+    color: int
 
 
 class Graph:
@@ -18,6 +23,15 @@ class Graph:
         self.output_from_input: OutputFromInput = {}
         self.input_from_output: InputFromOutput = {}
         self.current_dir: Optional[pathlib.Path] = None
+        self.type_map: Dict[str, Type] = {}
+        self.shape_map: Dict[Type, PinStyle] = {}
+
+    def register_type(self, t: Type):
+        k = t.__name__
+        self.type_map[k] = t
+
+    def add_pin_style(self, t: Type, style):
+        self.shape_map[t] = style
 
     def to_bytes(self) -> bytes:
         graph = {
@@ -28,7 +42,7 @@ class Graph:
         import json
         return json.dumps(graph).encode('utf-8')
 
-    def from_bytes(self, class_map: Dict[str, Type], data: bytes):
+    def from_bytes(self, data: bytes):
         # clear
         self.nodes.clear()
         self.links.clear()
@@ -40,7 +54,8 @@ class Graph:
             parsed = json.loads(data)
             self.next_id = parsed['next_id']
             for klass, args in parsed['nodes']:
-                self.nodes.append(Node.from_json(class_map, klass, **args))
+                node = self.type_map[klass](**args)
+                self.nodes.append(node)
             for begin, end in parsed['links']:
                 self.connect(begin, end)
         except Exception as ex:

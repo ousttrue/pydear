@@ -24,6 +24,16 @@ def main():
     from pydear.utils.node_editor.editor import NodeEditor
     node_editor = NodeEditor('imnodes_util_editor',
                              setting=setting if setting else None)
+
+    #
+    # customize node editor
+    #
+    from simple_nodes import TYPES, PIN_STYLE_MAP
+    for t in TYPES:
+        node_editor.graph.register_type(t)
+    for t, pin_style in PIN_STYLE_MAP.items():
+        node_editor.graph.add_pin_style(t, pin_style)
+
     from pydear.utils import dockspace
     docks = [
         dockspace.Dock('', node_editor.show, (ctypes.c_bool * 1)(True))

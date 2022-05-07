@@ -8,11 +8,10 @@ T = TypeVar('T')
 
 
 def color_int(r, g, b):
-    return (255<<24) + (b << 16) + (g << 8) + (r << 0)
+    return (255 << 24) + (b << 16) + (g << 8) + (r << 0)
 
 
 PIN_COLOR = color_int(255, 255, 128)
-SHAPE_MAP = {}
 
 
 class Serialized(NamedTuple):
@@ -41,9 +40,9 @@ class InputPin(Generic[T], metaclass=abc.ABCMeta):
     def set_value(self, value: T):
         raise NotImplementedError()
 
-    def show(self):
+    def show(self, shape_map):
         t = get_args(self.__orig_bases__[0])[0]  # type: ignore
-        shape, color = SHAPE_MAP.get(
+        shape, color = shape_map.get(
             t, (ImNodes.ImNodesPinShape_.CircleFilled, PIN_COLOR))
         ImNodes.PushColorStyle(ImNodes.ImNodesCol_.Pin, color)
         ImNodes.BeginInputAttribute(self.id, shape)
@@ -67,9 +66,9 @@ class OutputPin(Generic[T], metaclass=abc.ABCMeta):
     def get_value(self, node: 'Node') -> T:
         raise NotImplementedError()
 
-    def show(self, indent: int):
+    def show(self, shape_map, indent: int):
         t = get_args(self.__orig_bases__[0])[0]  # type: ignore
-        shape, color = SHAPE_MAP.get(
+        shape, color = shape_map.get(
             t, (ImNodes.ImNodesPinShape_.CircleFilled, PIN_COLOR))
         ImNodes.PushColorStyle(ImNodes.ImNodesCol_.Pin, color)
         ImNodes.BeginOutputAttribute(self.id, shape)
@@ -82,7 +81,7 @@ OutputFromInput: TypeAlias = Dict[int, Tuple['Node', OutputPin]]
 InputFromOutput: TypeAlias = Dict[int, Tuple['Node', InputPin]]
 
 
-class Node:
+class Node(metaclass=abc.ABCMeta):
     def __init__(self, id: int, title: str, inputs: List[InputPin], outputs: List[OutputPin]) -> None:
         self.id = id
         self.title = title
@@ -90,22 +89,17 @@ class Node:
         self.outputs = outputs
         self.process_frame = -1
 
+    @classmethod
+    @abc.abstractmethod
+    def imgui_menu(cls, graph, click_pos):
+        raise NotImplementedError()
+
     def to_json(self) -> Serialized:
         return Serialized(
             'Node', {'id': self.id, 'title': self.title,
                      'inputs': [input_pin.to_json() for input_pin in self.inputs],
                      'outputs': [output_pin.to_json() for output_pin in self.outputs]
                      })
-
-    @staticmethod
-    def from_json(klass_map, klass: str, **kw):
-        if 'inputs' in kw:
-            kw['inputs'] = [InputPin.from_json(klass_map, klass, **in_args)
-                            for klass, in_args in kw['inputs']]
-        if 'outputs' in kw:
-            kw['outputs'] = [OutputPin.from_json(klass_map, klass, **out_args)
-                             for klass, out_args in kw['outputs']]
-        return klass_map[klass](**kw)
 
     def get_right_indent(self) -> int:
         return 40
@@ -129,10 +123,10 @@ class Node:
         self.show_content(graph)
 
         for in_pin in self.inputs:
-            in_pin.show()
+            in_pin.show(graph.shape_map)
 
         for out_pin in self.outputs:
-            out_pin.show(self.get_right_indent())
+            out_pin.show(graph.shape_map, self.get_right_indent())
 
         ImNodes.EndNode()
 
@@ -168,10 +162,3 @@ class Node:
 
     def process_self(self):
         pass
-
-
-KLASS_MAP = {
-    'InputPin': InputPin,
-    'OutputPin': OutputPin,
-    'Node': Node,
-}
