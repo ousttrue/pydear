@@ -66,7 +66,9 @@ class Graph:
         raise KeyError()
 
     def connect(self, output_id: int, input_id: int):
-        # TODO: remove multi input
+        # remove link that has same input_id
+        self.links = [(o, i) for o, i in self.links if i != input_id]
+
         self.links.append((output_id, input_id))
         self.input_pin_map[input_id] = self.find_output(output_id)
         self.output_pin_map[output_id] = self.find_input(input_id)
