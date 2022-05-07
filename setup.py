@@ -319,7 +319,7 @@ class build_ext_cmake(build_ext):
         # any python sources to bundle, the dirs will be missing
         build_temp = pathlib.Path(self.build_temp)
         build_temp.mkdir(parents=True, exist_ok=True)
-        ext_path = pathlib.Path(self.get_ext_fullpath(ext.name))
+        ext_path = pathlib.Path(self.get_ext_fullpath(ext.name)).absolute()
         ext_path.parent.mkdir(parents=True, exist_ok=True)
 
         # example of cmake args
