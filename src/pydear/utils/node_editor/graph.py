@@ -81,14 +81,15 @@ class Graph:
         if not in_pin.is_acceptable(out_pin):
             return
 
-        # remove link that has same input_id
-        self.links = [(o, i) for o, i in self.links if i != input_id]
+        # remove link that has same input_id or output_id
+        self.links = [(o, i) for o, i in self.links if i != input_id and o!= output_id]
 
         self.links.append((output_id, input_id))
         self.output_from_input[input_id] = (out_node, out_pin)
         self.input_from_output[output_id] = (in_node, in_pin)
 
     def disconnect(self, link_index: int):
+        # TODO: multi output
         output_id, input_id = self.links[link_index]
         del self.links[link_index]
         del self.output_from_input[input_id]
