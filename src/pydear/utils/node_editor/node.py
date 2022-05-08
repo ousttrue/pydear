@@ -14,6 +14,11 @@ def color_int(r, g, b):
 PIN_COLOR = color_int(255, 255, 128)
 
 
+class PinStyle(NamedTuple):
+    shape: ImNodes.ImNodesPinShape_
+    color: int
+
+
 class Serialized(NamedTuple):
     klass: str
     args: Dict[str, Any]

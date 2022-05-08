@@ -1,17 +1,12 @@
-from typing import List, Tuple, Dict, Type, Optional, NamedTuple
+from typing import List, Tuple, Dict, Type, Optional
 import pathlib
 import logging
 import ctypes
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
-from .node import Node, InputPin, OutputPin, OutputFromInput, InputFromOutput
+from .node import Node, InputPin, OutputPin, OutputFromInput, InputFromOutput, PinStyle
 
 LOGGER = logging.getLogger(__name__)
-
-
-class PinStyle:
-    shape: ImNodes.ImNodesPinShape_
-    color: int
 
 
 class Graph:

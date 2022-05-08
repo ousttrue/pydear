@@ -1,6 +1,6 @@
-from typing import Tuple
+from typing import Tuple, Dict, Type
 import ctypes
-from pydear.utils.node_editor.node import Serialized, Node, OutputPin, InputPin, color_int
+from pydear.utils.node_editor.node import Serialized, Node, OutputPin, InputPin, color_int, PinStyle
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
 
@@ -137,7 +137,7 @@ TYPES = [
     Float3InputPin, ColorOutNode
 ]
 
-PIN_STYLE_MAP = {
-    Tuple[float, float, float]: (
+PIN_STYLE_MAP: Dict[Type, PinStyle] = {
+    Tuple[float, float, float]: PinStyle(
         ImNodes.ImNodesPinShape_.QuadFilled, color_int(255, 128, 128))
 }
