@@ -140,7 +140,7 @@ class ImplGlfwInput:
             glfw.set_cursor_pos_callback(
                 self.window, self._mouse_position_callback)
             glfw.set_window_size_callback(self.window, self._resize_callback)
-            # glfw.set_char_callback(self.window, self._char_callback)
+            glfw.set_char_callback(self.window, self._char_callback)
             glfw.set_scroll_callback(self.window, self._scroll_callback)
 
         self.io.display_size = glfw.get_framebuffer_size(self.window)
@@ -161,9 +161,8 @@ class ImplGlfwInput:
             self.io.AddKeyEvent(imgui_key.value, action == glfw.PRESS)
 
     def _char_callback(self, window, char):
-        pass
-        # if 0 < char < 0x10000:
-        #     self.io.add_input_character(char)
+        if 0 < char < 0x10000:
+            self.io.AddInputCharacter(char)
 
     def _resize_callback(self, window, width, height):
         self.io.DisplaySize = ImGui.ImVec2(width, height)
