@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Type
+from typing import Tuple, Dict, Type, Optional
 import ctypes
 from pydear.utils.node_editor.node import Serialized, Node, OutputPin, InputPin, color_int, PinStyle
 from pydear import imgui as ImGui
@@ -50,10 +50,10 @@ class FloatInputPin(InputPin[float]):
             self.value = value
 
 
-class RgbMuxerPin(OutputPin[Tuple[float, float, float]]):
+class RgbMuxerPin(OutputPin[Optional[Tuple[float, float, float]]]):
     def __init__(self, id: int):
         super().__init__(id, 'muxer')
-        self.value = (0.0, 0.0, 0.0)
+        self.value = None
 
     def get_value(self, node: 'RgbMuxerNode') -> Tuple[float, float, float]:
         return node.get_mux()

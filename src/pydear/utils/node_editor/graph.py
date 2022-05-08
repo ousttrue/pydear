@@ -25,7 +25,7 @@ class Graph:
         k = t.__name__
         self.type_map[k] = t
 
-    def add_pin_style(self, t: Type, style):
+    def add_pin_style(self, t: Type, style: PinStyle):
         self.shape_map[t] = style
 
     def to_bytes(self) -> bytes:

@@ -1,10 +1,24 @@
-from typing import Optional, Any, TypeAlias, Dict, Tuple, List, NamedTuple, TypeVar, Generic, get_args
+from typing import Optional, Any, TypeAlias, Dict, Tuple, List, NamedTuple, TypeVar, Generic, get_args, get_origin, Union
+import types
 import abc
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
 
 
 T = TypeVar('T')
+
+
+def get_generic_type(cls):
+    # https://stackoverflow.com/questions/56832881/check-if-a-field-is-typing-optional
+    t = get_args(cls.__orig_bases__[0])[0]
+    o = get_origin(t)
+    if o is Union: # Optional[T] => Union[T, None]
+        args = get_args(t)
+        match args:
+            case (tt, types.NoneType):
+                # resolve Optional[T]
+                t = tt
+    return t
 
 
 def color_int(r, g, b):
@@ -33,8 +47,8 @@ class InputPin(Generic[T], metaclass=abc.ABCMeta):
         return Serialized(self.__class__.__name__, {'id': self.id, 'name': self.name})
 
     def is_acceptable(self, out: 'OutputPin') -> bool:
-        src = get_args(self.__orig_bases__[0])[0]  # type: ignore
-        dst = get_args(out.__orig_bases__[0])[0]  # type: ignore
+        src = get_generic_type(self)
+        dst = get_generic_type(out)
         return src == dst
 
     @staticmethod
@@ -46,7 +60,7 @@ class InputPin(Generic[T], metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     def show(self, shape_map):
-        t = get_args(self.__orig_bases__[0])[0]  # type: ignore
+        t = get_generic_type(self)
         shape, color = shape_map.get(
             t, (ImNodes.ImNodesPinShape_.CircleFilled, PIN_COLOR))
         ImNodes.PushColorStyle(ImNodes.ImNodesCol_.Pin, color)
@@ -72,7 +86,7 @@ class OutputPin(Generic[T], metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     def show(self, shape_map, indent: int):
-        t = get_args(self.__orig_bases__[0])[0]  # type: ignore
+        t = get_generic_type(self)
         shape, color = shape_map.get(
             t, (ImNodes.ImNodesPinShape_.CircleFilled, PIN_COLOR))
         ImNodes.PushColorStyle(ImNodes.ImNodesCol_.Pin, color)
