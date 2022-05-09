@@ -429,7 +429,7 @@ class Gizmo:
 
         return clicked
 
-    def bone_cube(self, key, w: float, h: float, length: float, is_selected: bool = False) -> bool:
+    def bone_cube(self, key, w: float, h: float, length: float, *, is_selected: bool = False) -> bool:
         '''
         _X_
         w   A height _Y_
@@ -533,3 +533,63 @@ class Gizmo:
             glm.vec4(head, 1))
 
         return self.bone_octahedron(key, glm.length(head_tail), is_selected)
+
+    def ring_yaw(self, m: glm.mat4, inner: float, outer: float, *, section=20):
+        to_pi = math.pi / 180
+        step = 360//section
+        values = [degree * to_pi for degree in range(0, 360, step)]
+
+        def theta_to_xy(theta):
+            s = math.sin(theta)
+            c = math.cos(theta)
+            return (s, c)
+        points = [theta_to_xy(theta) for theta in values]
+        for i, (ix, iy) in enumerate(points):
+            j = (i+1) % len(points)
+            (jx, jy) = points[j]
+
+            self.quad(
+                glm.vec3(ix, iy, 0)*inner,
+                glm.vec3(jx, jy, 0)*inner,
+                glm.vec3(jx, jy, 0)*outer,
+                glm.vec3(ix, iy, 0)*outer)
+
+    def ring_pitch(self, m: glm.mat4, inner: float, outer: float, *, section=20):
+        to_pi = math.pi / 180
+        step = 360//section
+        values = [degree * to_pi for degree in range(0, 360, step)]
+
+        def theta_to_xy(theta):
+            s = math.sin(theta)
+            c = math.cos(theta)
+            return (s, c)
+        points = [theta_to_xy(theta) for theta in values]
+        for i, (ix, iy) in enumerate(points):
+            j = (i+1) % len(points)
+            (jx, jy) = points[j]
+
+            self.quad(
+                glm.vec3(0, ix, iy)*inner,
+                glm.vec3(0, jx, jy)*inner,
+                glm.vec3(0, jx, jy)*outer,
+                glm.vec3(0, ix, iy)*outer)
+
+    def ring_roll(self, m: glm.mat4, inner: float, outer: float, *, section=20):
+        to_pi = math.pi / 180
+        step = 360//section
+        values = [degree * to_pi for degree in range(0, 360, step)]
+
+        def theta_to_xy(theta):
+            s = math.sin(theta)
+            c = math.cos(theta)
+            return (s, c)
+        points = [theta_to_xy(theta) for theta in values]
+        for i, (ix, iy) in enumerate(points):
+            j = (i+1) % len(points)
+            (jx, jy) = points[j]
+
+            self.quad(
+                glm.vec3(ix, 0, iy)*inner,
+                glm.vec3(jx, 0, jy)*inner,
+                glm.vec3(jx, 0, jy)*outer,
+                glm.vec3(ix, 0, iy)*outer)
