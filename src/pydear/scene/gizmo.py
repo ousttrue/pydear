@@ -1,4 +1,5 @@
 from typing import NamedTuple, Optional
+from enum import Enum, auto
 import logging
 import ctypes
 import math
@@ -8,6 +9,7 @@ from pydear import glo
 from pydear.scene.camera import Ray
 
 LOGGER = logging.getLogger(__name__)
+UP_RED = glm.vec3(0.9, 0.2, 0.2) * 0.5
 
 VS = '''
 #version 330
@@ -83,15 +85,28 @@ class Vertex(ctypes.Structure):
 
     @staticmethod
     def pos_color(p: glm.vec3, c: glm.vec4) -> 'Vertex':
-        return Vertex(
-            p.x,
-            p.y,
-            p.z,
-            c.r,
-            c.g,
-            c.b,
-            c.a,
-        )
+        if isinstance(c, glm.vec3):
+            return Vertex(
+                p.x,
+                p.y,
+                p.z,
+                c.r,
+                c.g,
+                c.b,
+                1,
+            )
+        elif isinstance(c, glm.vec4):
+            return Vertex(
+                p.x,
+                p.y,
+                p.z,
+                c.r,
+                c.g,
+                c.b,
+                c.a,
+            )
+        else:
+            raise NotImplementedError()
 
 
 class LineVertex(NamedTuple):
@@ -196,13 +211,14 @@ class Gizmo:
             for prop in self.line_props:
                 prop()
 
-            GL.glDisable(GL.GL_DEPTH_TEST)
-            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-            GL.glEnable(GL.GL_BLEND)
+            # GL.glDisable(GL.GL_DEPTH_TEST)
+            # GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+            # GL.glEnable(GL.GL_BLEND)
             self.triangle_drawable.draw(
                 self.triangle_count, topology=GL.GL_TRIANGLES)
-            GL.glDisable(GL.GL_BLEND)
-            GL.glEnable(GL.GL_DEPTH_TEST)
+            # GL.glDisable(GL.GL_BLEND)
+            # GL.glEnable(GL.GL_DEPTH_TEST)
+            # GL.glEnable(GL.GL_CULL_FACE)
 
             self.line_drawable.draw(self.line_count, topology=GL.GL_LINES)
 
@@ -215,7 +231,7 @@ class Gizmo:
         self.lines[self.line_count] = Vertex.pos_color(p1, self.color)
         self.line_count += 1
 
-    def triangle(self, p0: glm.vec3, p1: glm.vec3, p2: glm.vec3, *, intersect=False):
+    def triangle(self, p0: glm.vec3, p1: glm.vec3, p2: glm.vec3, *, intersect=False) -> Optional[float]:
         p0 = (self.matrix * glm.vec4(p0, 1)).xyz
         p1 = (self.matrix * glm.vec4(p1, 1)).xyz
         p2 = (self.matrix * glm.vec4(p2, 1)).xyz
@@ -232,9 +248,20 @@ class Gizmo:
         if intersect:
             return self.ray.intersect_triangle(p0, p1, p2)
 
-    def quad(self, p0: glm.vec3, p1: glm.vec3, p2: glm.vec3, p3: glm.vec3):
-        self.triangle(p0, p1, p2)
-        self.triangle(p2, p3, p0)
+    def quad(self, p0: glm.vec3, p1: glm.vec3, p2: glm.vec3, p3: glm.vec3, *, intersect=False) -> Optional[float]:
+        i0 = self.triangle(p0, p1, p2, intersect=intersect)
+        i1 = self.triangle(p2, p3, p0, intersect=intersect)
+
+        if intersect:
+            if i0 and i1:
+                if i0 < i1:
+                    return i0
+                else:
+                    return i1
+            elif i0:
+                return i0
+            elif i1:
+                return i1
 
     def axis(self, size: float):
         origin = glm.vec3(0, 0, 0)
@@ -325,7 +352,7 @@ class Gizmo:
                 self.line(t2, b2)
                 self.line(t3, b3)
 
-    def bone(self, key, length: float, is_selected: bool = False) -> bool:
+    def bone_octahedron(self, key, length: float, is_selected: bool = False) -> bool:
         '''
         return True if mouse clicked
         '''
@@ -402,7 +429,98 @@ class Gizmo:
 
         return clicked
 
-    def bone_head_tail(self, key: str, head: glm.vec3, tail: glm.vec3, up: glm.vec3, is_selected=False) -> bool:
+    def bone_cube(self, key, w: float, h: float, length: float, is_selected: bool = False) -> bool:
+        '''
+        _X_
+        w   A height _Y_
+        i   |
+        d   +------>
+        t  /      /
+        h +------> length _Z_
+         /      /
+        +------>
+        '''
+        clicked = False
+        self.color = glm.vec4(0.5, 0.5, 0.5, 0.2)
+        if is_selected:
+            self.color = glm.vec4(0.7, 0.7, 0, 0.7)
+        elif self.hover_last == key:
+            self.color = glm.vec4(0, 0.7, 0, 0.7)
+            if self.mouse_clicked:
+                clicked = True
+        any_hit = False
+
+        x = glm.vec3(1, 0, 0)
+        y = glm.vec3(0, 0, 1)
+        p0 = glm.vec3(0)
+        p1 = glm.vec3(0, length, 0)
+        p0_0 = p0-x*w-y*h
+        p0_1 = p0+x*w-y*h
+        p0_2 = p0+x*w+y*h
+        p0_3 = p0-x*w+y*h
+        p1_0 = p1-x*w-y*h
+        p1_1 = p1+x*w-y*h
+        p1_2 = p1+x*w+y*h
+        p1_3 = p1-x*w+y*h
+        # cap
+        hit = self.quad(p1_0,
+                        p1_3,
+                        p1_2,
+                        p1_1, intersect=True)
+        if hit:
+            self.hover = key
+            any_hit = True
+
+        hit = self.quad(p0_0,
+                        p0_1,
+                        p0_2,
+                        p0_3, intersect=True)
+        if hit:
+            self.hover = key
+            any_hit = True
+
+        # left
+        hit = self.quad(p0_0,
+                        p0_3,
+                        p1_3,
+                        p1_0, intersect=True)
+        if hit:
+            self.hover = key
+            any_hit = True
+
+        # right
+        hit = self.quad(p0_2,
+                        p0_1,
+                        p1_1,
+                        p1_2, intersect=True)
+        if hit:
+            self.hover = key
+            any_hit = True
+
+        # bottom
+        hit = self.quad(p0_1,
+                        p0_0,
+                        p1_0,
+                        p1_1, intersect=True)
+        if hit:
+            self.hover = key
+            any_hit = True
+
+        # top
+        self.color = UP_RED
+        hit = self.quad(p0_3,
+                        p0_2,
+                        p1_2,
+                        p1_3, intersect=True)
+        if hit:
+            self.hover = key
+            any_hit = True
+
+        return clicked
+
+    def bone_head_tail(self, key: str, head: glm.vec3, tail: glm.vec3, up: glm.vec3, *,
+                       is_selected=False) -> bool:
+
         head_tail = tail - head
         y = glm.normalize(head_tail)
         x = glm.normalize(glm.cross(y, up))
@@ -414,4 +532,4 @@ class Gizmo:
             glm.vec4(z, 0),
             glm.vec4(head, 1))
 
-        return self.bone(key, glm.length(head_tail), is_selected)
+        return self.bone_octahedron(key, glm.length(head_tail), is_selected)
