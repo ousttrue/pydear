@@ -36,7 +36,7 @@ def main():
 
     from pydear.utils import dockspace
     docks = [
-        dockspace.Dock('', node_editor.show, (ctypes.c_bool * 1)(True))
+        dockspace.Dock('node_editor', node_editor.show, (ctypes.c_bool * 1)(True))
     ]
 
     gui = dockspace.DockingGui(
