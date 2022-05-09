@@ -1,4 +1,4 @@
-from typing import Optional, Any, TypeAlias, Dict, Tuple, List, NamedTuple, TypeVar, Generic, get_args, get_origin, Union
+from typing import Optional, Any, TypeAlias, Dict, Tuple, List, NamedTuple, TypeVar, Generic, get_args, get_origin, Union, Type
 import types
 import abc
 from pydear import imgui as ImGui
@@ -8,11 +8,11 @@ from pydear import imnodes as ImNodes
 T = TypeVar('T')
 
 
-def get_generic_type(cls):
+def get_generic_type(cls) -> Type:
     # https://stackoverflow.com/questions/56832881/check-if-a-field-is-typing-optional
     t = get_args(cls.__orig_bases__[0])[0]
     o = get_origin(t)
-    if o is Union: # Optional[T] => Union[T, None]
+    if o is Union:  # Optional[T] => Union[T, None]
         args = get_args(t)
         match args:
             case (tt, types.NoneType):
@@ -25,12 +25,13 @@ def color_int(r, g, b):
     return (255 << 24) + (b << 16) + (g << 8) + (r << 0)
 
 
-PIN_COLOR = color_int(255, 255, 128)
-
-
 class PinStyle(NamedTuple):
     shape: ImNodes.ImNodesPinShape_
     color: int
+
+
+PIN_COLOR = color_int(255, 255, 128)
+DEFAULT_STYLE = PinStyle(ImNodes.ImNodesPinShape_.CircleFilled, PIN_COLOR)
 
 
 class Serialized(NamedTuple):
@@ -38,18 +39,24 @@ class Serialized(NamedTuple):
     args: Dict[str, Any]
 
 
+class Link(NamedTuple):
+    out_pin_id: int
+    in_pin_id: int
+    color: int
+
+
 class InputPin(Generic[T], metaclass=abc.ABCMeta):
     def __init__(self, id: int, name: str) -> None:
         self.id = id
         self.name = name
+        self.generic_type = get_generic_type(self)
 
     def to_json(self) -> Serialized:
         return Serialized(self.__class__.__name__, {'id': self.id, 'name': self.name})
 
-    def is_acceptable(self, out: 'OutputPin') -> bool:
-        src = get_generic_type(self)
-        dst = get_generic_type(out)
-        return src == dst
+    def get_acceptale_type(self, out: 'OutputPin') -> Optional[Type]:
+        if self.generic_type == out.generic_type:
+            return self.generic_type
 
     @staticmethod
     def from_json(klass_map, klass, **kw) -> 'InputPin':
@@ -60,19 +67,20 @@ class InputPin(Generic[T], metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     def show(self, shape_map):
-        t = get_generic_type(self)
         shape, color = shape_map.get(
-            t, (ImNodes.ImNodesPinShape_.CircleFilled, PIN_COLOR))
+            self.generic_type, DEFAULT_STYLE)
         ImNodes.PushColorStyle(ImNodes.ImNodesCol_.Pin, color)
         ImNodes.BeginInputAttribute(self.id, shape)
         ImGui.Text(self.name)
         ImNodes.EndInputAttribute()
+        ImNodes.PopColorStyle()
 
 
 class OutputPin(Generic[T], metaclass=abc.ABCMeta):
     def __init__(self, id: int, name: str) -> None:
         self.id = id
         self.name = name
+        self.generic_type = get_generic_type(self)
 
     def to_json(self) -> Serialized:
         return Serialized(self.__class__.__name__, {'id': self.id, 'name': self.name})
@@ -88,12 +96,13 @@ class OutputPin(Generic[T], metaclass=abc.ABCMeta):
     def show(self, shape_map, indent: int):
         t = get_generic_type(self)
         shape, color = shape_map.get(
-            t, (ImNodes.ImNodesPinShape_.CircleFilled, PIN_COLOR))
+            t, DEFAULT_STYLE)
         ImNodes.PushColorStyle(ImNodes.ImNodesCol_.Pin, color)
         ImNodes.BeginOutputAttribute(self.id, shape)
         ImGui.Indent(indent)
         ImGui.Text(self.name)
         ImNodes.EndOutputAttribute()
+        ImNodes.PopColorStyle()
 
 
 OutputFromInput: TypeAlias = Dict[int, Tuple['Node', OutputPin]]
@@ -123,12 +132,12 @@ class Node(metaclass=abc.ABCMeta):
     def get_right_indent(self) -> int:
         return 40
 
-    def contains(self, link: Tuple[int, int]) -> bool:
+    def contains(self, link: Link) -> bool:
         for in_pin in self.inputs:
-            if in_pin.id in link:
+            if in_pin.id == link.in_pin_id:
                 return True
         for out_pin in self.outputs:
-            if out_pin.id in link:
+            if out_pin.id == link.out_pin_id:
                 return True
         return False
 

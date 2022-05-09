@@ -34,8 +34,11 @@ class FloatValueNode(Node):
             'value': self._array[0]
         })
 
+    def get_right_indent(self) -> int:
+        return 100
+
     def show_content(self, graph):
-        ImGui.SetNextItemWidth(200)
+        ImGui.SetNextItemWidth(100)
         ImGui.SliderFloat(f'value##{id}', self._array, 0, 1)
         self.out.value = self._array[0]
 

@@ -1,10 +1,10 @@
-from typing import List, Tuple, Dict, Type, Optional
+from typing import List, Tuple, Dict, Type, Optional, NamedTuple
 import pathlib
 import logging
 import ctypes
 from pydear import imgui as ImGui
 from pydear import imnodes as ImNodes
-from .node import Node, InputPin, OutputPin, OutputFromInput, InputFromOutput, PinStyle
+from .node import Node, InputPin, OutputPin, OutputFromInput, InputFromOutput, PinStyle, Link, DEFAULT_STYLE
 
 LOGGER = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ class Graph:
         self.next_id = 1
         self.nodes: List[Node] = []
         self.keep_remove = []
-        self.links: List[Tuple[int, int]] = []
+        self.links: List[Link] = []
         self.output_from_input: OutputFromInput = {}
         self.input_from_output: InputFromOutput = {}
         self.current_dir: Optional[pathlib.Path] = None
@@ -31,7 +31,7 @@ class Graph:
     def to_bytes(self) -> bytes:
         graph = {
             'nodes': [node.to_json() for node in self.nodes],
-            'links': self.links,
+            'links': [(link.out_pin_id, link.in_pin_id) for link in self.links],
             'next_id': self.next_id,
         }
         import json
@@ -75,22 +75,26 @@ class Graph:
                     return node, in_pin
         raise KeyError()
 
-    def connect(self, output_id: int, input_id: int):
-        out_node, out_pin = self.find_output(output_id)
-        in_node, in_pin = self.find_input(input_id)
-        if not in_pin.is_acceptable(out_pin):
+    def connect(self, out_pin_id: int, in_pin_id: int):
+        out_node, out_pin = self.find_output(out_pin_id)
+        in_node, in_pin = self.find_input(in_pin_id)
+
+        t = in_pin.get_acceptale_type(out_pin)
+        if not t:
             return
 
         # remove link that has same input_id or output_id
-        self.links = [(o, i) for o, i in self.links if i != input_id and o!= output_id]
+        self.links = [link for link in self.links if link.out_pin_id != out_pin_id
+                      and link.in_pin_id != in_pin_id]
 
-        self.links.append((output_id, input_id))
-        self.output_from_input[input_id] = (out_node, out_pin)
-        self.input_from_output[output_id] = (in_node, in_pin)
+        pin_style = self.shape_map.get(t, DEFAULT_STYLE)
+        self.links.append(Link(out_pin_id, in_pin_id, pin_style.color))
+        self.output_from_input[in_pin_id] = (out_node, out_pin)
+        self.input_from_output[out_pin_id] = (in_node, in_pin)
 
     def disconnect(self, link_index: int):
         # TODO: multi output
-        output_id, input_id = self.links[link_index]
+        output_id, input_id, color = self.links[link_index]
         del self.links[link_index]
         del self.output_from_input[input_id]
         del self.input_from_output[output_id]
@@ -121,14 +125,14 @@ class Graph:
             if not node.has_connected_output(self.input_from_output):
                 node.process(process_frame, self.output_from_input)
 
-        def pin_exists(out_pin: int, in_pin: int):
-            if out_pin not in out_pin_list:
+        def pin_exists(link: Link):
+            if link.out_pin_id not in out_pin_list:
                 return False
-            if in_pin not in in_pin_list:
+            if link.in_pin_id not in in_pin_list:
                 return False
             return True
 
-        self.links = [link for link in self.links if pin_exists(*link)]
+        self.links = [link for link in self.links if pin_exists(link)]
 
     def show(self):
         if not isinstance(self.keep_remove, list):
@@ -138,8 +142,10 @@ class Graph:
         for node in self.nodes:
             node.show(self)
 
-        for i, (begin, end) in enumerate(self.links):
-            ImNodes.Link(i, begin, end)
+        for i, link in enumerate(self.links):
+            ImNodes.PushColorStyle(ImNodes.ImNodesCol_.Link, link.color)
+            ImNodes.Link(i, link.out_pin_id, link.in_pin_id)
+            ImNodes.PopColorStyle()
 
     def update(self, start_attr, end_attr):
         if ImNodes.IsLinkCreated(start_attr, end_attr):
