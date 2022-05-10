@@ -7,7 +7,7 @@ from OpenGL import GL
 import glm
 from pydear.utils.selector import Item
 from pydear.scene.camera import Camera, MouseEvent
-from pydear.scene.gizmo import Gizmo, AABB
+from pydear.gizmo.gizmo import Gizmo, AABB
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ class GizmoScene(Item):
         self.mouse_event = mouse_event
         self.camera.bind_mouse_event(self.mouse_event)
         self.gizmo = Gizmo()
+        self.gizmo.bind_mouse_event(self.mouse_event)
         self.selected = None
 
     def render(self, w, h):
@@ -42,21 +43,20 @@ class GizmoScene(Item):
         # GL.glFrontFace(GL.GL_CCW)
         GL.glEnable(GL.GL_DEPTH_TEST)
 
-        input = self.mouse_event.last_input
-        assert(input)
-
-        self.gizmo.begin(input.x, input.y, input.left_down,
-                         self.camera.view.matrix, self.camera.projection.matrix,
-                         self.camera.get_mouse_ray(input.x, input.y))
+        self.gizmo.begin(self.camera)
         self.gizmo.aabb(AABB(glm.vec3(5, 0, 0), glm.vec3(6, 1, 1)))
 
+        current = None
         for bone in BONES:
             selected = self.gizmo.bone_head_tail(
                 bone.name, bone.head, bone.tail, bone.up, is_selected=bone.name == self.selected)
             if selected:
-                self.selected = bone.name
-            elif input.left_down:
-                self.selected = None
+                current = bone.name
+
+        if current:
+            self.selected = current
+        elif self.mouse_event.last_input.left_down:
+            self.selected = None
 
         self.matrix = glm.mat4()
         self.gizmo.axis(1)

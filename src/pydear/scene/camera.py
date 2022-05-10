@@ -247,6 +247,9 @@ class Camera:
         self.on_wheel = self.middle_drag
 
     def bind_mouse_event(self, mouse_event: MouseEvent):
+        '''
+        use right and middle drag and wheel
+        '''
         mouse_event.wheel.append(self.on_wheel.wheel)
         mouse_event.right_pressed.append(self.right_drag.begin)
         mouse_event.right_drag.append(self.right_drag.drag)

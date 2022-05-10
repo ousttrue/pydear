@@ -6,7 +6,8 @@ import math
 from OpenGL import GL
 import glm
 from pydear import glo
-from pydear.scene.camera import Ray
+from pydear.scene.camera import Ray, Camera
+from pydear.utils.mouse_event import MouseEvent
 
 LOGGER = logging.getLogger(__name__)
 UP_RED = glm.vec3(0.9, 0.2, 0.2) * 0.5
@@ -115,23 +116,32 @@ class LineVertex(NamedTuple):
 
 
 class Gizmo:
+    '''
+    [triangles] の登録
+    * 1weight skinning
+    * cube
+    * ring
+    * bone
+    * rgba
+    * normal diffuse + ambient
+
+    [lines] の登録
+    * 1weight skinning
+    * axis
+    * rgba
+
+    [mouse event]
+    cursor ray の[triangles]に対するあたり判定 => hover(highlight)
+    hover に対する click(selector)/drag(manipulator) 
+    '''
     def __init__(self) -> None:
         # state
-        self.mouse_x = 0
-        self.mouse_y = 0
-        self.mouse_down = False
-        self.mouse_right_down = False
-        self.mouse_middle_down = False
         self.camera_view = glm.mat4()
         self.camera_projection = glm.mat4()
-
         self.ray = Ray(glm.vec3(0, 0, 0), glm.vec3(0, 0, 1))
-
         self.matrix = glm.mat4()
         self.color = glm.vec4(1, 1, 1, 1)
         # event
-        self.mouse_clicked = False
-
         self.line_shader: Optional[glo.Shader] = None
         self.line_props = []
         # lines
@@ -142,28 +152,43 @@ class Gizmo:
         self.triangles = (Vertex * 65535)()
         self.triangle_count = 0
         self.triangle_drawable: Optional[glo.Vao] = None
-
         # hover selectable
         self.hover = None
         self.hover_last = None
+        self.mouse_event = None
 
-    def begin(self, x: int, y: int, mouse_down: bool,
-              view: glm.mat4, projection: glm.mat4, ray: Ray):
+        self.mouse_clicked = False
+
+    def bind_mouse_event(self, mouse_event: MouseEvent):
+        '''
+        use left mouse
+        '''
+        self.mouse_event = mouse_event
+        mouse_event.left_pressed.append(self.drag_begin)
+        mouse_event.left_drag.append(self.drag)
+        mouse_event.left_released.append(self.drag_end)
+
+    def drag_begin(self, x, y):
+        pass
+
+    def drag(self, x, y, dx, dy):
+        pass
+
+    def drag_end(self, x, y):
+        self.mouse_clicked = True
+
+    def begin(self, camera: Camera):
+        assert self.mouse_event and self.mouse_event.last_input
+        input = self.mouse_event.last_input
         # clear
         self.line_count = 0
         self.triangle_count = 0
         self.matrix = glm.mat4()
         self.color = glm.vec4(1, 1, 1, 1)
-        # update
-        self.mouse_clicked = self.mouse_down and not mouse_down
-
-        self.mouse_x = x
-        self.mouse_y = y
-        self.mouse_down = mouse_down
-        self.camera_view = view
-        self.camera_projection = projection
-        self.ray = ray
-
+        #
+        self.camera_view = camera.view.matrix
+        self.camera_projection = camera.projection.matrix
+        self.ray = camera.get_mouse_ray(input.x, input.y)
         self.hover_last = self.hover
         self.hover = None
 
@@ -408,6 +433,7 @@ class Gizmo:
             self.color = glm.vec4(0, 0.7, 0, 0.7)
             if self.mouse_clicked:
                 clicked = True
+                self.mouse_clicked = False
 
         triangles = (
             (p0, h, p1),
@@ -448,6 +474,7 @@ class Gizmo:
             self.color = glm.vec4(0, 0.7, 0, 0.7)
             if self.mouse_clicked:
                 clicked = True
+                self.mouse_clicked = False
         any_hit = False
 
         x = glm.vec3(1, 0, 0)

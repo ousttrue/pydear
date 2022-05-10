@@ -88,12 +88,15 @@ class MouseEvent:
         if self.left_active and not current.left_down:
             for callback in self.left_released:
                 callback(current.x, current.y)
+            self.left_active = False
         if self.right_active and not current.right_down:
             for callback in self.right_released:
                 callback(current.x, current.y)
+            self.right_active = False
         if self.middle_active and not current.middle_down:
             for callback in self.middle_released:
                 callback(current.x, current.y)
+            self.middle_active = False
 
         if current.wheel:
             for callback in self.wheel:
