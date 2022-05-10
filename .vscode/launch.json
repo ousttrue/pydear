@@ -117,7 +117,10 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/examples/three_dimension/main.py",
-            "args": [],
+            "args": [
+                "--ini",
+                "three_dimension.dat",
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
         },

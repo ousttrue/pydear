@@ -1,4 +1,6 @@
 from typing import Optional
+import pathlib
+import argparse
 import logging
 import ctypes
 from pydear import imgui as ImGui
@@ -9,8 +11,17 @@ def main():
     logging.basicConfig(
         format='[%(levelname)s]%(name)s:%(funcName)s: %(message)s', level=logging.DEBUG)
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ini', type=pathlib.Path)
+    args = parser.parse_args()
+
+    setting = None
+    if args.ini:
+        from pydear.utils.setting import BinSetting
+        setting = BinSetting(args.ini)
+
     from pydear.utils import glfw_app
-    app = glfw_app.GlfwApp('3D')
+    app = glfw_app.GlfwApp('3D', setting=setting)
 
     from pydear.utils import dockspace
 
@@ -48,13 +59,17 @@ def main():
                        (ctypes.c_bool * 1)(True)),
     ]
 
-    gui = dockspace.DockingGui(app.loop, docks=views)
+    gui = dockspace.DockingGui(app.loop, docks=views, setting=setting)
     from pydear.backends.impl_glfw import ImplGlfwInput
     impl_glfw = ImplGlfwInput(app.window)
     while app.clear():
         impl_glfw.process_inputs()
         gui.render()
-    del gui
+
+    if setting:
+        gui.save()
+        app.save()
+        setting.save()
 
 
 if __name__ == '__main__':
