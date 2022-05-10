@@ -6,6 +6,7 @@ import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 from pydear.utils.selector import Item
+from pydear.utils.mouse_event import MouseInput, MouseEvent
 from pydear import glo
 from OpenGL import GL
 import glm
@@ -151,7 +152,7 @@ while i+6 < 65536:
 
 
 class TextRenderer(Item):
-    def __init__(self) -> None:
+    def __init__(self, mouse_event: MouseEvent) -> None:
         super().__init__('text')
         self.left = False
         self.index = 0
@@ -163,9 +164,13 @@ class TextRenderer(Item):
         self.width = 1
         self.height = 1
         self.view = glm.mat4()
+        mouse_event.left_pressed.append(self.put_letter)
 
-    def update_vertices(self, x, y, w, h, letter):
-        assert self.vao
+    def _update_vertices(self, x, y, w, h):
+        if not self.vao:
+            return
+        letter = self.letters[self.index]
+        LOGGER.debug(f'{letter}')
         pos = self.index * 4
         l, r, b, t = letter.get_uv()
         vertices[pos] = Vertex(float(x-w), float(y-h), l, b)
@@ -185,16 +190,11 @@ class TextRenderer(Item):
         elif d > 0:
             self.size += 1
 
+    def put_letter(self, x, y):
+        self._update_vertices(x, y, self.size, self.size)
+
     def mouse_drag(self, x, y, dx, dy, left, right, middle):
-        if self.left and left:
-            # pressed
-            letter = self.letters[self.index]
-            LOGGER.debug(f'{letter}')
-            self.update_vertices(
-                x, y, self.size, self.size, letter)
-        self.left = left
-        w = self.width
-        h = self.height
+        pass
 
     def mouse_release(self, x, y):
         pass

@@ -1,7 +1,7 @@
 from typing import Optional
 import abc
 from pydear import imgui as ImGui
-from .mouseevent import MouseInput
+from .mouse_event import MouseInput
 
 
 class Item(abc.ABC):

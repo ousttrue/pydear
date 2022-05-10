@@ -3,7 +3,7 @@ import asyncio
 import logging
 import ctypes
 from pydear import imgui as ImGui
-from pydear.utils.mouseevent import MouseInput
+from pydear.utils.mouse_event import MouseInput
 from pydear.utils import dockspace
 LOGGER = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 from typing import Callable, Optional
 import ctypes
 from pydear import imgui as ImGui
-from .mouseevent import MouseEvent, MouseInput
+from .mouse_event import MouseEvent, MouseInput
 
 
 class FboView:

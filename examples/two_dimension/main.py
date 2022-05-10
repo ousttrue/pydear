@@ -17,13 +17,6 @@ def main():
     from pydear.utils.selector import Selector, Item
     selector = Selector()
 
-    import contents.triangle
-    selector.add(contents.triangle.Triangle())
-    import contents.view
-    selector.add(contents.view.View())
-    import contents.text
-    selector.add(contents.text.TextRenderer())
-
     def show_selector(p_open):
         if ImGui.Begin("selector", p_open):
             selector.show()
@@ -46,6 +39,13 @@ def main():
         selected.on_mouse(input, last)
 
     fbo.mouse_event += on_mouse
+
+    import contents.triangle
+    selector.add(contents.triangle.Triangle())
+    import contents.view
+    selector.add(contents.view.View(fbo.mouse_event))
+    import contents.text
+    selector.add(contents.text.TextRenderer(fbo.mouse_event))
 
     views = [
         dockspace.Dock('demo', ImGui.ShowDemoWindow,

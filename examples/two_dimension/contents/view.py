@@ -6,7 +6,8 @@ import logging
 import ctypes
 from pydear import glo
 from pydear import imgui as ImGui
-from pydear.utils.selector import Item, MouseInput
+from pydear.utils.selector import Item
+from pydear.utils.mouse_event import MouseEvent
 import glm
 
 LOGGER = logging.getLogger(__name__)
@@ -53,9 +54,29 @@ vertices = (Vertex * 3)(
 )
 
 
+class ButtonInfo:
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.start = None
+        self.status = ''
+        self.on_released(0, 0)
+
+    def on_pressed(self, x, y):
+        self.start = (int(x), int(y))
+
+    def on_drag(self, x, y, dx, dy):
+        self.status = f'{self.name}: drag: {self.start} => ({x}, {y})'
+
+    def on_released(self, x, y):
+        self.status = f'{self.name}: release'
+
+    def show(self):
+        ImGui.TextUnformatted(self.status)
+
+
 class View(Item):
-    def __init__(self) -> None:
-        super().__init__('view')
+    def __init__(self, mouse_event: MouseEvent) -> None:
+        super().__init__('mouse event')
         self.vao: Optional[glo.Vao] = None
         self.shader: Optional[glo.Shader] = None
         self.props: List[Callable[[], None]] = []
@@ -68,6 +89,19 @@ class View(Item):
         self.view = glm.mat4()
         self.p_open = (ctypes.c_bool * 1)(True)
 
+        self.left = ButtonInfo('left')
+        mouse_event.left_pressed += [self.left.on_pressed]
+        mouse_event.left_drag += [self.left.on_drag, self.on_drag]
+        mouse_event.left_released += [self.left.on_released]
+        self.right = ButtonInfo('right')
+        mouse_event.right_pressed += [self.right.on_pressed]
+        mouse_event.right_drag += [self.right.on_drag, self.on_drag]
+        mouse_event.right_released += [self.right.on_released]
+        self.middle = ButtonInfo('middle')
+        mouse_event.middle_pressed += [self.middle.on_pressed]
+        mouse_event.middle_drag += [self.middle.on_drag, self.on_drag]
+        mouse_event.middle_released += [self.middle.on_released]
+
     def resize(self, w: int, h: int):
         self.width = w
         self.height = h
@@ -79,10 +113,11 @@ class View(Item):
             self.zoom *= 0.9
 
     def mouse_drag(self, x, y, dx, dy, left, right, middle):
+        pass
 
-        if middle:
-            self.x -= dx * self.zoom
-            self.y += dy * self.zoom
+    def on_drag(self, x, y, dx, dy):
+        self.x -= dx * self.zoom
+        self.y += dy * self.zoom
 
     def _update_matrix(self):
         w = self.width/2 * self.zoom
@@ -100,10 +135,17 @@ class View(Item):
         if not self.p_open[0]:
             return
 
-        if ImGui.Begin('view info', self.p_open):
+        if ImGui.Begin('mouse event info', self.p_open):
             ImGui.TextUnformatted(f'{self.x}: {self.y}')
             ImGui.TextUnformatted(f'{self.width}: {self.height}')
             ImGui.TextUnformatted(f'{self.zoom}')
+
+            ImGui.Separator()
+
+            self.left.show()
+            self.right.show()
+            self.middle.show()
+
         ImGui.End()
 
     def render(self):
