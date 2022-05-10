@@ -5,8 +5,8 @@ from typing import Optional, Callable, List
 import logging
 import ctypes
 from pydear import glo
-from pydear.utils.selector import Item
 from pydear import imgui as ImGui
+from pydear.utils.selector import Item, MouseInput
 import glm
 
 LOGGER = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ class View(Item):
             self.y-h, self.y+h,
             0, 1)
 
-    def mouse_release(self):
+    def mouse_release(self, x, y):
         pass
 
     def show(self):

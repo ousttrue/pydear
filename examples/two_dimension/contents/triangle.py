@@ -62,7 +62,7 @@ class Triangle(Item):
     def mouse_drag(self, x, y, dx, dy, left, right, middle):
         pass
 
-    def mouse_release(self):
+    def mouse_release(self, x, y):
         pass
 
     def render(self):

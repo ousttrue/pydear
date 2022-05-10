@@ -68,7 +68,7 @@ class GizmoScene(Item):
 
         for bone in BONES:
             selected = self.gizmo.bone_head_tail(
-                bone.name, bone.head, bone.tail, bone.up,  bone.name == self.selected)
+                bone.name, bone.head, bone.tail, bone.up, is_selected=bone.name == self.selected)
             if selected:
                 self.selected = bone.name
             elif self.left_down:

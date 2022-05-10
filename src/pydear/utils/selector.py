@@ -1,6 +1,7 @@
 from typing import Optional
 import abc
 from pydear import imgui as ImGui
+from .mouseevent import MouseInput
 
 
 class Item(abc.ABC):
@@ -14,6 +15,26 @@ class Item(abc.ABC):
     @abc.abstractmethod
     def wheel(self, d: int):
         pass
+
+    def on_mouse(self, input: MouseInput, last: Optional[MouseInput]):
+        self.resize(input.width, input.height)
+
+        dx = 0
+        dy = 0
+        if last:
+            dx = input.x - last.x
+            dy = input.y - last.y
+
+        if input.is_active:
+            self.mouse_drag(
+                input.x, input.y,
+                dx, dy,
+                input.left_down, input.right_down, input.middle_down)
+        else:
+            self.mouse_release(input.x, input.y)
+
+        if input.is_hover:
+            self.wheel(input.wheel)
 
     @abc.abstractmethod
     def mouse_drag(self, x: int, y: int, dx: int, dy: int, left: bool, right: bool, middle: bool):

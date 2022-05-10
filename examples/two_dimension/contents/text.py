@@ -196,7 +196,7 @@ class TextRenderer(Item):
         w = self.width
         h = self.height
 
-    def mouse_release(self):
+    def mouse_release(self, x, y):
         pass
 
     def show(self):
