@@ -17,7 +17,7 @@ class FboView:
         self.mouse_event = MouseEvent()
         self.render = render
 
-    def show_fbo(self, w, h):
+    def show_fbo(self, x, y, w, h):
         texture = self.fbo_manager.clear(
             int(w), int(h), self.clear_color)
         if texture:
@@ -26,10 +26,8 @@ class FboView:
             from pydear import imgui_internal
             imgui_internal.ButtonBehavior(ImGui.Custom_GetLastItemRect(), ImGui.Custom_GetLastItemId(), None, None,  # type: ignore
                                           ImGui.ImGuiButtonFlags_.MouseButtonMiddle | ImGui.ImGuiButtonFlags_.MouseButtonRight)
-            io = ImGui.GetIO()
-            x, y = ImGui.GetWindowPos()
-            y += ImGui.GetFrameHeight()
 
+            io = ImGui.GetIO()
             self.mouse_event.process(MouseInput(
                 (io.MousePos.x-x), (io.MousePos.y-y),
                 w, h,
@@ -47,8 +45,10 @@ class FboView:
         if ImGui.Begin("render target", p_open,
                        ImGui.ImGuiWindowFlags_.NoScrollbar |
                        ImGui.ImGuiWindowFlags_.NoScrollWithMouse):
+            x, y = ImGui.GetWindowPos()
+            y += ImGui.GetFrameHeight()
             w, h = ImGui.GetContentRegionAvail()
-            self.show_fbo(w, h)
+            self.show_fbo(x, y, w, h)
 
         ImGui.End()
         ImGui.PopStyleVar()

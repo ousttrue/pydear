@@ -178,8 +178,6 @@ class Gizmo:
         self.mouse_clicked = True
 
     def begin(self, camera: Camera):
-        assert self.mouse_event and self.mouse_event.last_input
-        input = self.mouse_event.last_input
         # clear
         self.line_count = 0
         self.triangle_count = 0
@@ -188,9 +186,12 @@ class Gizmo:
         #
         self.camera_view = camera.view.matrix
         self.camera_projection = camera.projection.matrix
-        self.ray = camera.get_mouse_ray(input.x, input.y)
         self.hover_last = self.hover
         self.hover = None
+
+        if self.mouse_event and self.mouse_event.last_input:
+            input = self.mouse_event.last_input
+            self.ray = camera.get_mouse_ray(input.x, input.y)
 
     def end(self):
         if not self.line_shader:
