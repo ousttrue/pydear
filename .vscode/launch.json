@@ -84,6 +84,8 @@
             "args": [
                 "--ini",
                 "two_dimension.dat",
+                "--font",
+                "${env:USERPROFILE}\\AppData\\Local\\Microsoft\\Windows\\Fonts\\HackGenNerdConsole-Regular.ttf"
             ],
             "console": "integratedTerminal",
             "justMyCode": false
@@ -133,7 +135,11 @@
             "request": "launch",
             "program": "C:/Python310/Python.exe",
             "args": [
-                "${file}"
+                "${file}",
+                "--ini",
+                "two_dimension.dat",
+                "--font",
+                "${workspaceFolder}/_external/nanovg/example/Roboto-Regular.ttf",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/src",

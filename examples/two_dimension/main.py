@@ -8,12 +8,41 @@ from pydear.utils.fbo_view import FboView
 logger = logging.getLogger(__name__)
 
 
+class SelectorView:
+    def __init__(self, fbo: FboView, font: pathlib.Path) -> None:
+        from pydear.utils.selector import Selector, Item
+        self.selector = Selector()
+
+        from contents.triangle import Triangle
+        self.selector.add(Triangle())
+        from contents.view import View
+        self.selector.add(View(fbo.mouse_event))
+        from contents.text import TextRenderer
+        self.selector.add(TextRenderer(fbo.mouse_event))
+        from contents.nanovg import NanoVg
+        self.selector.add(NanoVg(fbo.mouse_event, font))
+
+    def show(self, p_open):
+        if not p_open or p_open[0]:
+            if ImGui.Begin("selector", p_open):
+                self.selector.show()
+            ImGui.End()
+
+        if self.selector.selected:
+            self.selector.selected.show()
+
+    def render(self, w: int, h: int):
+        if self.selector.selected:
+            self.selector.selected.render(w, h)
+
+
 def main():
     logging.basicConfig(
         format='[%(levelname)s]%(name)s:%(funcName)s: %(message)s', level=logging.DEBUG)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--ini', type=pathlib.Path)
+    parser.add_argument('--font', type=pathlib.Path)
     args = parser.parse_args()
 
     setting = None
@@ -24,41 +53,21 @@ def main():
     from pydear.utils import glfw_app
     app = glfw_app.GlfwApp('2D', setting=setting)
 
+    # selector
+    fbo = FboView()
+    selector = SelectorView(fbo, args.font)
+    fbo.render = selector.render
+
+    # docking
     from pydear.utils import dockspace
-    from pydear.utils.selector import Selector, Item
-    selector = Selector()
-
-    def show_selector(p_open):
-        if not p_open or p_open[0]:
-            if ImGui.Begin("selector", p_open):
-                selector.show()
-            ImGui.End()
-
-        if selector.selected:
-            selector.selected.show()
-
-    def render(w: int, h: int):
-        if selector.selected:
-            selector.selected.render(w, h)
-
-    fbo = FboView(render)
-
-    import contents.triangle
-    selector.add(contents.triangle.Triangle())
-    import contents.view
-    selector.add(contents.view.View(fbo.mouse_event))
-    import contents.text
-    selector.add(contents.text.TextRenderer(fbo.mouse_event))
-
     views = [
         dockspace.Dock('metrics', ImGui.ShowMetricsWindow,
                        (ctypes.c_bool * 1)(True)),
-        dockspace.Dock('samples', show_selector,
+        dockspace.Dock('samples', selector.show,
                        (ctypes.c_bool * 1)(True)),
         dockspace.Dock('view', fbo.show,
                        (ctypes.c_bool * 1)(True)),
     ]
-
     gui = dockspace.DockingGui(app.loop, docks=views, setting=setting)
 
     # main loop
