@@ -164,7 +164,17 @@ class TextRenderer(Item):
         self.width = 1
         self.height = 1
         self.view = glm.mat4()
-        mouse_event.left_pressed.append(self.put_letter)
+
+        def put_letter(x, y):
+            self._update_vertices(x, y, self.size, self.size)
+        mouse_event.left_pressed.append(put_letter)
+
+        def on_wheel(d):
+            if d < 0:
+                self.size -= 1
+            elif d > 0:
+                self.size += 1
+        mouse_event.wheel += [on_wheel]
 
     def _update_vertices(self, x, y, w, h):
         if not self.vao:
@@ -180,29 +190,13 @@ class TextRenderer(Item):
         self.vao.vbo.update(vertices)
         self.index += 1
 
-    def resize(self, w: int, h: int):
-        self.width = w
-        self.height = h
-
-    def wheel(self, d):
-        if d < 0:
-            self.size -= 1
-        elif d > 0:
-            self.size += 1
-
-    def put_letter(self, x, y):
-        self._update_vertices(x, y, self.size, self.size)
-
-    def mouse_drag(self, x, y, dx, dy, left, right, middle):
-        pass
-
-    def mouse_release(self, x, y):
-        pass
-
     def show(self):
         pass
 
-    def render(self):
+    def render(self, w, h):
+        self.width = w
+        self.height = h
+
         self.view = glm.ortho(
             0, self.width,
             self.height, 0,

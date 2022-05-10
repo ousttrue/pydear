@@ -1,11 +1,14 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, TypeAlias
 import ctypes
 from pydear import imgui as ImGui
 from .mouse_event import MouseEvent, MouseInput
 
 
+RenderCallback: TypeAlias = Callable[[int, int], None]
+
+
 class FboView:
-    def __init__(self, render=Optional[Callable[[], None]]) -> None:
+    def __init__(self, render=Optional[RenderCallback]) -> None:
         self.clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
         from pydear import glo
         self.fbo_manager = glo.FboRenderer()
@@ -39,7 +42,7 @@ class FboView:
                     ImGui.IsItemActive(), ImGui.IsItemHovered(), int(io.MouseWheel)))
 
                 if self.render:
-                    self.render()
+                    self.render(w, h)
 
         ImGui.End()
         ImGui.PopStyleVar()

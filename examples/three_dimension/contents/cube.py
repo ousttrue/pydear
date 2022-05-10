@@ -7,29 +7,21 @@ from OpenGL import GL
 from pydear.utils.selector import Item
 from pydear import glo
 from pydear.scene.camera import Camera
+from pydear.utils.mouse_event import MouseEvent
 
 LOGGER = logging.getLogger(__name__)
 
 
 class Cube(Item):
-    def __init__(self) -> None:
+    def __init__(self, mouse_event: MouseEvent) -> None:
         super().__init__('cube')
         self.camera = Camera()
+        self.camera.bind_mouse_event(mouse_event)
         self.drawable: Optional[glo.Drawable] = None
 
-    def resize(self, w: int, h: int):
+    def render(self, w, h):
         self.camera.projection.resize(w, h)
 
-    def wheel(self, d: int):
-        self.camera.wheel(d)
-
-    def mouse_drag(self, x: int, y: int, dx: int, dy: int, left: bool, right: bool, middle: bool):
-        self.camera.mouse_drag(x, y, dx, dy, left, right, middle)
-
-    def mouse_release(self, x, y):
-        self.camera.mouse_release(x, y)
-
-    def render(self):
         # GL.glEnable(GL.GL_CULL_FACE)
         # GL.glCullFace(GL.GL_BACK)
         # GL.glFrontFace(GL.GL_CCW)

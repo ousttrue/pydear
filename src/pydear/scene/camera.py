@@ -3,6 +3,7 @@ import math
 import logging
 import glm
 import abc
+from pydear.utils.mouse_event import MouseEvent
 LOGGER = logging.getLogger(__name__)
 
 
@@ -136,27 +137,23 @@ class ScreenShift(DragInterface):
     def begin(self, x, y):
         pass
 
-    def drag(self, x, y, dx: int, dy: int) -> bool:
+    def drag(self, x, y, dx: int, dy: int):
         plane_height = math.tan(
             self.projection.fov_y * 0.5) * self.shift.z * 2
         self.shift.x -= dx / self.projection.height * plane_height
         self.shift.y += dy / self.projection.height * plane_height
         self.update()
-        return True
 
-    def end(self):
+    def end(self, x, y):
         pass
 
-    def wheel(self, d: int) -> bool:
+    def wheel(self, d: int):
         if d < 0:
             self.shift.z *= 1.1
             self.update()
-            return True
         elif d > 0:
             self.shift.z *= 0.9
             self.update()
-            return True
-        return False
 
 
 class TurnTable(DragInterface):
@@ -175,13 +172,12 @@ class TurnTable(DragInterface):
     def begin(self, x, y):
         pass
 
-    def drag(self, x, y, dx: int, dy: int) -> bool:
+    def drag(self, x, y, dx: int, dy: int):
         self.yaw += dx * 0.01
         self.pitch += dy * 0.01
         self.update()
-        return True
 
-    def end(self):
+    def end(self, x, y):
         pass
 
 
@@ -222,9 +218,9 @@ class ArcBall(DragInterface):
         self.va = get_arcball_vector(
             x, y, self.projection.width, self.projection.height)
 
-    def drag(self, x, y, dx, dy) -> bool:
+    def drag(self, x, y, dx, dy):
         if x == self.x and y == self.y:
-            return False
+            return
         self.x = x
         self.y = y
         vb = get_arcball_vector(
@@ -233,9 +229,8 @@ class ArcBall(DragInterface):
         axis = glm.cross(self.va, vb)
         self.tmp_rotation = glm.angleAxis(angle, axis)
         self.update()
-        return True
 
-    def end(self):
+    def end(self, x, y):
         self.rotation = glm.normalize(self.tmp_rotation * self.rotation)
         self.tmp_rotation = glm.quat()
         self.update()
@@ -251,55 +246,14 @@ class Camera:
             self.view, self.projection, distance=distance, y=y)
         self.on_wheel = self.middle_drag
 
-        # mouse state
-        self.x = 0
-        self.y = 0
-        self.left = False
-        self.right = False
-        self.middle = False
-
-    def mouse_drag(self,
-                   x: int, y: int,
-                   dx: int, dy: int,
-                   left: bool, right: bool, middle: bool):
-        self.x = x
-        self.y = y
-        self.left = left
-        if right:
-            if not self.right:
-                self.right = True
-                self.right_drag.begin(x, y)
-            self.right_drag.drag(x, y, dx, dy)
-        else:
-            if self.right:
-                self.right = False
-                self.right_drag.end()
-
-        if middle:
-            if not self.middle:
-                self.middle = True
-                self.middle_drag.begin(x, y)
-            self.middle_drag.drag(x, y, dx, dy)
-        else:
-            if self.middle:
-                self.middle = False
-                self.middle_drag.end()
-
-    def mouse_release(self, x: int, y: int):
-        self.x = x
-        self.y = y
-        self.left = False
-
-        if self.right:
-            self.right = False
-            self.right_drag.end()
-
-        if self.middle:
-            self.middle = False
-            self.middle_drag.end()
-
-    def wheel(self, d):
-        self.on_wheel.wheel(d)
+    def bind_mouse_event(self, mouse_event: MouseEvent):
+        mouse_event.wheel.append(self.on_wheel.wheel)
+        mouse_event.right_pressed.append(self.right_drag.begin)
+        mouse_event.right_drag.append(self.right_drag.drag)
+        mouse_event.right_released.append(self.right_drag.end)
+        mouse_event.middle_pressed.append(self.middle_drag.begin)
+        mouse_event.middle_drag.append(self.middle_drag.drag)
+        mouse_event.middle_released.append(self.middle_drag.end)
 
     # def fit(self, p0: Float3, p1: Float3):
     #     if math.isnan(p0.x) or math.isnan(p0.y) or math.isnan(p0.z) or math.isnan(p1.x) or math.isnan(p1.y) or math.isnan(p1.z):

@@ -38,6 +38,8 @@ class MouseEvent:
         self.middle_drag: List[DragCallback] = []
         self.middle_released: List[XYCallback] = []
 
+        self.wheel: List[Callable[[int], None]] = []
+
     def __iadd__(self, callback: Callback):
         self.callbacks.append(callback)
         return self
@@ -92,5 +94,9 @@ class MouseEvent:
         if self.middle_active and not current.middle_down:
             for callback in self.middle_released:
                 callback(current.x, current.y)
+
+        if current.wheel:
+            for callback in self.wheel:
+                callback(current.wheel)
 
         self.last_input = current

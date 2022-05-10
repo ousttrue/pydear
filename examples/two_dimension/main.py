@@ -26,19 +26,19 @@ def main():
         if selector.selected:
             selector.selected.show()
 
-    def render():
+    def render(w: int, h: int):
         if selector.selected:
-            selector.selected.render()
+            selector.selected.render(w, h)
 
     fbo = FboView(render)
 
-    def on_mouse(input: MouseInput, last: Optional[MouseInput]):
-        selected = selector.selected
-        if not selected:
-            return
-        selected.on_mouse(input, last)
+    # def on_mouse(input: MouseInput, last: Optional[MouseInput]):
+    #     selected = selector.selected
+    #     if not selected:
+    #         return
+    #     selected.on_mouse(input, last)
 
-    fbo.mouse_event += on_mouse
+    # fbo.mouse_event += on_mouse
 
     import contents.triangle
     selector.add(contents.triangle.Triangle())

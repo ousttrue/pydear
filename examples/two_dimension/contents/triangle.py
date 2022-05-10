@@ -53,19 +53,7 @@ class Triangle(Item):
         self.shader: Optional[glo.Shader] = None
         self.vao: Optional[glo.Vao] = None
 
-    def resize(self, w, h):
-        pass
-
-    def wheel(self, d):
-        pass
-
-    def mouse_drag(self, x, y, dx, dy, left, right, middle):
-        pass
-
-    def mouse_release(self, x, y):
-        pass
-
-    def render(self):
+    def render(self, w, h):
         if not self.shader:
             shader_or_error = glo.Shader.load(vs, fs)
             if not isinstance(shader_or_error, glo.Shader):

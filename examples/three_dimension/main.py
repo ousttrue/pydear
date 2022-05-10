@@ -14,14 +14,8 @@ def main():
 
     from pydear.utils import dockspace
 
-    from pydear.utils.selector import Selector, MouseInput
+    from pydear.utils.selector import Selector
     selector = Selector()
-    import contents.cube
-    selector.add(contents.cube.Cube())
-    import contents.teapot
-    selector.add(contents.teapot.TeaPot())
-    import contents.gizmo
-    selector.add(contents.gizmo.GizmoScene())
 
     def show_selector(p_open):
         if ImGui.Begin("selector", p_open):
@@ -31,18 +25,19 @@ def main():
         if selector.selected:
             selector.selected.show()
 
-    def render():
+    def render(w, h):
         if selector.selected:
-            selector.selected.render()
+            selector.selected.render(w, h)
 
     from pydear.utils.fbo_view import FboView
     fbo = FboView(render)
 
-    def on_mouse(current: MouseInput, last: Optional[MouseInput]):
-        selected = selector.selected
-        if selected:
-            selected.on_mouse(current, last)
-    fbo.mouse_event += on_mouse
+    import contents.cube
+    selector.add(contents.cube.Cube(fbo.mouse_event))
+    import contents.teapot
+    selector.add(contents.teapot.TeaPot(fbo.mouse_event))
+    import contents.gizmo
+    selector.add(contents.gizmo.GizmoScene(fbo.mouse_event))
 
     views = [
         dockspace.Dock('metrics', ImGui.ShowMetricsWindow,

@@ -91,33 +91,30 @@ class View(Item):
 
         self.left = ButtonInfo('left')
         mouse_event.left_pressed += [self.left.on_pressed]
-        mouse_event.left_drag += [self.left.on_drag, self.on_drag]
+        mouse_event.left_drag += [self.left.on_drag]
         mouse_event.left_released += [self.left.on_released]
         self.right = ButtonInfo('right')
         mouse_event.right_pressed += [self.right.on_pressed]
-        mouse_event.right_drag += [self.right.on_drag, self.on_drag]
+        mouse_event.right_drag += [self.right.on_drag]
         mouse_event.right_released += [self.right.on_released]
+
         self.middle = ButtonInfo('middle')
         mouse_event.middle_pressed += [self.middle.on_pressed]
-        mouse_event.middle_drag += [self.middle.on_drag, self.on_drag]
+
+        def on_drag(x, y, dx, dy):
+            self.x -= dx * self.zoom
+            self.y += dy * self.zoom
+
+        mouse_event.middle_drag += [self.middle.on_drag, on_drag]
         mouse_event.middle_released += [self.middle.on_released]
 
-    def resize(self, w: int, h: int):
-        self.width = w
-        self.height = h
+        def on_wheel(d: int):
+            if d < 0:
+                self.zoom *= 1.1
+            elif d > 0:
+                self.zoom *= 0.9
 
-    def wheel(self, d: int):
-        if d < 0:
-            self.zoom *= 1.1
-        elif d > 0:
-            self.zoom *= 0.9
-
-    def mouse_drag(self, x, y, dx, dy, left, right, middle):
-        pass
-
-    def on_drag(self, x, y, dx, dy):
-        self.x -= dx * self.zoom
-        self.y += dy * self.zoom
+        mouse_event.wheel += [on_wheel]
 
     def _update_matrix(self):
         w = self.width/2 * self.zoom
@@ -127,9 +124,6 @@ class View(Item):
             self.x-w, self.x+w,
             self.y-h, self.y+h,
             0, 1)
-
-    def mouse_release(self, x, y):
-        pass
 
     def show(self):
         if not self.p_open[0]:
@@ -148,7 +142,9 @@ class View(Item):
 
         ImGui.End()
 
-    def render(self):
+    def render(self, w, h):
+        self.width = w
+        self.height = h
         self._update_matrix()
 
         if not self.shader:
