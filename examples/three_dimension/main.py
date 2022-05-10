@@ -29,9 +29,10 @@ def main():
     selector = Selector()
 
     def show_selector(p_open):
-        if ImGui.Begin("selector", p_open):
-            selector.show()
-        ImGui.End()
+        if not p_open or p_open[0]:
+            if ImGui.Begin("selector", p_open):
+                selector.show()
+            ImGui.End()
 
         if selector.selected:
             selector.selected.show()
@@ -60,12 +61,15 @@ def main():
     ]
 
     gui = dockspace.DockingGui(app.loop, docks=views, setting=setting)
+
+    # main loop
     from pydear.backends.impl_glfw import ImplGlfwInput
     impl_glfw = ImplGlfwInput(app.window)
     while app.clear():
         impl_glfw.process_inputs()
         gui.render()
 
+    # save ini
     if setting:
         gui.save()
         app.save()
