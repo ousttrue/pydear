@@ -1,118 +1,23 @@
 from typing import NamedTuple, Optional
-from enum import Enum, auto
 import logging
-import ctypes
 import math
 from OpenGL import GL
 import glm
 from pydear import glo
 from pydear.scene.camera import Ray, Camera
 from pydear.utils.mouse_event import MouseEvent
+from .shader_vertex import Vertex, SHADER, LineVertex
+from .aabb import AABB
 
 LOGGER = logging.getLogger(__name__)
 UP_RED = glm.vec3(0.9, 0.2, 0.2) * 0.5
 
-VS = '''
-#version 330
-in vec3 aPosition;
-in vec4 aColor;
-out vec4 vColor;
-uniform mediump mat4 vp;
 
-void main() {
-  gl_Position = vp * vec4(aPosition, 1);
-  vColor = aColor;
-}
-'''
-
-FS = '''
-#version 330
-in vec4 vColor;
-out vec4 fColor;
-void main() { fColor = vColor; }
-'''
-
-
-class AABB(NamedTuple):
-    min: glm.vec3
-    max: glm.vec3
-
-    def __str__(self) -> str:
-        return f'AABB({self.min}, {self.max})'
-
-    def expand(self, rhs: 'AABB') -> 'AABB':
-        min = self.min.copy()
-        if rhs.min.x < min.x:
-            min.x = rhs.min.x
-        if rhs.min.y < min.y:
-            min.y = rhs.min.y
-        if rhs.min.z < min.z:
-            min.z = rhs.min.z
-
-        max = self.max.copy()
-        if rhs.max.x > max.x:
-            max.x = rhs.max.x
-        if rhs.max.y > max.y:
-            max.y = rhs.max.y
-        if rhs.max.z > max.z:
-            max.z = rhs.max.z
-
-        return AABB(min, max)
-
-    def transform(self, m: glm.mat4) -> 'AABB':
-        p0 = (m * glm.vec4(self.min, 1)).xyz
-        p1 = (m * glm.vec4(self.max, 1)).xyz
-        min_x, max_x = (p0.x, p1.x) if p0.x < p1.x else (p1.x, p0.x)
-        min_y, max_y = (p0.y, p1.y) if p0.y < p1.y else (p1.y, p0.y)
-        min_z, max_z = (p0.z, p1.z) if p0.z < p1.z else (p1.z, p0.z)
-        return AABB(glm.vec3(min_x, min_y, min_z), glm.vec3(max_x, max_y, max_z))
-
-    @staticmethod
-    def new_empty() -> 'AABB':
-        return AABB(glm.vec3(float('inf'), float('inf'), float('inf')), -glm.vec3(float('inf'), float('inf'), float('inf')))
-
-
-class Vertex(ctypes.Structure):
-
-    _fields_ = [
-        ('x', ctypes.c_float),
-        ('y', ctypes.c_float),
-        ('z', ctypes.c_float),
-        ('r', ctypes.c_float),
-        ('g', ctypes.c_float),
-        ('b', ctypes.c_float),
-        ('a', ctypes.c_float),
-    ]
-
-    @staticmethod
-    def pos_color(p: glm.vec3, c: glm.vec4) -> 'Vertex':
-        if isinstance(c, glm.vec3):
-            return Vertex(
-                p.x,
-                p.y,
-                p.z,
-                c.r,
-                c.g,
-                c.b,
-                1,
-            )
-        elif isinstance(c, glm.vec4):
-            return Vertex(
-                p.x,
-                p.y,
-                p.z,
-                c.r,
-                c.g,
-                c.b,
-                c.a,
-            )
-        else:
-            raise NotImplementedError()
-
-
-class LineVertex(NamedTuple):
-    position: glm.vec3
-    color: glm.vec4
+class GizmoMesh:
+    def __init__(self) -> None:
+        self.matrix = glm.mat4()
+        self.triangles = []
+        self.lines = []
 
 
 class Gizmo:
@@ -134,6 +39,7 @@ class Gizmo:
     cursor ray の[triangles]に対するあたり判定 => hover(highlight)
     hover に対する click(selector)/drag(manipulator) 
     '''
+
     def __init__(self) -> None:
         # state
         self.camera_view = glm.mat4()
@@ -142,8 +48,11 @@ class Gizmo:
         self.matrix = glm.mat4()
         self.color = glm.vec4(1, 1, 1, 1)
         # event
-        self.line_shader: Optional[glo.Shader] = None
-        self.line_props = []
+        self.shader: Optional[glo.Shader] = None
+        self.props = []
+        self.skin = glm.array.zeros(200, glm.mat4)
+        self.skin[0] = glm.mat4()
+
         # lines
         self.lines = (Vertex * 65535)()
         self.line_count = 0
@@ -194,34 +103,43 @@ class Gizmo:
             self.ray = camera.get_mouse_ray(input.x, input.y)
 
     def end(self):
-        if not self.line_shader:
+        if not self.shader:
             # shader
-            shader_or_error = glo.Shader.load(VS, FS)
+            shader_or_error = glo.Shader.load_from_pkg("pydear", SHADER)
             if not isinstance(shader_or_error, glo.Shader):
                 LOGGER.error(shader_or_error)
                 raise Exception()
-            self.line_shader = shader_or_error
+            self.shader = shader_or_error
 
-            vp = glo.UniformLocation.create(self.line_shader.program, "vp")
+            # uVP
+            vp = glo.UniformLocation.create(self.shader.program, "uVP")
 
             def set_vp():
                 m = self.camera_projection * self.camera_view
                 vp.set_mat4(glm.value_ptr(m))
-            self.line_props.append(set_vp)
+            self.props.append(set_vp)
+
+            # uBoneMatrices
+            skin = glo.UniformLocation.create(
+                self.shader.program, "uBoneMatrices")
+
+            def set_skin():
+                skin.set_mat4(self.skin.ptr, count=len(self.skin))
+            self.props.append(set_skin)
 
             # lines
             line_vbo = glo.Vbo()
             line_vbo.set_vertices(self.lines, is_dynamic=True)
 
             self.line_drawable = glo.Vao(
-                line_vbo, glo.VertexLayout.create_list(self.line_shader.program))
+                line_vbo, glo.VertexLayout.create_list(self.shader.program))
 
             # vertices
             triangle_vbo = glo.Vbo()
             triangle_vbo.set_vertices(self.lines, is_dynamic=True)
 
             self.triangle_drawable = glo.Vao(
-                triangle_vbo, glo.VertexLayout.create_list(self.line_shader.program))
+                triangle_vbo, glo.VertexLayout.create_list(self.shader.program))
 
         else:
             assert self.line_drawable
@@ -233,8 +151,8 @@ class Gizmo:
         assert self.line_drawable
         assert self.triangle_drawable
 
-        with self.line_shader:
-            for prop in self.line_props:
+        with self.shader:
+            for prop in self.props:
                 prop()
 
             # GL.glDisable(GL.GL_DEPTH_TEST)
