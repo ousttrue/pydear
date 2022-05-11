@@ -1,4 +1,5 @@
-from typing import NamedTuple, Optional, Dict, List
+from typing import NamedTuple, Optional, Dict, List, Iterable
+import abc
 import logging
 import ctypes
 import math
@@ -59,7 +60,33 @@ class Quad(NamedTuple):
             return self.t1.intersect(ray)
 
 
-class CubeShape:
+class Shape(metaclass=abc.ABCMeta):
+
+    @abc.abstractmethod
+    def get_color(self) -> glm.vec4:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_matrix(self) -> glm.mat4:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_quads(self) -> Iterable[Quad]:
+        raise NotImplementedError()
+
+    def intersect(self, ray: Ray) -> Optional[float]:
+        to_local = glm.inverse(self.get_matrix())
+        local_ray = Ray((to_local * glm.vec4(ray.origin, 1)).xyz,
+                        (to_local * glm.vec4(ray.dir, 0)).xyz)
+        hits = [quad.intersect(local_ray) for quad in self.get_quads()]
+        hits = [hit for hit in hits if hit]
+        if not hits:
+            return None
+        hits.sort()
+        return hits[0]
+
+
+class CubeShape(Shape):
     '''
         4 7
     0 3+-+
@@ -69,7 +96,8 @@ class CubeShape:
     1 2
     '''
 
-    def __init__(self, width: float, height: float, depth: float, *, position: Optional[glm.vec3] = None) -> None:
+    def __init__(self, width: float, height: float, depth: float, *, position: Optional[glm.vec3] = None, color=None) -> None:
+        self.color = color if color else glm.vec4(1, 1, 1, 1)
         self.width = width
         self.height = height
         self.depth = depth
@@ -94,19 +122,42 @@ class CubeShape:
             Quad.from_points(v1, v5, v6, v2),
         ]
 
+    def get_color(self) -> glm.vec4:
+        return self.color
+
+    def get_quads(self) -> Iterable[Quad]:
+        return self.quads
+
     def get_matrix(self) -> glm.mat4:
         return glm.translate(self.position)
 
-    def intersect(self, ray: Ray) -> Optional[float]:
-        to_local = glm.inverse(self.get_matrix())
-        local_ray = Ray((to_local * glm.vec4(ray.origin, 1)).xyz,
-                        (to_local * glm.vec4(ray.dir, 0)).xyz)
-        hits = [quad.intersect(local_ray) for quad in self.quads]
-        hits = [hit for hit in hits if hit]
-        if not hits:
-            return None
-        hits.sort()
-        return hits[0]
+
+class RingShape(Shape):
+    def __init__(self, theta, inner, outer, *, sections=20, color=None) -> None:
+        self.color = color if color else glm.vec4(1, 1, 1, 1)
+        delta = theta/sections
+        angle = 0
+        angles = []
+        for i in range(sections):
+            angles.append(angle)
+            angle += delta
+        sin_cos = [(math.sin(angle), math.cos(angle)) for angle in angles]
+        self.quads = []
+        for i, (s0, c0) in enumerate(sin_cos):
+            v0 = glm.vec3(c0, s0, 0)
+            s1, c1 = sin_cos[(i+1) % sections]
+            v1 = glm.vec3(c1, s1, 0)
+            self.quads.append(Quad.from_points(
+                v0*inner, v0*outer, v1*outer, v1*inner))
+
+    def get_color(self) -> glm.vec4:
+        return self.color
+
+    def get_matrix(self) -> glm.mat4:
+        return glm.mat4()
+
+    def get_quads(self) -> Iterable[Quad]:
+        return self.quads
 
 
 class TriangleBuffer:
@@ -125,10 +176,10 @@ class TriangleBuffer:
         self.hover_index = -1
         self.select_index = -1
 
-    def add_vertex(self, bone: int, v: glm.vec3, n: glm.vec3) -> int:
+    def add_vertex(self, bone: int, v: glm.vec3, n: glm.vec3, c: glm.vec4) -> int:
         i = self.vertex_count
         self.vertices[i] = Vertex(
-            v.x, v.y, v.z, bone, 1, 1, 1, 1, n.x, n.y, n.z)
+            v.x, v.y, v.z, bone, c.r, c.g, c.b, c.a, n.x, n.y, n.z)
         self.vertex_count += 1
         vertices = self.bone_vertex_map.get(bone)
 
@@ -139,16 +190,16 @@ class TriangleBuffer:
 
         return i
 
-    def add_triangle(self, bone: int, t: Triangle):
+    def add_triangle(self, bone: int, t: Triangle, color: glm.vec4):
         '''
         ccw
         '''
         v10 = t.v0-t.v1
         v12 = t.v2-t.v1
         n = glm.normalize(glm.cross(v10, v12))
-        i0 = self.add_vertex(bone, t.v0, n)
-        i1 = self.add_vertex(bone, t.v1, n)
-        i2 = self.add_vertex(bone, t.v2, n)
+        i0 = self.add_vertex(bone, t.v0, n, color)
+        i1 = self.add_vertex(bone, t.v1, n, color)
+        i2 = self.add_vertex(bone, t.v2, n, color)
         self.indices[self.index_count] = i0
         self.index_count += 1
         self.indices[self.index_count] = i1
@@ -156,14 +207,15 @@ class TriangleBuffer:
         self.indices[self.index_count] = i2
         self.index_count += 1
 
-    def add_quad(self, bone: int, quad: Quad):
-        self.add_triangle(bone, quad.t0)
-        self.add_triangle(bone, quad.t1)
+    def add_quad(self, bone: int, quad: Quad, color: glm.vec4):
+        self.add_triangle(bone, quad.t0, color)
+        self.add_triangle(bone, quad.t1, color)
 
-    def add(self, bone: int, cube: CubeShape):
-        for quad in cube.quads:
-            self.add_quad(bone, quad)
-        self.skin[bone] = cube.get_matrix()
+    def add_shape(self, bone: int, shape: Shape):
+        color = shape.get_color()
+        for quad in shape.get_quads():
+            self.add_quad(bone, quad, color)
+        self.skin[bone] = shape.get_matrix()
 
     def set_color(self, bone, r, g, b):
         if bone < 0:
@@ -259,7 +311,7 @@ class Gizmo:
     def __init__(self) -> None:
         self.vertex_buffer = TriangleBuffer()
         self.mouse_event = None
-        self.shapes: List[CubeShape] = []
+        self.shapes: List[Shape] = []
         self.selected = -1
 
     def bind_mouse_event(self, mouse_event: MouseEvent):
@@ -283,11 +335,11 @@ class Gizmo:
     def drag_end(self, x, y):
         self.mouse_clicked = True
 
-    def add_selector(self, shape: CubeShape) -> int:
+    def add_shape(self, shape: Shape, *, draggable=False) -> int:
         key = len(self.shapes)
         self.shapes.append(shape)
 
-        self.vertex_buffer.add(key, shape)
+        self.vertex_buffer.add_shape(key, shape)
 
         return key
 
