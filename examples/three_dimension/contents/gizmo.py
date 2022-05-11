@@ -25,12 +25,20 @@ class GizmoScene(Item):
             for j in range(-2, 3, 1):
                 cube = CubeShape(0.5, 0.5, 0.5,
                                  position=glm.vec3(i, j, 0))
-                key = self.gizmo.add_shape(cube)
+                self.gizmo.add_shape(cube)
                 # LOGGER.debug(f'{i}, {j} => {key}')
 
         # draggable
-        ring = RingShape(math.pi * 2, 0.4, 0.5, color=glm.vec4(0.3, 1, 1, 1))
-        self.gizmo.add_shape(ring, draggable=True)
+        ring = RingShape(math.pi * 2, 0.4, 0.6, color=glm.vec4(0.3, 0.3, 1, 1))
+        self.ring_key = self.gizmo.add_shape(ring, draggable=True)
+
+        def on_selected(index: int):
+            if index>=0:
+                shape = self.gizmo.shapes[index]
+                ring.matrix = shape.matrix
+                self.gizmo.vertex_buffer.skin[self.ring_key] = ring.matrix
+
+        self.gizmo.selected += on_selected
 
     def render(self, w, h):
         self.camera.projection.resize(w, h)

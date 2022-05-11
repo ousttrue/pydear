@@ -11,6 +11,7 @@ class EventProperty(Generic[T]):
 
     def __iadd__(self, callback: Callback):
         self.callbacks.append(callback)
+        return self
 
     def set(self, value):
         if self.value == value:

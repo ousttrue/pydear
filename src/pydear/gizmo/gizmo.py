@@ -8,8 +8,10 @@ import glm
 from pydear import glo
 from pydear.scene.camera import Ray, Camera
 from pydear.utils.mouse_event import MouseEvent
+from pydear.utils.eventproperty import EventProperty
 from .shader_vertex import Vertex, SHADER, LineVertex
 from .aabb import AABB
+
 
 LOGGER = logging.getLogger(__name__)
 UP_RED = glm.vec3(0.9, 0.2, 0.2) * 0.5
@@ -63,13 +65,12 @@ class Quad(NamedTuple):
 
 
 class Shape(metaclass=abc.ABCMeta):
+    def __init__(self, is_draggable: bool) -> None:
+        self.is_draggable = is_draggable
+        self.matrix = glm.mat4()
 
     @abc.abstractmethod
     def get_color(self) -> glm.vec4:
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def get_matrix(self) -> glm.mat4:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -77,7 +78,7 @@ class Shape(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     def intersect(self, ray: Ray) -> Optional[float]:
-        to_local = glm.inverse(self.get_matrix())
+        to_local = glm.inverse(self.matrix)
         local_ray = Ray((to_local * glm.vec4(ray.origin, 1)).xyz,
                         (to_local * glm.vec4(ray.dir, 0)).xyz)
         hits = [quad.intersect(local_ray) for quad in self.get_quads()]
@@ -99,6 +100,7 @@ class CubeShape(Shape):
     '''
 
     def __init__(self, width: float, height: float, depth: float, *, position: Optional[glm.vec3] = None, color=None) -> None:
+        super().__init__(False)
         self.color = color if color else glm.vec4(1, 1, 1, 1)
         self.width = width
         self.height = height
@@ -123,6 +125,7 @@ class CubeShape(Shape):
             Quad.from_points(v4, v0, v3, v7),
             Quad.from_points(v1, v5, v6, v2),
         ]
+        self.matrix = glm.translate(self.position)
 
     def get_color(self) -> glm.vec4:
         return self.color
@@ -130,12 +133,11 @@ class CubeShape(Shape):
     def get_quads(self) -> Iterable[Quad]:
         return self.quads
 
-    def get_matrix(self) -> glm.mat4:
-        return glm.translate(self.position)
-
 
 class RingShape(Shape):
     def __init__(self, theta, inner, outer, *, sections=20, color=None) -> None:
+        super().__init__(True)
+        self.matrix = glm.mat4(0)
         self.color = color if color else glm.vec4(1, 1, 1, 1)
         delta = theta/sections
         angle = 0
@@ -154,9 +156,6 @@ class RingShape(Shape):
 
     def get_color(self) -> glm.vec4:
         return self.color
-
-    def get_matrix(self) -> glm.mat4:
-        return glm.mat4()
 
     def get_quads(self) -> Iterable[Quad]:
         return self.quads
@@ -217,7 +216,7 @@ class TriangleBuffer:
         color = shape.get_color()
         for quad in shape.get_quads():
             self.add_quad(bone, quad, color)
-        self.skin[bone] = shape.get_matrix()
+        self.skin[bone] = shape.matrix
 
     def set_state(self, bone, state):
         if bone < 0:
@@ -289,6 +288,22 @@ class TriangleBuffer:
                 self.index_count, topology=GL.GL_TRIANGLES)
 
 
+class DragContext:
+    def __init__(self, x, y, *, manipulator: Shape, selected: Shape, set_matrix) -> None:
+        self.manipulator = manipulator
+        self.selected = selected
+        self.x = x
+        self.y = y
+        self.init_matrix = selected.matrix
+        self.set_matrix = set_matrix
+
+    def drag(self, x, y, dx, dy):
+        angle = (y - self.y) * 0.02
+        self.selected.matrix = self.init_matrix * \
+            glm.rotate(angle, glm.vec3(0, 0, 1))
+        self.set_matrix(self.selected.matrix)
+
+
 class Gizmo:
     '''
     [triangles] の登録
@@ -313,7 +328,8 @@ class Gizmo:
         self.vertex_buffer = TriangleBuffer()
         self.mouse_event = None
         self.shapes: List[Shape] = []
-        self.selected = -1
+        self.selected = EventProperty[int](-1)
+        self.drag_context = None
 
     def bind_mouse_event(self, mouse_event: MouseEvent):
         '''
@@ -326,15 +342,25 @@ class Gizmo:
 
     def drag_begin(self, x, y):
         if self.vertex_buffer.hover_index >= 0:
-            self.selected = self.vertex_buffer.hover_index
+            shape = self.shapes[self.vertex_buffer.hover_index]
+            if shape.is_draggable:
+                def set_matrix(m):
+                    self.vertex_buffer.skin[self.selected.value] = m
+                self.drag_context = DragContext(x, y,
+                                                manipulator=shape,
+                                                selected=self.shapes[self.selected.value],
+                                                set_matrix=set_matrix)
+            else:
+                self.selected.set(self.vertex_buffer.hover_index)
         else:
-            self.selected = -1
+            self.selected.set(-1)
 
     def drag(self, x, y, dx, dy):
-        pass
+        if self.drag_context:
+            self.drag_context.drag(x, y, dx, dy)
 
     def drag_end(self, x, y):
-        self.mouse_clicked = True
+        self.drag_context = None
 
     def add_shape(self, shape: Shape, *, draggable=False) -> int:
         key = len(self.shapes)
@@ -358,378 +384,4 @@ class Gizmo:
                     hit_shape_index = i
                     hit_distance = distance
 
-        self.vertex_buffer.select_hover(self.selected, hit_shape_index)
-
-    # def line(self, p0: glm.vec3, p1: glm.vec3):
-    #     p0 = (self.matrix * glm.vec4(p0, 1)).xyz
-    #     self.lines[self.line_count] = Vertex.pos_color(p0, self.color)
-    #     self.line_count += 1
-
-    #     p1 = (self.matrix * glm.vec4(p1, 1)).xyz
-    #     self.lines[self.line_count] = Vertex.pos_color(p1, self.color)
-    #     self.line_count += 1
-
-    # def triangle(self, p0: glm.vec3, p1: glm.vec3, p2: glm.vec3, *, intersect=False) -> Optional[float]:
-    #     p0 = (self.matrix * glm.vec4(p0, 1)).xyz
-    #     p1 = (self.matrix * glm.vec4(p1, 1)).xyz
-    #     p2 = (self.matrix * glm.vec4(p2, 1)).xyz
-
-    #     self.triangles[self.triangle_count] = Vertex.pos_color(p0, self.color)
-    #     self.triangle_count += 1
-
-    #     self.triangles[self.triangle_count] = Vertex.pos_color(p1, self.color)
-    #     self.triangle_count += 1
-
-    #     self.triangles[self.triangle_count] = Vertex.pos_color(p2, self.color)
-    #     self.triangle_count += 1
-
-    #     if intersect:
-    #         return self.ray.intersect_triangle(p0, p1, p2)
-
-    # def quad(self, p0: glm.vec3, p1: glm.vec3, p2: glm.vec3, p3: glm.vec3, *, intersect=False) -> Optional[float]:
-    #     i0 = self.triangle(p0, p1, p2, intersect=intersect)
-    #     i1 = self.triangle(p2, p3, p0, intersect=intersect)
-
-    #     if intersect:
-    #         if i0 and i1:
-    #             if i0 < i1:
-    #                 return i0
-    #             else:
-    #                 return i1
-    #         elif i0:
-    #             return i0
-    #         elif i1:
-    #             return i1
-
-    # def axis(self, size: float):
-    #     origin = glm.vec3(0, 0, 0)
-    #     # X
-    #     self.color = glm.vec4(1, 0, 0, 1)
-    #     self.line(origin, glm.vec3(size, 0, 0))
-    #     self.color = glm.vec4(0.5, 0, 0, 1)
-    #     self.line(origin, glm.vec3(-size, 0, 0))
-    #     # Y
-    #     self.color = glm.vec4(0, 1, 0, 1)
-    #     self.line(origin, glm.vec3(0, size, 0))
-    #     self.color = glm.vec4(0, 0.5, 0, 1)
-    #     self.line(origin, glm.vec3(0, -size, 0))
-    #     # Z
-    #     self.color = glm.vec4(0, 0, 1, 1)
-    #     self.line(origin, glm.vec3(0, 0, size))
-    #     self.color = glm.vec4(0, 0, 0.5, 1)
-    #     self.line(origin, glm.vec3(0, 0, -size))
-
-    # def ground_mark(self):
-    #     # 足元の軸表示
-    #     WHITE = glm.vec4(1, 1, 1, 0.8)
-    #     S = 0.5
-    #     LINE_VERTICES = [
-    #         # X
-    #         LineVertex(glm.vec3(0, 0, 0), glm.vec4(1, 0, 0, 1)),
-    #         LineVertex(glm.vec3(S, 0, 0), glm.vec4(1, 0, 0, 1)),
-    #         LineVertex(glm.vec3(0, 0, 0), glm.vec4(0.5, 0, 0, 1)),
-    #         LineVertex(glm.vec3(-S, 0, 0), glm.vec4(0.5, 0, 0, 1)),
-    #         # Z
-    #         LineVertex(glm.vec3(0, 0, 0), glm.vec4(0, 0, 1, 1)),
-    #         LineVertex(glm.vec3(0, 0, S), glm.vec4(0, 0, 1, 1)),
-    #         LineVertex(glm.vec3(0, 0, 0), glm.vec4(0, 0, 0.5, 1)),
-    #         LineVertex(glm.vec3(0, 0, -S), glm.vec4(0, 0, 0.5, 1)),
-    #         # box
-    #         LineVertex(glm.vec3(-S, 0, -S), WHITE),
-    #         LineVertex(glm.vec3(S, 0, -S), WHITE),
-    #         LineVertex(glm.vec3(S, 0, -S), WHITE),
-    #         LineVertex(glm.vec3(S, 0, S), WHITE),
-    #         LineVertex(glm.vec3(S, 0, S), WHITE),
-    #         LineVertex(glm.vec3(-S, 0, S), WHITE),
-    #         LineVertex(glm.vec3(-S, 0, S), WHITE),
-    #         LineVertex(glm.vec3(-S, 0, -S), WHITE),
-    #         # front
-    #         LineVertex(glm.vec3(S, 0, S+0.1),
-    #                    WHITE), LineVertex(glm.vec3(0, 0, S+0.1+S), WHITE),
-    #         LineVertex(glm.vec3(0, 0, S+0.1+S),
-    #                    WHITE), LineVertex(glm.vec3(-S, 0, S+0.1), WHITE),
-    #         LineVertex(glm.vec3(-S, 0, S+0.1),
-    #                    WHITE), LineVertex(glm.vec3(S, 0, S+0.1), WHITE),
-    #     ]
-    #     for i in range(0, len(LINE_VERTICES), 2):
-    #         head, tail = LINE_VERTICES[i:i+2]
-    #         self.color = head.color
-    #         self.line(head.position, tail.position)
-
-    # def aabb(self, aabb: AABB):
-    #     self.color = glm.vec4(1, 1, 1, 1)
-    #     match aabb:
-    #         case AABB(n, p):
-    #             nx = n.x
-    #             ny = n.y
-    #             nz = n.z
-    #             px = p.x
-    #             py = p.y
-    #             pz = p.z
-    #             t0 = glm.vec3(nx, py, nz)
-    #             t1 = glm.vec3(px, py, nz)
-    #             t2 = glm.vec3(px, py, pz)
-    #             t3 = glm.vec3(nx, py, pz)
-    #             b0 = glm.vec3(nx, ny, nz)
-    #             b1 = glm.vec3(px, ny, nz)
-    #             b2 = glm.vec3(px, ny, pz)
-    #             b3 = glm.vec3(nx, ny, pz)
-    #             # top
-    #             self.line(t0, t1)
-    #             self.line(t1, t2)
-    #             self.line(t2, t3)
-    #             self.line(t3, t0)
-    #             # bottom
-    #             self.line(b0, b1)
-    #             self.line(b1, b2)
-    #             self.line(b2, b3)
-    #             self.line(b3, b0)
-    #             # side
-    #             self.line(t0, b0)
-    #             self.line(t1, b1)
-    #             self.line(t2, b2)
-    #             self.line(t3, b3)
-
-    # def bone_octahedron(self, key, length: float, is_selected: bool = False) -> bool:
-    #     '''
-    #     return True if mouse clicked
-    #     '''
-    #     s = length * 0.1
-    #     # head-tail
-    #     #      0, -1(p1)
-    #     # (p2)  |
-    #     # -1, 0 |
-    #     #     --+--->
-    #     #       |    1, 0(p0)
-    #     #       v
-    #     #      0, +1(p3)
-    #     self.color = glm.vec4(1, 0.0, 1, 1)
-    #     h = glm.vec3(0, 0, 0)
-    #     t = glm.vec3(0, length, 0)
-    #     # self.line(h, t, bone.world_matrix)
-    #     p0 = glm.vec3(s, s, 0)
-    #     p1 = glm.vec3(0, s, -s)
-    #     p2 = glm.vec3(-s, s, 0)
-    #     p3 = glm.vec3(0, s, s)
-
-    #     self.line(p0, p1)
-    #     self.line(p1, p2)
-    #     self.line(p2, p3)
-    #     self.line(p3, p0)
-
-    #     # self.line(p2, p0, bone.world_matrix)
-    #     self.color = glm.vec4(1, 0, 0, 1)
-    #     self.line(h, p0)
-    #     self.line(p0, t)
-    #     self.color = glm.vec4(0.1, 0, 0, 1)
-    #     if is_selected:
-    #         self.color = glm.vec4(0.1, 1, 0, 1)
-    #     self.line(h, p2)
-    #     self.line(p2, t)
-
-    #     # self.line(p1, p3, bone.world_matrix)
-    #     self.color = glm.vec4(0, 0, 1, 1)
-    #     self.line(h, p3)
-    #     self.line(p3, t)
-    #     self.color = glm.vec4(0, 0, 0.1, 1)
-    #     if is_selected:
-    #         self.color = glm.vec4(0, 1, 0.1, 1)
-    #     self.line(h, p1)
-    #     self.line(p1, t)
-
-    #     # triangles
-    #     clicked = False
-    #     self.color = glm.vec4(0.5, 0.5, 0.5, 0.2)
-    #     if is_selected:
-    #         self.color = glm.vec4(0.7, 0.7, 0, 0.7)
-    #     elif self.hover_last == key:
-    #         self.color = glm.vec4(0, 0.7, 0, 0.7)
-    #         if self.mouse_clicked:
-    #             clicked = True
-    #             self.mouse_clicked = False
-
-    #     triangles = (
-    #         (p0, h, p1),
-    #         (p1, h, p2),
-    #         (p2, h, p3),
-    #         (p3, h, p0),
-    #         (p0, t, p1),
-    #         (p1, t, p2),
-    #         (p2, t, p3),
-    #         (p3, t, p0),
-    #     )
-
-    #     any_hit = False
-    #     for t in triangles:
-    #         hit = self.triangle(*t, intersect=(not any_hit))
-    #         if hit:
-    #             self.hover = key
-    #             any_hit = True
-
-    #     return clicked
-
-    # def bone_cube(self, key, w: float, h: float, length: float, *, is_selected: bool = False) -> bool:
-    #     '''
-    #     _X_
-    #     w   A height _Y_
-    #     i   |
-    #     d   +------>
-    #     t  /      /
-    #     h +------> length _Z_
-    #      /      /
-    #     +------>
-    #     '''
-    #     clicked = False
-    #     self.color = glm.vec4(0.5, 0.5, 0.5, 0.2)
-    #     if is_selected:
-    #         self.color = glm.vec4(0.7, 0.7, 0, 0.7)
-    #     elif self.hover_last == key:
-    #         self.color = glm.vec4(0, 0.7, 0, 0.7)
-    #         if self.mouse_clicked:
-    #             clicked = True
-    #             self.mouse_clicked = False
-    #     any_hit = False
-
-    #     x = glm.vec3(1, 0, 0)
-    #     y = glm.vec3(0, 0, 1)
-    #     p0 = glm.vec3(0)
-    #     p1 = glm.vec3(0, length, 0)
-    #     p0_0 = p0-x*w-y*h
-    #     p0_1 = p0+x*w-y*h
-    #     p0_2 = p0+x*w+y*h
-    #     p0_3 = p0-x*w+y*h
-    #     p1_0 = p1-x*w-y*h
-    #     p1_1 = p1+x*w-y*h
-    #     p1_2 = p1+x*w+y*h
-    #     p1_3 = p1-x*w+y*h
-    #     # cap
-    #     hit = self.quad(p1_0,
-    #                     p1_3,
-    #                     p1_2,
-    #                     p1_1, intersect=True)
-    #     if hit:
-    #         self.hover = key
-    #         any_hit = True
-
-    #     hit = self.quad(p0_0,
-    #                     p0_1,
-    #                     p0_2,
-    #                     p0_3, intersect=True)
-    #     if hit:
-    #         self.hover = key
-    #         any_hit = True
-
-    #     # left
-    #     hit = self.quad(p0_0,
-    #                     p0_3,
-    #                     p1_3,
-    #                     p1_0, intersect=True)
-    #     if hit:
-    #         self.hover = key
-    #         any_hit = True
-
-    #     # right
-    #     hit = self.quad(p0_2,
-    #                     p0_1,
-    #                     p1_1,
-    #                     p1_2, intersect=True)
-    #     if hit:
-    #         self.hover = key
-    #         any_hit = True
-
-    #     # bottom
-    #     hit = self.quad(p0_1,
-    #                     p0_0,
-    #                     p1_0,
-    #                     p1_1, intersect=True)
-    #     if hit:
-    #         self.hover = key
-    #         any_hit = True
-
-    #     # top
-    #     self.color = UP_RED
-    #     hit = self.quad(p0_3,
-    #                     p0_2,
-    #                     p1_2,
-    #                     p1_3, intersect=True)
-    #     if hit:
-    #         self.hover = key
-    #         any_hit = True
-
-    #     return clicked
-
-    # def bone_head_tail(self, key: str, head: glm.vec3, tail: glm.vec3, up: glm.vec3, *,
-    #                    is_selected=False) -> bool:
-
-    #     head_tail = tail - head
-    #     y = glm.normalize(head_tail)
-    #     x = glm.normalize(glm.cross(y, up))
-    #     z = glm.normalize(glm.cross(x, y))
-
-    #     self.matrix = glm.mat4(
-    #         glm.vec4(x, 0),
-    #         glm.vec4(y, 0),
-    #         glm.vec4(z, 0),
-    #         glm.vec4(head, 1))
-
-    #     return self.bone_octahedron(key, glm.length(head_tail), is_selected)
-
-    # def ring_yaw(self, m: glm.mat4, inner: float, outer: float, *, section=20):
-    #     to_pi = math.pi / 180
-    #     step = 360//section
-    #     values = [degree * to_pi for degree in range(0, 360, step)]
-
-    #     def theta_to_xy(theta):
-    #         s = math.sin(theta)
-    #         c = math.cos(theta)
-    #         return (s, c)
-    #     points = [theta_to_xy(theta) for theta in values]
-    #     for i, (ix, iy) in enumerate(points):
-    #         j = (i+1) % len(points)
-    #         (jx, jy) = points[j]
-
-    #         self.quad(
-    #             glm.vec3(ix, iy, 0)*inner,
-    #             glm.vec3(jx, jy, 0)*inner,
-    #             glm.vec3(jx, jy, 0)*outer,
-    #             glm.vec3(ix, iy, 0)*outer)
-
-    # def ring_pitch(self, m: glm.mat4, inner: float, outer: float, *, section=20):
-    #     to_pi = math.pi / 180
-    #     step = 360//section
-    #     values = [degree * to_pi for degree in range(0, 360, step)]
-
-    #     def theta_to_xy(theta):
-    #         s = math.sin(theta)
-    #         c = math.cos(theta)
-    #         return (s, c)
-    #     points = [theta_to_xy(theta) for theta in values]
-    #     for i, (ix, iy) in enumerate(points):
-    #         j = (i+1) % len(points)
-    #         (jx, jy) = points[j]
-
-    #         self.quad(
-    #             glm.vec3(0, ix, iy)*inner,
-    #             glm.vec3(0, jx, jy)*inner,
-    #             glm.vec3(0, jx, jy)*outer,
-    #             glm.vec3(0, ix, iy)*outer)
-
-    # def ring_roll(self, m: glm.mat4, inner: float, outer: float, *, section=20):
-    #     to_pi = math.pi / 180
-    #     step = 360//section
-    #     values = [degree * to_pi for degree in range(0, 360, step)]
-
-    #     def theta_to_xy(theta):
-    #         s = math.sin(theta)
-    #         c = math.cos(theta)
-    #         return (s, c)
-    #     points = [theta_to_xy(theta) for theta in values]
-    #     for i, (ix, iy) in enumerate(points):
-    #         j = (i+1) % len(points)
-    #         (jx, jy) = points[j]
-
-    #         self.quad(
-    #             glm.vec3(ix, 0, iy)*inner,
-    #             glm.vec3(jx, 0, jy)*inner,
-    #             glm.vec3(jx, 0, jy)*outer,
-    #             glm.vec3(ix, 0, iy)*outer)
+        self.vertex_buffer.select_hover(self.selected.value, hit_shape_index)
