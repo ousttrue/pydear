@@ -7,23 +7,9 @@ from OpenGL import GL
 import glm
 from pydear.utils.selector import Item
 from pydear.scene.camera import Camera, MouseEvent
-from pydear.gizmo.gizmo import Gizmo, AABB
+from pydear.gizmo.gizmo import Gizmo, CubeShape
 
 LOGGER = logging.getLogger(__name__)
-
-
-class Bone(NamedTuple):
-    name: str
-    head: glm.vec3
-    tail: glm.vec3
-    up: glm.vec3
-
-
-BONES = [
-    Bone('bone1', glm.vec3(0, 0, 0), glm.vec3(0, 0.2, 0), glm.vec3(0, 0, -1)),
-    Bone('bone2', glm.vec3(0, 0.2, 0), glm.vec3(0, 0.4, 0), glm.vec3(0, 0, -1)),
-    Bone('bone3', glm.vec3(0, 0.4, 0), glm.vec3(0, 0.6, 0), glm.vec3(0, 0, -1)),
-]
 
 
 class GizmoScene(Item):
@@ -36,6 +22,13 @@ class GizmoScene(Item):
         self.gizmo.bind_mouse_event(self.mouse_event)
         self.selected = None
 
+        for i in range(-2, 3, 1):
+            for j in range(-2, 3, 1):
+                cube = CubeShape(0.5, 0.5, 0.5,
+                                 position=glm.vec3(i, j, 0))
+                key = self.gizmo.add_selector(cube)
+                LOGGER.debug(f'{i}, {j} => {key}')
+
     def render(self, w, h):
         self.camera.projection.resize(w, h)
         # GL.glEnable(GL.GL_CULL_FACE)
@@ -43,25 +36,29 @@ class GizmoScene(Item):
         # GL.glFrontFace(GL.GL_CCW)
         GL.glEnable(GL.GL_DEPTH_TEST)
 
-        self.gizmo.begin(self.camera)
-        self.gizmo.aabb(AABB(glm.vec3(5, 0, 0), glm.vec3(6, 1, 1)))
+        # self.gizmo.begin(self.camera)
+        # self.gizmo.aabb(AABB(glm.vec3(5, 0, 0), glm.vec3(6, 1, 1)))
 
-        current = None
-        for bone in BONES:
-            selected = self.gizmo.bone_head_tail(
-                bone.name, bone.head, bone.tail, bone.up, is_selected=bone.name == self.selected)
-            if selected:
-                current = bone.name
+        # current = None
+        # for bone in BONES:
+        #     selected = self.gizmo.bone_head_tail(
+        #         bone.name, bone.head, bone.tail, bone.up, is_selected=bone.name == self.selected)
+        #     if selected:
+        #         current = bone.name
 
-        if current:
-            self.selected = current
-        elif self.mouse_event.last_input.left_down:
-            self.selected = None
+        # if current:
+        #     self.selected = current
+        # elif self.mouse_event.last_input.left_down:
+        #     self.selected = None
 
-        self.matrix = glm.mat4()
-        self.gizmo.axis(1)
+        # self.matrix = glm.mat4()
+        # self.gizmo.axis(1)
 
-        self.gizmo.end()
+        # self.gizmo.end()
+
+        input = self.mouse_event.last_input
+        assert(input)
+        self.gizmo.process(self.camera, input.x, input.y)
 
     def show(self):
         pass

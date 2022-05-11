@@ -18,7 +18,7 @@ class Vbo:
     def unbind(self):
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
 
-    def set_vertices(self, vertices, is_dynamic: bool = False):
+    def set_vertices(self, vertices, *, is_dynamic: bool = False):
         self.bind()
         GL.glBufferData(GL.GL_ARRAY_BUFFER, ctypes.sizeof(vertices),
                         vertices, GL.GL_DYNAMIC_DRAW if is_dynamic else GL.GL_STATIC_DRAW)
@@ -46,8 +46,8 @@ class Ibo:
     def unbind(self):
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0)
 
-    def set_indices(self, vertices: ctypes.Array):
-        match vertices._type_:
+    def set_indices(self, indices: ctypes.Array, *, is_dynamic: bool = False):
+        match indices._type_:
             case ctypes.c_ushort:
                 self.format = GL.GL_UNSIGNED_SHORT
             case ctypes.c_uint:
@@ -55,6 +55,12 @@ class Ibo:
             case _:
                 raise NotImplementedError()
         self.bind()
-        GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, ctypes.sizeof(vertices),
-                        vertices, GL.GL_STATIC_DRAW)
+        GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, ctypes.sizeof(indices),
+                        indices, GL.GL_DYNAMIC_DRAW if is_dynamic else GL.GL_STATIC_DRAW)
+        self.unbind()
+
+    def update(self, indices, offset=0) -> None:
+        self.bind()
+        GL.glBufferSubData(GL.GL_ELEMENT_ARRAY_BUFFER, offset,
+                           ctypes.sizeof(indices), indices)
         self.unbind()
