@@ -57,6 +57,14 @@ class Vertex(ctypes.Structure):
         else:
             raise NotImplementedError()
 
+    @property
+    def position(self):
+        return glm.vec3(self.x, self.y, self.z)
+
+    @property
+    def color(self):
+        return glm.vec4(self.r, self.g, self.b, self.a)
+
 
 def LineVertex(p, c):
     return Vertex.pos_color(p, c)
