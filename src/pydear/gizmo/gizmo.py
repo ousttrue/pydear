@@ -13,6 +13,8 @@ from .aabb import AABB
 
 LOGGER = logging.getLogger(__name__)
 UP_RED = glm.vec3(0.9, 0.2, 0.2) * 0.5
+HOVER = 0x01
+SELECTED = 0x02
 
 
 class GizmoMesh:
@@ -217,23 +219,22 @@ class TriangleBuffer:
             self.add_quad(bone, quad, color)
         self.skin[bone] = shape.get_matrix()
 
-    def set_color(self, bone, r, g, b):
+    def set_state(self, bone, state):
         if bone < 0:
             return
         indices = self.bone_vertex_map[bone]
         for i in indices:
             v = self.vertices[i]
-            v.r = r
-            v.g = g
-            v.b = b
+            v.state = state
 
     def select_hover(self, select_index: int,  hover_index: int):
-        self.set_color(hover_index, 0.5, 1, 0.5)
-        self.set_color(select_index, 1, 0.5, 0.5)
-        if self.hover_index != select_index and self.hover_index != hover_index:
-            self.set_color(self.hover_index, 1, 1, 1)
-        if self.select_index != select_index and self.select_index != hover_index:
-            self.set_color(self.select_index, 1, 1, 1)
+        self.set_state(self.hover_index, 0)
+        self.set_state(self.select_index, 0)
+        if select_index == hover_index:
+            self.set_state(hover_index, HOVER | SELECTED)
+        else:
+            self.set_state(hover_index, HOVER)
+            self.set_state(select_index, SELECTED)
         self.hover_index = hover_index
         self.select_index = select_index
 

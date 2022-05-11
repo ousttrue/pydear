@@ -19,6 +19,7 @@ class Vertex(ctypes.Structure):
         ('nx', ctypes.c_float),
         ('ny', ctypes.c_float),
         ('nz', ctypes.c_float),
+        ('state', ctypes.c_float),
     ]
 
     @staticmethod
@@ -39,6 +40,7 @@ class Vertex(ctypes.Structure):
                 normal.x,
                 normal.y,
                 normal.z,
+                0
             )
         elif isinstance(c, glm.vec4):
             return Vertex(
