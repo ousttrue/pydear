@@ -17,6 +17,7 @@ LOGGER = logging.getLogger(__name__)
 UP_RED = glm.vec3(0.9, 0.2, 0.2) * 0.5
 HOVER = 0x01
 SELECTED = 0x02
+DRAGGED = 0x04
 
 
 class GizmoMesh:
@@ -65,9 +66,10 @@ class Quad(NamedTuple):
 
 
 class Shape(metaclass=abc.ABCMeta):
-    def __init__(self, is_draggable: bool) -> None:
+    def __init__(self, matrix: glm.mat4, is_draggable: bool) -> None:
+        self.matrix = EventProperty[glm.mat4](matrix)
         self.is_draggable = is_draggable
-        self.matrix = glm.mat4()
+        self.index = -1
 
     @abc.abstractmethod
     def get_color(self) -> glm.vec4:
@@ -78,7 +80,7 @@ class Shape(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     def intersect(self, ray: Ray) -> Optional[float]:
-        to_local = glm.inverse(self.matrix)
+        to_local = glm.inverse(self.matrix.value)
         local_ray = Ray((to_local * glm.vec4(ray.origin, 1)).xyz,
                         (to_local * glm.vec4(ray.dir, 0)).xyz)
         hits = [quad.intersect(local_ray) for quad in self.get_quads()]
@@ -100,12 +102,11 @@ class CubeShape(Shape):
     '''
 
     def __init__(self, width: float, height: float, depth: float, *, position: Optional[glm.vec3] = None, color=None) -> None:
-        super().__init__(False)
+        super().__init__(glm.translate(position), False)
         self.color = color if color else glm.vec4(1, 1, 1, 1)
         self.width = width
         self.height = height
         self.depth = depth
-        self.position = position
         x = self.width/2
         y = self.height/2
         z = self.depth/2
@@ -125,7 +126,6 @@ class CubeShape(Shape):
             Quad.from_points(v4, v0, v3, v7),
             Quad.from_points(v1, v5, v6, v2),
         ]
-        self.matrix = glm.translate(self.position)
 
     def get_color(self) -> glm.vec4:
         return self.color
@@ -136,8 +136,7 @@ class CubeShape(Shape):
 
 class RingShape(Shape):
     def __init__(self, theta, inner, outer, *, sections=20, color=None) -> None:
-        super().__init__(True)
-        self.matrix = glm.mat4(0)
+        super().__init__(glm.mat4(0), True)
         self.color = color if color else glm.vec4(1, 1, 1, 1)
         delta = theta/sections
         angle = 0
@@ -173,7 +172,6 @@ class TriangleBuffer:
         self.index_count = 0
         self.vao: Optional[glo.Vao] = None
         self.skin = glm.array.zeros(200, glm.mat4)
-        self.skin[0] = glm.mat4()
         self.hover_index = -1
         self.select_index = -1
 
@@ -216,24 +214,38 @@ class TriangleBuffer:
         color = shape.get_color()
         for quad in shape.get_quads():
             self.add_quad(bone, quad, color)
-        self.skin[bone] = shape.matrix
 
-    def set_state(self, bone, state):
+        # bind matrix
+        def on_matrix(m):
+            self.skin[bone] = m
+        shape.matrix += on_matrix
+        self.skin[bone] = shape.matrix.value
+
+    def add_state(self, bone, state):
         if bone < 0:
             return
         indices = self.bone_vertex_map[bone]
         for i in indices:
             v = self.vertices[i]
-            v.state = state
+            v.state = int(v.state) | state
+
+    def remove_state(self, bone, state):
+        if bone < 0:
+            return
+        indices = self.bone_vertex_map[bone]
+        inv = ~state
+        for i in indices:
+            v = self.vertices[i]
+            v.state = int(v.state) & inv
 
     def select_hover(self, select_index: int,  hover_index: int):
-        self.set_state(self.hover_index, 0)
-        self.set_state(self.select_index, 0)
+        self.remove_state(self.hover_index, HOVER)
+        self.remove_state(self.select_index, SELECTED)
         if select_index == hover_index:
-            self.set_state(hover_index, HOVER | SELECTED)
+            self.add_state(hover_index, HOVER | SELECTED)
         else:
-            self.set_state(hover_index, HOVER)
-            self.set_state(select_index, SELECTED)
+            self.add_state(hover_index, HOVER)
+            self.add_state(select_index, SELECTED)
         self.hover_index = hover_index
         self.select_index = select_index
 
@@ -289,19 +301,17 @@ class TriangleBuffer:
 
 
 class DragContext:
-    def __init__(self, x, y, *, manipulator: Shape, selected: Shape, set_matrix) -> None:
+    def __init__(self, x, y, *, manipulator: Shape, selected: Shape) -> None:
         self.manipulator = manipulator
         self.selected = selected
         self.x = x
         self.y = y
-        self.init_matrix = selected.matrix
-        self.set_matrix = set_matrix
+        self.init_matrix = selected.matrix.value
 
     def drag(self, x, y, dx, dy):
         angle = (y - self.y) * 0.02
-        self.selected.matrix = self.init_matrix * \
-            glm.rotate(angle, glm.vec3(0, 0, 1))
-        self.set_matrix(self.selected.matrix)
+        self.selected.matrix.set(
+            self.init_matrix * glm.rotate(angle, glm.vec3(0, 0, 1)))
 
 
 class Gizmo:
@@ -331,6 +341,7 @@ class Gizmo:
         self.selected = EventProperty[int](-1)
         self.drag_context = None
 
+
     def bind_mouse_event(self, mouse_event: MouseEvent):
         '''
         use left mouse
@@ -344,12 +355,12 @@ class Gizmo:
         if self.vertex_buffer.hover_index >= 0:
             shape = self.shapes[self.vertex_buffer.hover_index]
             if shape.is_draggable:
-                def set_matrix(m):
-                    self.vertex_buffer.skin[self.selected.value] = m
+                # index = [self.selected.value]
                 self.drag_context = DragContext(x, y,
                                                 manipulator=shape,
-                                                selected=self.shapes[self.selected.value],
-                                                set_matrix=set_matrix)
+                                                selected=self.shapes[self.selected.value])
+                self.vertex_buffer.add_state(
+                    self.vertex_buffer.hover_index, DRAGGED)
             else:
                 self.selected.set(self.vertex_buffer.hover_index)
         else:
@@ -360,13 +371,18 @@ class Gizmo:
             self.drag_context.drag(x, y, dx, dy)
 
     def drag_end(self, x, y):
-        self.drag_context = None
+        if self.drag_context:
+            self.vertex_buffer.remove_state(self.drag_context.manipulator.index, DRAGGED)
+            self.drag_context = None
 
     def add_shape(self, shape: Shape, *, draggable=False) -> int:
         key = len(self.shapes)
         self.shapes.append(shape)
-
+        shape.index = key
         self.vertex_buffer.add_shape(key, shape)
+
+        # if draggable:
+        #     self.vertex_buffer.set_state(key, DRAGGED)
 
         return key
 

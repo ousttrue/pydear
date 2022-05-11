@@ -10,6 +10,7 @@ uniform mat4 uBoneMatrices[250];
 
 const int HOVER = 0x01;
 const int SELECTED = 0x02;
+const int DRAGGED = 0x04;
 
 void main() {
 
@@ -27,10 +28,11 @@ void main() {
   float v = max(dot(N, L), 0.2);
 
   int state = int(aNormalState.w);
-  if ((state & SELECTED) != 0) {
+  if ((state & SELECTED) != 0 || (state & DRAGGED) != 0) {
     vColor = vec4(aColor.xyz, aColor.a);
   } else if ((state & HOVER) != 0) {
-    vColor = vec4(aColor.xyz * v * 0.5, aColor.a);
+    vec3 color = aColor.xyz * v;
+    vColor = vec4(color + (vec3(1, 1, 1) - color) * 0.2, aColor.a);
   } else {
     vColor = vec4(aColor.xyz * v, aColor.a);
   }

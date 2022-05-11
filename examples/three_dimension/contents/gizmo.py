@@ -33,10 +33,11 @@ class GizmoScene(Item):
         self.ring_key = self.gizmo.add_shape(ring, draggable=True)
 
         def on_selected(index: int):
-            if index>=0:
+            if index >= 0:
                 shape = self.gizmo.shapes[index]
-                ring.matrix = shape.matrix
-                self.gizmo.vertex_buffer.skin[self.ring_key] = ring.matrix
+                ring.matrix.set(shape.matrix.value)
+            else:
+                ring.matrix.set(glm.mat4(0))
 
         self.gizmo.selected += on_selected
 
