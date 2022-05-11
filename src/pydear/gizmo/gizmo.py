@@ -123,6 +123,7 @@ class TriangleBuffer:
         self.skin = glm.array.zeros(200, glm.mat4)
         self.skin[0] = glm.mat4()
         self.hover_index = -1
+        self.select_index = -1
 
     def add_vertex(self, bone: int, v: glm.vec3, n: glm.vec3) -> int:
         i = self.vertex_count
@@ -164,22 +165,25 @@ class TriangleBuffer:
             self.add_quad(bone, quad)
         self.skin[bone] = cube.get_matrix()
 
-    def hover(self, hover_index: int):
-        if self.hover_index >= 0:
-            indices = self.bone_vertex_map[self.hover_index]
-            for i in indices:
-                v = self.vertices[i]
-                v.r = 1
-                v.g = 1
-                v.b = 1
-        if hover_index >= 0:
-            indices = self.bone_vertex_map[hover_index]
-            for i in indices:
-                v = self.vertices[i]
-                v.r = 1
-                v.g = 1
-                v.b = 0.5
+    def set_color(self, bone, r, g, b):
+        if bone < 0:
+            return
+        indices = self.bone_vertex_map[bone]
+        for i in indices:
+            v = self.vertices[i]
+            v.r = r
+            v.g = g
+            v.b = b
+
+    def select_hover(self, select_index: int,  hover_index: int):
+        self.set_color(hover_index, 0.5, 1, 0.5)
+        self.set_color(select_index, 1, 0.5, 0.5)
+        if self.hover_index != select_index and self.hover_index != hover_index:
+            self.set_color(self.hover_index, 1, 1, 1)
+        if self.select_index != select_index and self.select_index != hover_index:
+            self.set_color(self.select_index, 1, 1, 1)
         self.hover_index = hover_index
+        self.select_index = select_index
 
     def render(self, camera: Camera):
         if not self.shader:
@@ -254,28 +258,9 @@ class Gizmo:
 
     def __init__(self) -> None:
         self.vertex_buffer = TriangleBuffer()
-        # # state
-        # self.camera_view = glm.mat4()
-        # self.camera_projection = glm.mat4()
-        # self.ray = Ray(glm.vec3(0, 0, 0), glm.vec3(0, 0, 1))
-        # self.matrix = glm.mat4()
-        # self.color = glm.vec4(1, 1, 1, 1)
-        # # event
-
-        # # lines
-        # self.lines = (Vertex * 65535)()
-        # self.line_count = 0
-        # self.line_drawable: Optional[glo.Vao] = None
-        # # triangles
-        # self.triangles = (Vertex * 65535)()
-        # self.triangle_count = 0
-        # # hover selectable
-        # self.hover = None
-        # self.hover_last = None
         self.mouse_event = None
         self.shapes: List[CubeShape] = []
-
-        # self.mouse_clicked = False
+        self.selected = -1
 
     def bind_mouse_event(self, mouse_event: MouseEvent):
         '''
@@ -287,7 +272,10 @@ class Gizmo:
         mouse_event.left_released.append(self.drag_end)
 
     def drag_begin(self, x, y):
-        pass
+        if self.vertex_buffer.hover_index >= 0:
+            self.selected = self.vertex_buffer.hover_index
+        else:
+            self.selected = -1
 
     def drag(self, x, y, dx, dy):
         pass
@@ -317,7 +305,7 @@ class Gizmo:
                     hit_shape_index = i
                     hit_distance = distance
 
-        self.vertex_buffer.hover(hit_shape_index)
+        self.vertex_buffer.select_hover(self.selected, hit_shape_index)
 
     # def line(self, p0: glm.vec3, p1: glm.vec3):
     #     p0 = (self.matrix * glm.vec4(p0, 1)).xyz
