@@ -6,7 +6,8 @@ import math
 import glm
 from pydear.utils.selector import Item
 from pydear.scene.camera import Camera, MouseEvent
-from pydear.gizmo.gizmo import Gizmo, CubeShape, RingShape
+from pydear.gizmo.gizmo import Gizmo
+from pydear.gizmo.shape import CubeShape, RingShape
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ class GizmoScene(Item):
 
         # draggable
         ring = RingShape(math.pi * 2, 0.4, 0.6, color=glm.vec4(0.3, 0.3, 1, 1))
-        self.ring_key = self.gizmo.add_shape(ring, draggable=True)
+        self.ring_key = self.gizmo.add_shape(ring)
 
         def on_selected(index: int):
             if index >= 0:
