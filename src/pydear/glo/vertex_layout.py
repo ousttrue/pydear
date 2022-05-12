@@ -1,3 +1,4 @@
+import ctypes
 from typing import NamedTuple, Iterable, List
 from OpenGL import GL
 import logging
@@ -9,7 +10,7 @@ class AttributeLocation(NamedTuple):
     location: int
 
     @staticmethod
-    def create(program,  name: str) -> 'AttributeLocation':
+    def create(program, name: str) -> 'AttributeLocation':
         location = GL.glGetAttribLocation(program, name)
         assert(location != -1)
         return AttributeLocation(name, location)
@@ -61,6 +62,18 @@ def byte_size(t, n):
             raise NotImplemented()
 
 
+def to_str(src) -> str:
+    match src:
+        case str():
+            return src
+        case _:
+            data = bytes(src)
+            pos = data.index(0)
+            if pos != -1:
+                data = data[:pos]
+            return data.decode('ascii')
+
+
 class VertexLayout(NamedTuple):
     attribute: AttributeLocation
     item_count: int  # maybe float1, 2, 3, 4 and 16
@@ -77,7 +90,7 @@ class VertexLayout(NamedTuple):
         for i in range(count):
             name, size, type_ = GL.glGetActiveAttrib(program, i)
             # https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetActiveAttrib.xhtml
-            attribute = AttributeLocation.create(program, name)
+            attribute = AttributeLocation.create(program, to_str(name))
             match type_map.get(type_):
                 case (t, n):
                     size = byte_size(t, n)
