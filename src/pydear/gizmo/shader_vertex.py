@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import Optional
 import ctypes
 import glm
 
@@ -23,7 +23,7 @@ class Vertex(ctypes.Structure):
     ]
 
     @staticmethod
-    def pos_color(p: glm.vec3, c: glm.vec4, *, bone: int = 0, normal: glm.vec3 = None) -> 'Vertex':
+    def pos_color(p: glm.vec3, c: glm.vec4, *, bone: int = 0, normal: Optional[glm.vec3] = None) -> 'Vertex':
         if not normal:
             normal = glm.vec3(0, 1, 0)
 

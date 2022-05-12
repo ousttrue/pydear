@@ -6,7 +6,7 @@ from pydear import glo
 from pydear.scene.camera import Camera
 from .shader_vertex import Vertex, SHADER
 from .primitive import Triangle, Quad
-from .shape import Shape
+from .shapes.shape import Shape
 from OpenGL import GL
 
 LOGGER = logging.getLogger(__name__)

@@ -6,8 +6,8 @@ import math
 import glm
 from pydear.utils.selector import Item
 from pydear.scene.camera import Camera, MouseEvent
-from pydear.gizmo.gizmo import Gizmo
-from pydear.gizmo.shape import CubeShape, RingShape
+from pydear.gizmo.gizmo import Gizmo, CubeShape, RingShape
+
 
 LOGGER = logging.getLogger(__name__)
 

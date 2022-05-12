@@ -3,7 +3,9 @@ import glm
 from pydear.scene.camera import Camera
 from pydear.utils.mouse_event import MouseEvent
 from pydear.utils.eventproperty import EventProperty
-from .shape import Shape
+from .shapes.shape import Shape
+from .shapes.cube_shape import CubeShape
+from .shapes.ring_shape import RingShape
 from .triangle_buffer import TriangleBuffer, DRAGGED
 
 
