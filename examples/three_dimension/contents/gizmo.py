@@ -1,13 +1,14 @@
 '''
 simple triangle sample
 '''
+from typing import Optional
 import logging
 import math
 import glm
 from pydear.utils.selector import Item
 from pydear.scene.camera import Camera, MouseEvent
 from pydear.gizmo.gizmo import Gizmo, CubeShape, RingShape
-
+from pydear.gizmo.shapes.shape import Shape
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,9 +34,8 @@ class GizmoScene(Item):
         ring = RingShape(math.pi * 2, 0.4, 0.6, color=glm.vec4(0.3, 0.3, 1, 1))
         self.ring_key = self.gizmo.add_shape(ring)
 
-        def on_selected(index: int):
-            if index >= 0:
-                shape = self.gizmo.shapes[index]
+        def on_selected(shape: Optional[Shape]):
+            if shape:
                 ring.matrix.set(shape.matrix.value)
             else:
                 ring.matrix.set(glm.mat4(0))

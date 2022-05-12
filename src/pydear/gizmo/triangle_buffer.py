@@ -10,9 +10,6 @@ from .shapes.shape import Shape
 from OpenGL import GL
 
 LOGGER = logging.getLogger(__name__)
-HOVER = 0x01
-SELECTED = 0x02
-DRAGGED = 0x04
 
 
 class TriangleBuffer:
@@ -27,8 +24,6 @@ class TriangleBuffer:
         self.index_count = 0
         self.vao: Optional[glo.Vao] = None
         self.skin = glm.array.zeros(200, glm.mat4)
-        self.hover_index = -1
-        self.select_index = -1
 
     def add_vertex(self, bone: int, v: glm.vec3, n: glm.vec3, c: glm.vec4) -> int:
         i = self.vertex_count
@@ -71,38 +66,20 @@ class TriangleBuffer:
             self.add_quad(bone, quad, color)
 
         # bind matrix
+
         def on_matrix(m):
             self.skin[bone] = m
         shape.matrix += on_matrix
         self.skin[bone] = shape.matrix.value
 
-    def add_state(self, bone, state):
-        if bone < 0:
-            return
-        indices = self.bone_vertex_map[bone]
-        for i in indices:
-            v = self.vertices[i]
-            v.state = int(v.state) | state
+        # bind state
 
-    def remove_state(self, bone, state):
-        if bone < 0:
-            return
-        indices = self.bone_vertex_map[bone]
-        inv = ~state
-        for i in indices:
-            v = self.vertices[i]
-            v.state = int(v.state) & inv
-
-    def select_hover(self, select_index: int,  hover_index: int):
-        self.remove_state(self.hover_index, HOVER)
-        self.remove_state(self.select_index, SELECTED)
-        if select_index == hover_index:
-            self.add_state(hover_index, HOVER | SELECTED)
-        else:
-            self.add_state(hover_index, HOVER)
-            self.add_state(select_index, SELECTED)
-        self.hover_index = hover_index
-        self.select_index = select_index
+        def on_state(state):
+            indices = self.bone_vertex_map[shape.index]
+            for i in indices:
+                v = self.vertices[i]
+                v.state = state.value
+        shape.state += on_state
 
     def render(self, camera: Camera):
         if not self.shader:

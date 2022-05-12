@@ -1,17 +1,31 @@
 from typing import Iterable, Optional
-import math
 import abc
 import glm
 from pydear.scene.camera import Ray
 from pydear.utils.eventproperty import EventProperty
 from ..primitive import Quad
+from enum import IntFlag
+
+
+class ShapeState(IntFlag):
+    NONE = 0x00
+    HOVER = 0x01
+    SELECT = 0x02
+    DRAG = 0x04
 
 
 class Shape(metaclass=abc.ABCMeta):
     def __init__(self, matrix: glm.mat4, is_draggable: bool) -> None:
-        self.matrix = EventProperty[glm.mat4](matrix)
+        self.matrix = EventProperty(matrix)
+        self.state = EventProperty(ShapeState.NONE)
         self.is_draggable = is_draggable
         self.index = -1
+
+    def add_state(self, state: ShapeState):
+        self.state.set(self.state.value | state)
+
+    def remove_state(self, state: ShapeState):
+        self.state.set(self.state.value & ~state)
 
     @abc.abstractmethod
     def get_color(self) -> glm.vec4:
@@ -31,7 +45,3 @@ class Shape(metaclass=abc.ABCMeta):
             return None
         hits.sort()
         return hits[0]
-
-
-
-
