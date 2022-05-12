@@ -2,12 +2,13 @@ from typing import Iterable
 import math
 import glm
 from ..primitive import Quad
-from .shape import Shape
+from .shape import Shape, ShapeState
 
 
 class RingShape(Shape):
-    def __init__(self, theta, inner, outer, *, sections=20, color=None) -> None:
+    def __init__(self, *, inner: float, outer: float, depth: float, theta: float = math.pi * 2, sections=20, color=None) -> None:
         super().__init__(glm.mat4(0), True)
+        self.state.set(ShapeState.HIDE)
         self.color = color if color else glm.vec4(1, 1, 1, 1)
         delta = theta/sections
         angle = 0
@@ -17,12 +18,28 @@ class RingShape(Shape):
             angle += delta
         sin_cos = [(math.sin(angle), math.cos(angle)) for angle in angles]
         self.quads = []
+
+        d = depth * 0.5
         for i, (s0, c0) in enumerate(sin_cos):
-            v0 = glm.vec3(c0, s0, 0)
             s1, c1 = sin_cos[(i+1) % sections]
-            v1 = glm.vec3(c1, s1, 0)
-            self.quads.append(Quad.from_points(
-                v0*inner, v0*outer, v1*outer, v1*inner))
+            v0 = glm.vec3(c0 * inner, s0 * inner, d)
+            v1 = glm.vec3(c0 * outer, s0 * outer, d)
+            v2 = glm.vec3(c1 * outer, s1 * outer, d)
+            v3 = glm.vec3(c1 * inner, s1 * inner, d)
+            v4 = glm.vec3(c0 * inner, s0 * inner, -d)
+            v5 = glm.vec3(c0 * outer, s0 * outer, -d)
+            v6 = glm.vec3(c1 * outer, s1 * outer, -d)
+            v7 = glm.vec3(c1 * inner, s1 * inner, -d)
+            '''
+                  v7 v6
+            v3 v2 v4 v5
+            v0 v1
+            '''
+            self.quads += [
+                Quad.from_points(v0, v1, v2, v3),
+                Quad.from_points(v1, v5, v6, v2),
+                Quad.from_points(v7, v6, v5, v4),
+            ]
 
     def get_color(self) -> glm.vec4:
         return self.color

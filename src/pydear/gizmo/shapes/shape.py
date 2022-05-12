@@ -12,6 +12,7 @@ class ShapeState(IntFlag):
     HOVER = 0x01
     SELECT = 0x02
     DRAG = 0x04
+    HIDE = 0x08
 
 
 class Shape(metaclass=abc.ABCMeta):
@@ -36,6 +37,9 @@ class Shape(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     def intersect(self, ray: Ray) -> Optional[float]:
+        if self.state.value & ShapeState.HIDE:
+            return
+
         to_local = glm.inverse(self.matrix.value)
         local_ray = Ray((to_local * glm.vec4(ray.origin, 1)).xyz,
                         (to_local * glm.vec4(ray.dir, 0)).xyz)

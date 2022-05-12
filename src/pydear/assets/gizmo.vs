@@ -11,14 +11,16 @@ uniform mat4 uBoneMatrices[250];
 const int HOVER = 0x01;
 const int SELECTED = 0x02;
 const int DRAGGED = 0x04;
+const int HIDE = 0x08;
 
 void main() {
 
   vec3 aNormal = aNormalState.xyz;
 
   int index = int(aPosBone.w);
-  vec4 position = (uBoneMatrices[index] * vec4(aPosBone.xyz, 1));
-  vec4 normal = (uBoneMatrices[index] * vec4(aNormal, 0));
+  mat4 matrix = uBoneMatrices[index];
+  vec4 position = (matrix * vec4(aPosBone.xyz, 1));
+  vec4 normal = (matrix * vec4(aNormal, 0));
 
   gl_Position = uVP * position;
 
@@ -35,5 +37,9 @@ void main() {
     vColor = vec4(color + (vec3(1, 1, 1) - color) * 0.2, aColor.a);
   } else {
     vColor = vec4(aColor.xyz * v, aColor.a);
+  }
+
+  if ((state & HIDE) != 0) {
+    gl_Position = vec4(0, 0, 0, 0);
   }
 }

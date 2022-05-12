@@ -8,7 +8,7 @@ import glm
 from pydear.utils.selector import Item
 from pydear.scene.camera import Camera, MouseEvent
 from pydear.gizmo.gizmo import Gizmo, CubeShape, RingShape
-from pydear.gizmo.shapes.shape import Shape
+from pydear.gizmo.shapes.shape import Shape, ShapeState
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,14 +31,16 @@ class GizmoScene(Item):
                 # LOGGER.debug(f'{i}, {j} => {key}')
 
         # draggable
-        ring = RingShape(math.pi * 2, 0.4, 0.6, color=glm.vec4(0.3, 0.3, 1, 1))
+        ring = RingShape(inner=0.4, outer=0.6, depth=0.02,
+                         color=glm.vec4(0.3, 0.3, 1, 1))
         self.ring_key = self.gizmo.add_shape(ring)
 
         def on_selected(shape: Optional[Shape]):
             if shape:
                 ring.matrix.set(shape.matrix.value)
+                ring.remove_state(ShapeState.HIDE)
             else:
-                ring.matrix.set(glm.mat4(0))
+                ring.add_state(ShapeState.HIDE)
 
         self.gizmo.selected += on_selected
 
