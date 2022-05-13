@@ -18,7 +18,8 @@ class Gizmo:
     def __init__(self) -> None:
         self.vertex_buffer = TriangleBuffer()
         self.shapes: List[Shape] = []
-        self.hit = RayHit(None, 0, 0, Ray(glm.vec3(), glm.vec3()), float('inf'))
+        self.hit = RayHit(None, 0, 0, Ray(
+            glm.vec3(), glm.vec3()), float('inf'))
 
     def add_shape(self, shape: Shape) -> int:
         key = len(self.shapes)

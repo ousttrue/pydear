@@ -66,6 +66,8 @@ def to_str(src) -> str:
     match src:
         case str():
             return src
+        case bytes():
+            return src.decode('ascii')
         case _:
             data = bytes(src)
             pos = data.index(0)
