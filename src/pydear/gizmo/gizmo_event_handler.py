@@ -54,18 +54,25 @@ class GizmoSelectHandler(GizmoEventHandler):
 
 
 class DragContext:
-    def __init__(self, x, y, *, manipulator, axis, target: Shape):
-        self.y = y
+    def __init__(self, start_screen_pos: glm.vec2, *, manipulator, axis, center_screen_pos: glm.vec2, target: Shape):
+        self.start_screen_pos = start_screen_pos
         assert(manipulator)
         self.manipulator = manipulator
         self.manipulator.add_state(ShapeState.DRAG)
         self.axis = axis
+        self.center_screen_pos = center_screen_pos
         assert target
         self.target = target
         self.init_matrix = target.matrix.value
 
-    def drag(self, x: int, y: int):
-        angle = (y - self.y) * 0.02
+    def drag(self, cursor_pos: glm.vec2):
+        hit_center = glm.vec3(self.center_screen_pos - self.start_screen_pos, 0)
+        hit_cursor = glm.vec3(cursor_pos-self.start_screen_pos, 0)
+        n = glm.cross(hit_center, hit_cursor)
+        plus_minus = 1 if n.z > 0 else -1
+        d = glm.length(self.start_screen_pos - cursor_pos)
+        angle = d * 0.02 * plus_minus
+
         m = self.init_matrix * glm.rotate(angle, self.axis)
         self.target.matrix.set(m)
         return m
@@ -99,21 +106,30 @@ class DragEventHandler(GizmoEventHandler):
             case self.x_ring:
                 # ring is not selectable
                 self.context = DragContext(
-                    hit.x, hit.y, manipulator=hit.shape, axis=glm.vec3(1, 0, 0), target=self.selected.value)
+                    hit.cursor_pos, manipulator=hit.shape, axis=glm.vec3(
+                        1, 0, 0),
+                    target=self.selected.value,
+                    center_screen_pos=hit.shpae_screen_pos)
             case self.y_ring:
                 # ring is not selectable
                 self.context = DragContext(
-                    hit.x, hit.y, manipulator=hit.shape, axis=glm.vec3(0, 1, 0), target=self.selected.value)
+                    hit.cursor_pos, manipulator=hit.shape, axis=glm.vec3(
+                        0, 1, 0),
+                    target=self.selected.value,
+                    center_screen_pos=hit.shpae_screen_pos)
             case self.z_ring:
                 # ring is not selectable
                 self.context = DragContext(
-                    hit.x, hit.y, manipulator=hit.shape, axis=glm.vec3(0, 0, 1), target=self.selected.value)
+                    hit.cursor_pos, manipulator=hit.shape, axis=glm.vec3(
+                        0, 0, 1),
+                    target=self.selected.value,
+                    center_screen_pos=hit.shpae_screen_pos)
             case _:
                 self.select(hit)
 
     def drag(self, x, y, dx, dy):
         if self.context:
-            m = self.context.drag(x, y)
+            m = self.context.drag(glm.vec2(x, y))
             self.x_ring.matrix.set(m)
             self.y_ring.matrix.set(m)
             self.z_ring.matrix.set(m)

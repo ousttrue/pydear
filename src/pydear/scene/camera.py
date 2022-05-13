@@ -278,12 +278,18 @@ class Camera:
     #         self.projection.update_matrix()
 
     def get_mouse_ray(self, x: int, y: int) -> Ray:
-        origin = self.view.inverse[3].xyz
-        half_fov = self.projection.fov_y/2
-        dir = self.view.inverse * glm.vec4(
-            (x/self.projection.width * 2 - 1) *
-            math.tan(half_fov) * (self.projection.aspect),
-            -(y/self.projection.height * 2 - 1) * math.tan(half_fov),
-            -1,
-            0)
-        return Ray(origin, glm.normalize(dir.xyz))
+        return get_mouse_ray(x, y, self.projection.width, self.projection.height,
+                             self.view.inverse, self.projection.fov_y, self.projection.aspect)
+
+
+def get_mouse_ray(x: int, y: int, w: int, h: int,
+                  view_inverse: glm.mat4, fov_y: float, aspect: float) -> Ray:
+    origin = view_inverse[3].xyz
+    half_fov = fov_y/2
+    dir = view_inverse * glm.vec4(
+        (x/w * 2 - 1) *
+        math.tan(half_fov) * (aspect),
+        -(y/h * 2 - 1) * math.tan(half_fov),
+        -1,
+        0)
+    return Ray(origin, glm.normalize(dir.xyz))

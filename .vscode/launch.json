@@ -125,6 +125,8 @@
             "args": [
                 "--ini",
                 "three_dimension.dat",
+                "--font",
+                "${env:USERPROFILE}\\AppData\\Local\\Microsoft\\Windows\\Fonts\\HackGenNerdConsole-Regular.ttf",
             ],
             "console": "integratedTerminal",
             "justMyCode": false

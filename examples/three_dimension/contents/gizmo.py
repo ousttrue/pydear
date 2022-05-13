@@ -2,22 +2,25 @@
 simple triangle sample
 '''
 from typing import Optional
+import pathlib
 import logging
 import glm
 from pydear.utils.selector import Item
 from pydear.scene.camera import Camera, MouseEvent
 from pydear.gizmo.gizmo import Gizmo
 from pydear.gizmo.gizmo_event_handler import DragEventHandler
-
+from pydear.utils.nanovg_renderer import NanoVgRenderer, nvg_line_from_to
 LOGGER = logging.getLogger(__name__)
 
 
 class GizmoScene(Item):
-    def __init__(self, mouse_event: MouseEvent) -> None:
+    def __init__(self, mouse_event: MouseEvent, *, font: pathlib.Path) -> None:
         super().__init__('gizmo')
         self.camera = Camera()
         self.mouse_event = mouse_event
         self.camera.bind_mouse_event(self.mouse_event)
+
+        self.nvg = NanoVgRenderer(font)
 
         # gizmo shapes
         self.gizmo = Gizmo()
@@ -38,6 +41,13 @@ class GizmoScene(Item):
         input = self.mouse_event.last_input
         assert(input)
         self.gizmo.process(self.camera, input.x, input.y)
+
+        context = self.handler.context
+        if context:
+            cursor = context.start_screen_pos
+            with self.nvg.render(w, h) as vg:
+                nvg_line_from_to(vg, cursor.x, cursor.y, input.x, input.y)
+                nvg_line_from_to(vg, cursor.x, cursor.y, context.center_screen_pos.x, context.center_screen_pos.y)
 
     def show(self):
         pass

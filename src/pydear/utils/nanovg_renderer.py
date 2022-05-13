@@ -1,5 +1,5 @@
-import abc
 import pathlib
+import contextlib
 from pydear import nanovg
 from pydear.nanovg_backends import nanovg_impl_opengl3
 
@@ -45,3 +45,32 @@ class NanoVgRenderer:
 
     def end_frame(self):
         nanovg_impl_opengl3.render(nanovg.nvgGetDrawData(self.vg))
+
+    @contextlib.contextmanager
+    def render(self, w, h):
+        vg = self.begin_frame(w, h)
+        try:
+            if vg:
+                yield vg
+        finally:
+            self.end_frame()
+
+
+def nvg_line_from_to(vg, x0, y0, x1, y1):
+    nanovg.nvgSave(vg)
+    nanovg.nvgStrokeWidth(vg, 1.0)
+    nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(0, 192, 255, 255))
+    nanovg.nvgBeginPath(vg)
+    nanovg.nvgMoveTo(vg, x0, y0)
+    nanovg.nvgLineTo(vg, x1, y1)
+    nanovg.nvgStroke(vg)
+    nanovg.nvgRestore(vg)
+
+
+def nvg_text(vg, font_name, x, y):
+    nanovg.nvgFontSize(vg, 15.0)
+    nanovg.nvgFontFace(vg, font_name)
+    nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 255))
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
+                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    nanovg.nvgText(vg, x, y, f'{x}, {y}', None)  # type: ignore

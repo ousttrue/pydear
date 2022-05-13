@@ -13,6 +13,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--ini', type=pathlib.Path)
+    parser.add_argument('--font', type=pathlib.Path, required=True)
     args = parser.parse_args()
 
     setting = None
@@ -49,7 +50,7 @@ def main():
     import contents.teapot
     selector.add(contents.teapot.TeaPot(fbo.mouse_event))
     import contents.gizmo
-    selector.add(contents.gizmo.GizmoScene(fbo.mouse_event))
+    selector.add(contents.gizmo.GizmoScene(fbo.mouse_event, font=args.font))
 
     views = [
         dockspace.Dock('metrics', ImGui.ShowMetricsWindow,
