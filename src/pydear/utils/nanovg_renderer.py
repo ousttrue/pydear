@@ -1,0 +1,47 @@
+import abc
+import pathlib
+from pydear import nanovg
+from pydear.nanovg_backends import nanovg_impl_opengl3
+
+
+class NanoVgRenderer:
+    def __init__(self, font_path: pathlib.Path, font_name='nanovg_font') -> None:
+        self.vg = nanovg.nvgCreate(nanovg.NVGcreateFlags.NVG_ANTIALIAS
+                                   | nanovg.NVGcreateFlags.NVG_STENCIL_STROKES
+                                   | nanovg.NVGcreateFlags.NVG_DEBUG)
+        if not self.vg:
+            raise RuntimeError("Could not init nanovg")
+        nanovg_impl_opengl3.init(self.vg)
+
+        assert font_path.exists()
+        self.font_path = str(font_path.absolute()).replace('\\', '/')
+        self.font_initialized = False
+        self.font_name = font_name
+
+    def init_font(self):
+        '''
+        must after nanovg.nvgBeginFrame
+        '''
+        if self.font_initialized:
+            return
+        self.fontNormal = nanovg.nvgCreateFont(
+            self.vg, self.font_name, self.font_path)
+        if self.fontNormal == -1:
+            raise RuntimeError("Could not add font italic.")
+        self.font_initialized = True
+
+    def __del__(self):
+        nanovg_impl_opengl3.delete()
+
+    def begin_frame(self, width, height):
+        width = float(width)
+        height = float(height)
+        if width == 0 or height == 0:
+            return
+        ratio = width / height
+        nanovg.nvgBeginFrame(self.vg, width, height, ratio)
+        self.init_font()
+        return self.vg
+
+    def end_frame(self):
+        nanovg_impl_opengl3.render(nanovg.nvgGetDrawData(self.vg))

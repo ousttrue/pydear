@@ -19,8 +19,8 @@ class SelectorView:
         self.selector.add(View(fbo.mouse_event))
         from contents.text import TextRenderer
         self.selector.add(TextRenderer(fbo.mouse_event))
-        from contents.nanovg import NanoVg
-        self.selector.add(NanoVg(fbo.mouse_event, font))
+        from contents.nanovg import NanoVgSample
+        self.selector.add(NanoVgSample(font, fbo.mouse_event))
 
     def show(self, p_open):
         if not p_open or p_open[0]:
