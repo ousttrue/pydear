@@ -29,7 +29,7 @@ class Gizmo:
         return key
 
     def process(self, camera: Camera, x, y):
-        # remder
+        # render
         self.vertex_buffer.render(camera)
 
         # ray intersect
