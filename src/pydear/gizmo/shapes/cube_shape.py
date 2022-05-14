@@ -1,4 +1,4 @@
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Tuple
 import glm
 from ..primitive import Quad
 from .shape import Shape
@@ -42,8 +42,6 @@ class CubeShape(Shape):
             Quad.from_points(v1, v5, v6, v2),
         ]
 
-    def get_color(self) -> glm.vec4:
-        return self.color
-
-    def get_quads(self) -> Iterable[Quad]:
-        return self.quads
+    def get_quads(self) -> Iterable[Tuple[Quad, glm.vec4]]:
+        for quad in self.quads:
+            yield quad, self.color

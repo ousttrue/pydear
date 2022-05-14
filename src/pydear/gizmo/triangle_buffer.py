@@ -61,8 +61,7 @@ class TriangleBuffer:
         self.add_triangle(bone, quad.t1, color)
 
     def add_shape(self, bone: int, shape: Shape):
-        color = shape.get_color()
-        for quad in shape.get_quads():
+        for quad, color in shape.get_quads():
             self.add_quad(bone, quad, color)
 
         # bind matrix

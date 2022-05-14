@@ -1,4 +1,4 @@
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Tuple
 import abc
 import glm
 from pydear.scene.camera import Ray
@@ -29,11 +29,7 @@ class Shape(metaclass=abc.ABCMeta):
         self.state.set(self.state.value & ~state)
 
     @abc.abstractmethod
-    def get_color(self) -> glm.vec4:
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def get_quads(self) -> Iterable[Quad]:
+    def get_quads(self) -> Iterable[Tuple[Quad, glm.vec4]]:
         raise NotImplementedError()
 
     def intersect(self, ray: Ray) -> Optional[float]:
@@ -43,7 +39,7 @@ class Shape(metaclass=abc.ABCMeta):
         to_local = glm.inverse(self.matrix.value)
         local_ray = Ray((to_local * glm.vec4(ray.origin, 1)).xyz,
                         (to_local * glm.vec4(ray.dir, 0)).xyz)
-        hits = [quad.intersect(local_ray) for quad in self.get_quads()]
+        hits = [quad.intersect(local_ray) for quad, color in self.get_quads()]
         hits = [hit for hit in hits if hit]
         if not hits:
             return None

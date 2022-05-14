@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Tuple
 import math
 import glm
 from ..primitive import Quad
@@ -41,11 +41,9 @@ class XRingShape(Shape):
                 Quad.from_points(v7, v6, v5, v4),
             ]
 
-    def get_color(self) -> glm.vec4:
-        return self.color
-
-    def get_quads(self) -> Iterable[Quad]:
-        return self.quads
+    def get_quads(self) -> Iterable[Tuple[Quad, glm.vec4]]:
+        for quad in self.quads:
+            yield quad, self.color
 
 
 class YRingShape(Shape):
@@ -84,11 +82,9 @@ class YRingShape(Shape):
                 Quad.from_points(v7, v6, v5, v4),
             ]
 
-    def get_color(self) -> glm.vec4:
-        return self.color
-
-    def get_quads(self) -> Iterable[Quad]:
-        return self.quads
+    def get_quads(self) -> Iterable[Tuple[Quad, glm.vec4]]:
+        for quad in self.quads:
+            yield quad, self.color
 
 
 class ZRingShape(Shape):
@@ -127,8 +123,6 @@ class ZRingShape(Shape):
                 Quad.from_points(v7, v6, v5, v4),
             ]
 
-    def get_color(self) -> glm.vec4:
-        return self.color
-
-    def get_quads(self) -> Iterable[Quad]:
-        return self.quads
+    def get_quads(self) -> Iterable[Tuple[Quad, glm.vec4]]:
+        for quad in self.quads:
+            yield quad, self.color
