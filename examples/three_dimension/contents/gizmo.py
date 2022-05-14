@@ -8,7 +8,7 @@ import glm
 from pydear.utils.selector import Item
 from pydear.scene.camera import Camera, MouseEvent
 from pydear.gizmo.gizmo import Gizmo
-from pydear.gizmo.gizmo_event_handler import DragEventHandler
+from pydear.gizmo.gizmo_drag_handler import GizmoDragHandler
 from pydear.utils.nanovg_renderer import NanoVgRenderer, nvg_line_from_to
 LOGGER = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class GizmoScene(Item):
                 self.gizmo.add_shape(cube)
 
         # mouse event handling
-        self.handler = DragEventHandler(self.gizmo, self.camera)
+        self.handler = GizmoDragHandler(self.gizmo, self.camera)
         self.handler.bind_mouse_event_with_gizmo(
             self.mouse_event, self.gizmo)
 
@@ -44,9 +44,9 @@ class GizmoScene(Item):
 
         context = self.handler.context
         if context:
-            cursor = context.start_screen_pos
+            start = context.start_screen_pos
             with self.nvg.render(w, h) as vg:
-                nvg_line_from_to(vg, cursor.x, cursor.y, input.x, input.y)
+                nvg_line_from_to(vg, start.x, start.y, input.x, input.y)
                 # nvg_line_from_to(vg, cursor.x, cursor.y, context.center_screen_pos.x, context.center_screen_pos.y)
 
     def show(self):
