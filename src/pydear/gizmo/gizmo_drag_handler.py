@@ -17,6 +17,20 @@ class Axis(Enum):
     Z = 2
 
 
+class ScreenLine:
+    def __init__(self, start: glm.vec2, end: glm.vec2) -> None:
+        a = end - start
+        if a.x:
+            self.a = a.y/a.x
+        else:
+            self.a = float('inf')
+
+        self.b = self.a * start.x - start.y
+
+    def point_from_x(self, x: float) -> glm.vec2:
+        return glm.vec2(x, self.a * x - self.b)
+
+
 class DragContext:
     def __init__(self, start_screen_pos: glm.vec2, *, manipulator: Shape, axis: Axis, target: Shape, camera: Camera):
         self.start_screen_pos = start_screen_pos
@@ -28,15 +42,42 @@ class DragContext:
         self.target = target
         self.init_matrix = target.matrix.value
 
+        vp = camera.projection.matrix * camera.view.matrix
+        center_pos = vp * manipulator.matrix.value[3]
+        cx = center_pos.x / center_pos.w
+        cy = center_pos.y / center_pos.w
+        self.center_screen_pos = glm.vec2(
+            (cx * 0.5 + 0.5)*camera.projection.width,
+            (0.5 - cy * 0.5)*camera.projection.height
+        )
+
+        l = ScreenLine(self.start_screen_pos, self.center_screen_pos)
+        self.left = l.point_from_x(0)
+        self.right = l.point_from_x(camera.projection.width)
+
+        view_axis = (camera.view.matrix *
+                     manipulator.matrix.value)[axis.value].xyz
+        center_start = glm.vec3(self.start_screen_pos, 0) - \
+            glm.vec3(self.center_screen_pos, 0)
+        self.cross = glm.normalize(glm.cross(center_start, view_axis))
+        if self.cross.x == 0 and self.cross.y == 0:
+            self.edge = True
+            cs = self.center_screen_pos - self.start_screen_pos
+            if self.cross.z > 0:
+                self.cross = glm.normalize(glm.vec3(cs.x, cs.y, 0))
+            else:
+                self.cross = -glm.normalize(glm.vec3(cs.x, cs.y, 0))
+        else:
+            self.edge = False
+            self.cross.z = 0
+            self.cross = glm.normalize(self.cross)
+
     def drag(self, cursor_pos: glm.vec2):
-        # p = Plane(self.init_matrix[self.axis].xyz, self.init_matrix[3].xyz).project()
-        # hit_center = glm.vec3(self.center_screen_pos -
-        #                       self.start_screen_pos, 0)
-        # hit_cursor = glm.vec3(cursor_pos-self.start_screen_pos, 0)
-        # n = glm.cross(hit_center, hit_cursor)
-        # plus_minus = 1 if n.z > 0 else -1
-        # d = glm.length(self.start_screen_pos - cursor_pos)
-        d = cursor_pos.y - self.start_screen_pos.y
+        # d = cursor_pos.y - self.start_screen_pos.y
+
+        start_cursor = glm.vec3(cursor_pos, 0) - \
+            glm.vec3(self.start_screen_pos, 0)
+        d = glm.dot(self.cross, start_cursor)
         angle = d * 0.02
 
         m = self.init_matrix * glm.rotate(angle, IDENTITY[self.axis.value].xyz)
