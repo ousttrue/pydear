@@ -90,20 +90,20 @@ class DragContext:
 
 
 class GizmoDragHandler(GizmoEventHandler):
-    def __init__(self, gizmo: Gizmo, camera) -> None:
+    def __init__(self, gizmo: Gizmo, camera, *, inner=0.4, outer=0.6, depth=0.02) -> None:
         super().__init__()
         self.camera = camera
         self.selected = EventProperty[Optional[Shape]](None)
 
         # draggable
         from pydear.gizmo.shapes.ring_shape import XRingShape, YRingShape, ZRingShape
-        self.x_ring = XRingShape(inner=0.4, outer=0.6, depth=0.02,
+        self.x_ring = XRingShape(inner=inner, outer=outer, depth=depth,
                                  color=glm.vec4(1, 0.3, 0.3, 1))
         gizmo.add_shape(self.x_ring)
-        self.y_ring = YRingShape(inner=0.4, outer=0.6, depth=0.02,
+        self.y_ring = YRingShape(inner=inner, outer=outer, depth=depth,
                                  color=glm.vec4(0.3, 1, 0.3, 1))
         gizmo.add_shape(self.y_ring)
-        self.z_ring = ZRingShape(inner=0.4, outer=0.6, depth=0.02,
+        self.z_ring = ZRingShape(inner=inner, outer=outer, depth=depth,
                                  color=glm.vec4(0.3, 0.3, 1, 1))
         gizmo.add_shape(self.z_ring)
 
