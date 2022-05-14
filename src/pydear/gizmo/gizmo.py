@@ -7,19 +7,18 @@ from .triangle_buffer import TriangleBuffer
 
 
 class RayHit(NamedTuple):
-    shape: Optional[Shape]
     cursor_pos: glm.vec2
     ray: Ray
+    shape: Optional[Shape]
     distance: float
-    shpae_screen_pos: glm.vec2
 
 
 class Gizmo:
     def __init__(self) -> None:
         self.vertex_buffer = TriangleBuffer()
         self.shapes: List[Shape] = []
-        self.hit = RayHit(None, glm.vec2(), Ray(
-            glm.vec3(), glm.vec3()), float('inf'), glm.mat4())
+        self.hit = RayHit(glm.vec2(), Ray(glm.vec3(), glm.vec3()),
+                          None, float('inf'))
 
     def add_shape(self, shape: Shape) -> int:
         key = len(self.shapes)
@@ -36,7 +35,6 @@ class Gizmo:
         ray = camera.get_mouse_ray(x, y)
         hit_shape = None
         hit_distance = float('inf')
-        hit_shape_screen_pos = glm.vec2()
         for i, shape in enumerate(self.shapes):
             distance = shape.intersect(ray)
             if distance:
@@ -50,15 +48,7 @@ class Gizmo:
             if hover_shape:
                 hover_shape.remove_state(ShapeState.HOVER)
 
-        if hit_shape:
-            p = (camera.projection.matrix * camera.view.matrix) * \
-                hit_shape.matrix.value[3]
-            hit_shape_screen_pos = glm.vec2(
-                (p.x / p.w + 1) / 2 * camera.projection.width,
-                (1 - p.y / p.w) / 2 * camera.projection.height)
-
-        self.hit = RayHit(hit_shape,
-                          glm.vec2(x, y), ray, hit_distance,
-                          hit_shape_screen_pos)
+        self.hit = RayHit(glm.vec2(x, y), ray,
+                          hit_shape, hit_distance)
         if self.hit.shape:
             self.hit.shape.add_state(ShapeState.HOVER)

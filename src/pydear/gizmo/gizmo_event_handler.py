@@ -1,10 +1,20 @@
 from typing import Optional
 import abc
+from enum import Enum, auto
 import glm
 from pydear.utils.eventproperty import EventProperty
 from pydear.utils.mouse_event import MouseEvent
+from pydear.scene.camera import Camera
 from .shapes.shape import Shape, ShapeState
 from .gizmo import Gizmo, RayHit
+
+IDENTITY = glm.mat4()
+
+
+class Axis(Enum):
+    X = 0
+    Y = 1
+    Z = 2
 
 
 class GizmoEventHandler(metaclass=abc.ABCMeta):
@@ -54,26 +64,28 @@ class GizmoSelectHandler(GizmoEventHandler):
 
 
 class DragContext:
-    def __init__(self, start_screen_pos: glm.vec2, *, manipulator, axis, center_screen_pos: glm.vec2, target: Shape):
+    def __init__(self, start_screen_pos: glm.vec2, *, manipulator: Shape, axis: Axis, target: Shape):
         self.start_screen_pos = start_screen_pos
         assert(manipulator)
         self.manipulator = manipulator
         self.manipulator.add_state(ShapeState.DRAG)
         self.axis = axis
-        self.center_screen_pos = center_screen_pos
         assert target
         self.target = target
         self.init_matrix = target.matrix.value
 
-    def drag(self, cursor_pos: glm.vec2):
-        hit_center = glm.vec3(self.center_screen_pos - self.start_screen_pos, 0)
-        hit_cursor = glm.vec3(cursor_pos-self.start_screen_pos, 0)
-        n = glm.cross(hit_center, hit_cursor)
-        plus_minus = 1 if n.z > 0 else -1
-        d = glm.length(self.start_screen_pos - cursor_pos)
-        angle = d * 0.02 * plus_minus
+    def drag(self, cursor_pos: glm.vec2, camera: Camera):
+        # p = Plane(self.init_matrix[self.axis].xyz, self.init_matrix[3].xyz).project()
+        # hit_center = glm.vec3(self.center_screen_pos -
+        #                       self.start_screen_pos, 0)
+        # hit_cursor = glm.vec3(cursor_pos-self.start_screen_pos, 0)
+        # n = glm.cross(hit_center, hit_cursor)
+        # plus_minus = 1 if n.z > 0 else -1
+        # d = glm.length(self.start_screen_pos - cursor_pos)
+        d = cursor_pos.y - self.start_screen_pos.y
+        angle = d * 0.02
 
-        m = self.init_matrix * glm.rotate(angle, self.axis)
+        m = self.init_matrix * glm.rotate(angle, IDENTITY[self.axis.value].xyz)
         self.target.matrix.set(m)
         return m
 
@@ -83,8 +95,9 @@ class DragContext:
 
 
 class DragEventHandler(GizmoEventHandler):
-    def __init__(self, gizmo: Gizmo) -> None:
+    def __init__(self, gizmo: Gizmo, camera) -> None:
         super().__init__()
+        self.camera = camera
         self.selected = EventProperty[Optional[Shape]](None)
 
         # draggable
@@ -106,30 +119,24 @@ class DragEventHandler(GizmoEventHandler):
             case self.x_ring:
                 # ring is not selectable
                 self.context = DragContext(
-                    hit.cursor_pos, manipulator=hit.shape, axis=glm.vec3(
-                        1, 0, 0),
-                    target=self.selected.value,
-                    center_screen_pos=hit.shpae_screen_pos)
+                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.X,
+                    target=self.selected.value)
             case self.y_ring:
                 # ring is not selectable
                 self.context = DragContext(
-                    hit.cursor_pos, manipulator=hit.shape, axis=glm.vec3(
-                        0, 1, 0),
-                    target=self.selected.value,
-                    center_screen_pos=hit.shpae_screen_pos)
+                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.Y,
+                    target=self.selected.value)
             case self.z_ring:
                 # ring is not selectable
                 self.context = DragContext(
-                    hit.cursor_pos, manipulator=hit.shape, axis=glm.vec3(
-                        0, 0, 1),
-                    target=self.selected.value,
-                    center_screen_pos=hit.shpae_screen_pos)
+                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.Z,
+                    target=self.selected.value)
             case _:
                 self.select(hit)
 
     def drag(self, x, y, dx, dy):
         if self.context:
-            m = self.context.drag(glm.vec2(x, y))
+            m = self.context.drag(glm.vec2(x, y), self.camera)
             self.x_ring.matrix.set(m)
             self.y_ring.matrix.set(m)
             self.z_ring.matrix.set(m)

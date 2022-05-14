@@ -32,7 +32,7 @@ class GizmoScene(Item):
                 self.gizmo.add_shape(cube)
 
         # mouse event handling
-        self.handler = DragEventHandler(self.gizmo)
+        self.handler = DragEventHandler(self.gizmo, self.camera)
         self.handler.bind_mouse_event_with_gizmo(
             self.mouse_event, self.gizmo)
 
@@ -47,7 +47,7 @@ class GizmoScene(Item):
             cursor = context.start_screen_pos
             with self.nvg.render(w, h) as vg:
                 nvg_line_from_to(vg, cursor.x, cursor.y, input.x, input.y)
-                nvg_line_from_to(vg, cursor.x, cursor.y, context.center_screen_pos.x, context.center_screen_pos.y)
+                # nvg_line_from_to(vg, cursor.x, cursor.y, context.center_screen_pos.x, context.center_screen_pos.y)
 
     def show(self):
         pass
