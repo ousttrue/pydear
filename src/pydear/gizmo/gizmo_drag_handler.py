@@ -127,7 +127,7 @@ class GizmoDragHandler(GizmoEventHandler):
                     hit.cursor_pos, manipulator=hit.shape, axis=Axis.Z,
                     target=self.selected.value, camera=self.camera)
             case _:
-                self.select(hit)
+                self.select(hit.shape)
 
     def drag(self, x, y, dx, dy):
         if self.context:
@@ -141,23 +141,23 @@ class GizmoDragHandler(GizmoEventHandler):
             self.context.end()
             self.context = None
 
-    def select(self, hit: RayHit):
-        shape = hit.shape
-        if shape != self.selected.value:
-            # clear
-            if self.selected.value:
-                self.selected.value.remove_state(ShapeState.SELECT)
-            # select
-            self.selected.set(shape)
-            if shape:
-                shape.add_state(ShapeState.SELECT)
-                self.x_ring.matrix.set(shape.matrix.value)
-                self.x_ring.remove_state(ShapeState.HIDE)
-                self.y_ring.matrix.set(shape.matrix.value)
-                self.y_ring.remove_state(ShapeState.HIDE)
-                self.z_ring.matrix.set(shape.matrix.value)
-                self.z_ring.remove_state(ShapeState.HIDE)
-            else:
-                self.x_ring.add_state(ShapeState.HIDE)
-                self.y_ring.add_state(ShapeState.HIDE)
-                self.z_ring.add_state(ShapeState.HIDE)
+    def select(self, shape: Optional[Shape]):
+        if shape == self.selected.value:
+            return
+        # clear
+        if self.selected.value:
+            self.selected.value.remove_state(ShapeState.SELECT)
+        # select
+        self.selected.set(shape)
+        if shape:
+            shape.add_state(ShapeState.SELECT)
+            self.x_ring.matrix.set(shape.matrix.value)
+            self.x_ring.remove_state(ShapeState.HIDE)
+            self.y_ring.matrix.set(shape.matrix.value)
+            self.y_ring.remove_state(ShapeState.HIDE)
+            self.z_ring.matrix.set(shape.matrix.value)
+            self.z_ring.remove_state(ShapeState.HIDE)
+        else:
+            self.x_ring.add_state(ShapeState.HIDE)
+            self.y_ring.add_state(ShapeState.HIDE)
+            self.z_ring.add_state(ShapeState.HIDE)

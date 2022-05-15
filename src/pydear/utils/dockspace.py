@@ -136,7 +136,7 @@ def show_docks(views: Iterable[Dock],
 
 
 class DockingGui(gui_app.Gui):
-    def __init__(self, loop: asyncio.AbstractEventLoop, *, docks: List[Dock], menu=None, setting=None) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop, *, docks: List[Dock], menu: Optional[Callable[[], None]] = None, setting=None) -> None:
         def draw():
             show_docks(self.views, menu)
 
