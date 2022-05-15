@@ -45,7 +45,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: artifact
-          path: .
+          path: dist
       - name: Display structure of downloaded files
         run: ls -R          
       - uses: pypa/gh-action-pypi-publish@v1.4.2
