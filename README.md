@@ -34,7 +34,7 @@ class ImGuiIO(ctypes.Structure):
 ```
 
 The ImGUi backend is provided in a pure Python module `pydear.backends`.
-Currently only glfw and gltf3 exist.
+Currently only glfw and OpenGL3 exist.
 
 Most bindings are available, except for functions that have callback and va_list as arguments.
 
