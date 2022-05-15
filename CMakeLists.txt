@@ -27,26 +27,14 @@ add_library(
   _external/imgui/imgui_draw.cpp
   _external/imgui/imgui_tables.cpp
   _external/imgui/imgui_demo.cpp
-  # _external/ImFileDialog/ImFileDialog.cpp
-  # _external/ImFileDialogWrap.cpp
   _external/imnodes/imnodes.cpp
-  _external/ImGuizmo/ImGuizmo.cpp
-  _external/ImGuizmo/GraphEditor.cpp
-  _external/ImGuizmo/ImCurveEdit.cpp
-  _external/ImGuizmo/ImGradient.cpp
-  _external/ImGuizmo/ImSequencer.cpp
-  _external/tinygizmo/tinygizmo/tiny-gizmo.cpp
   _external/picovg/src/nanovg.cpp)
 set(Python3_FIND_REGISTRY FIRST)
 find_package(Python3 REQUIRED COMPONENTS Development)
 target_include_directories(
   ${PROJECT_NAME}
-  PRIVATE _external
+  PRIVATE 
           _external/imgui
-          # _external/stb
-          _external/tinygizmo/tinygizmo
-          _external/glew-2.1.0/include
-          _external
           _external/imnodes
           _external/picovg/src
           ${Python3_INCLUDE_DIRS})
