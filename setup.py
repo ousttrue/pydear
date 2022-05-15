@@ -10,7 +10,10 @@ except:
     pass
 
 
+HERE = pathlib.Path(__name__).absolute().parent
+
 # https://stackoverflow.com/questions/42585210/extending-setuptools-extension-to-use-cmake-in-setup-py
+
 
 class CMakeExtension(setuptools.Extension):
 
@@ -54,6 +57,8 @@ EXTENSIONS: List[setuptools.Extension] = [CMakeExtension(
 setuptools.setup(
     name='pydear',
     description='Dear imgui binding',
+    long_description=(HERE / 'README.md').read_text(encoding='utf-8'),
+    long_description_content_type="text/markdown",
     author='ousttrue',
     author_email='ousttrue@gmail.com',
     url='https://github.com/ousttrue/pydear',
