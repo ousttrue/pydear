@@ -29,11 +29,10 @@ jobs:
           CIBW_BUILD: cp310-win_amd64
       - run: pip install rawtypes
       - run: python setup.py sdist --formats=gztar
+      - run: mv wheelhouse/*.whl dist/
       - uses: actions/upload-artifact@v3
         with:
-          path: |
-            ./wheelhouse/*.whl
-            ./dist/*.gz
+          path: ./dist/*
 
   upload_all:
     name: Upload if release
@@ -46,7 +45,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: artifact
-          path: dist
+          path: .
       - name: Display structure of downloaded files
         run: ls -R          
       - uses: pypa/gh-action-pypi-publish@v1.4.2
