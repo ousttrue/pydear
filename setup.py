@@ -56,12 +56,6 @@ EXTENSIONS: List[setuptools.Extension] = [CMakeExtension(
 
 setuptools.setup(
     name='pydear',
-    description='Dear imgui binding',
-    long_description=(HERE / 'README.md').read_text(encoding='utf-8'),
-    long_description_content_type="text/markdown",
-    author='ousttrue',
-    author_email='ousttrue@gmail.com',
-    url='https://github.com/ousttrue/pydear',
     package_dir={'': 'src'},
     include_package_data=True,
     install_requires=["PyGLM", "glfw"],
@@ -81,4 +75,19 @@ setuptools.setup(
         'write_to': 'src/pydear/_version.py',
     },
     setup_requires=['setuptools_scm'],
+    # metadata
+    description='Dear imgui binding',
+    long_description=(HERE / 'README.md').read_text(encoding='utf-8'),
+    long_description_content_type="text/markdown",
+    author='ousttrue',
+    author_email='ousttrue@gmail.com',
+    url='https://github.com/ousttrue/pydear',
+    project_urls={
+        'Documentation': 'https://ousttrue.github.io/pydear/',
+        'Source': 'https://github.com/ousttrue/pydear',
+    },
+    classifiers=[
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.10',
+    ]
 )
