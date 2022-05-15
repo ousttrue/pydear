@@ -40,7 +40,7 @@ class BinSetting:
         self.load()
 
     def save(self):
-        LOGGER.debug(f'TomlSetting:save: {self.path}')
+        LOGGER.debug(f'{self.path}')
         with self.path.open('wb') as w:
             w.write(MAGIC)
             for k, v in self.data.items():
