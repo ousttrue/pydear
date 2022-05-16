@@ -16,10 +16,9 @@ class ShapeState(IntFlag):
 
 
 class Shape(metaclass=abc.ABCMeta):
-    def __init__(self, matrix: glm.mat4, is_draggable: bool) -> None:
+    def __init__(self, matrix: glm.mat4) -> None:
         self.matrix = EventProperty(matrix)
         self.state = EventProperty(ShapeState.NONE)
-        self.is_draggable = is_draggable
         self.index = -1
 
     def add_state(self, state: ShapeState):
@@ -30,6 +29,10 @@ class Shape(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_quads(self) -> Iterable[Tuple[Quad, glm.vec4]]:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_lines(self) -> Iterable[Tuple[glm.vec3, glm.vec3, glm.vec4]]:
         raise NotImplementedError()
 
     def intersect(self, ray: Ray) -> Optional[float]:

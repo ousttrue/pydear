@@ -17,12 +17,19 @@ class GizmoVertexBuffer:
         self.shader: Optional[glo.Shader] = None
         self.props = []
         self.view_projection = glm.mat4()
+
         self.vertices = (Vertex * 65535)()
         self.vertex_count = 0
         self.bone_vertex_map: Dict[int, List[int]] = {}
         self.indices = (ctypes.c_uint16 * 65535)()
         self.index_count = 0
-        self.vao: Optional[glo.Vao] = None
+        self.triangle_vao: Optional[glo.Vao] = None
+
+        self.line_vertices = (Vertex * 65535)()
+        self.line_count = 0
+        self.bone_line_map: Dict[int, List[int]] = {}
+        self.line_vao: Optional[glo.Vao] = None
+
         self.skin = glm.array.zeros(200, glm.mat4)
 
     def add_vertex(self, bone: int, v: glm.vec3, n: glm.vec3, c: glm.vec4) -> int:
@@ -60,9 +67,29 @@ class GizmoVertexBuffer:
         self.add_triangle(bone, quad.t0, color)
         self.add_triangle(bone, quad.t1, color)
 
+    def add_line_vertex(self, bone: int, v: glm.vec3, c: glm.vec4) -> int:
+        i = self.line_count
+        self.line_vertices[i] = Vertex(
+            v.x, v.y, v.z, bone, c.r, c.g, c.b, c.a, 1, 1, 1)
+        self.line_count += 1
+        line_vertices = self.bone_line_map.get(bone)
+
+        if not line_vertices:
+            line_vertices = []
+            self.bone_line_map[bone] = line_vertices
+        line_vertices.append(i)
+        return i
+
+    def add_line(self, bone: int, v0: glm.vec3, v1: glm.vec3, color: glm.vec4):
+        i0 = self.add_line_vertex(bone, v0, color)
+        i1 = self.add_line_vertex(bone, v1, color)
+
     def add_shape(self, bone: int, shape: Shape):
         for quad, color in shape.get_quads():
             self.add_quad(bone, quad, color)
+
+        for v0, v1, color in shape.get_lines():
+            self.add_line(bone, v0, v1, color)
 
         # bind matrix
 
@@ -105,27 +132,36 @@ class GizmoVertexBuffer:
             self.props.append(set_skin)
 
             # vao
+            vertex_layout = glo.VertexLayout.create_list(self.shader.program)
             vbo = glo.Vbo()
             vbo.set_vertices(self.vertices, is_dynamic=True)
             ibo = glo.Ibo()
             ibo.set_indices(self.indices, is_dynamic=True)
-            self.vao = glo.Vao(
-                vbo, glo.VertexLayout.create_list(self.shader.program), ibo)
+            self.triangle_vao = glo.Vao(
+                vbo, vertex_layout, ibo)
 
+            line_vbo = glo.Vbo()
+            line_vbo.set_vertices(self.line_vertices, is_dynamic=True)
+            self.line_vao = glo.Vao(
+                line_vbo, vertex_layout)
         else:
-            assert self.vao
-            self.vao.vbo.update(self.vertices)
-            assert self.vao.ibo
-            self.vao.ibo.update(self.indices)
+            assert self.triangle_vao
+            self.triangle_vao.vbo.update(self.vertices)
+            assert self.triangle_vao.ibo
+            self.triangle_vao.ibo.update(self.indices)
+            assert self.line_vao
+            self.line_vao.vbo.update(self.line_vertices)
 
         self.view_projection = camera.projection.matrix * camera.view.matrix
 
-        assert self.vao
+        assert self.triangle_vao
 
         with self.shader:
             for prop in self.props:
                 prop()
             GL.glEnable(GL.GL_DEPTH_TEST)
             GL.glEnable(GL.GL_CULL_FACE)
-            self.vao.draw(
+            self.triangle_vao.draw(
                 self.index_count, topology=GL.GL_TRIANGLES)
+            self.line_vao.draw(
+                self.line_count, topology=GL.GL_LINES)

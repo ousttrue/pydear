@@ -17,7 +17,7 @@ class CubeShape(Shape):
     def __init__(self, width: float, height: float, depth: float, *, position: Optional[glm.vec3] = None, color=None) -> None:
         if not position:
             position = glm.vec3(0)
-        super().__init__(glm.translate(position), False)
+        super().__init__(glm.translate(position))
         self.color = color if color else glm.vec4(1, 1, 1, 1)
         self.width = width
         self.height = height
@@ -45,3 +45,6 @@ class CubeShape(Shape):
     def get_quads(self) -> Iterable[Tuple[Quad, glm.vec4]]:
         for quad in self.quads:
             yield quad, self.color
+
+    def get_lines(self):
+        return []

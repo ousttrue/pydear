@@ -7,7 +7,7 @@ from .shape import Shape, ShapeState
 
 class XRingShape(Shape):
     def __init__(self, *, inner: float, outer: float, depth: float, theta: float = math.pi * 2, sections=20, color=None) -> None:
-        super().__init__(glm.mat4(0), True)
+        super().__init__(glm.mat4(0))
         self.state.set(ShapeState.HIDE)
         self.color = color if color else glm.vec4(1, 1, 1, 1)
         delta = theta/sections
@@ -45,10 +45,13 @@ class XRingShape(Shape):
         for quad in self.quads:
             yield quad, self.color
 
+    def get_lines(self):
+        return []
+
 
 class YRingShape(Shape):
     def __init__(self, *, inner: float, outer: float, depth: float, theta: float = math.pi * 2, sections=20, color=None) -> None:
-        super().__init__(glm.mat4(0), True)
+        super().__init__(glm.mat4(0))
         self.state.set(ShapeState.HIDE)
         self.color = color if color else glm.vec4(1, 1, 1, 1)
         delta = theta/sections
@@ -86,10 +89,13 @@ class YRingShape(Shape):
         for quad in self.quads:
             yield quad, self.color
 
+    def get_lines(self):
+        return []
+
 
 class ZRingShape(Shape):
     def __init__(self, *, inner: float, outer: float, depth: float, theta: float = math.pi * 2, sections=20, color=None) -> None:
-        super().__init__(glm.mat4(0), True)
+        super().__init__(glm.mat4(0))
         self.state.set(ShapeState.HIDE)
         self.color = color if color else glm.vec4(1, 1, 1, 1)
         delta = theta/sections
@@ -126,3 +132,6 @@ class ZRingShape(Shape):
     def get_quads(self) -> Iterable[Tuple[Quad, glm.vec4]]:
         for quad in self.quads:
             yield quad, self.color
+
+    def get_lines(self):
+        return []
