@@ -5,31 +5,30 @@ from ..primitive import Quad
 from .shape import Shape, ShapeState
 
 
-class XRingShape(Shape):
-    def __init__(self, *, inner: float, outer: float, depth: float, theta: float = math.pi * 2, sections=20, color=None) -> None:
+class RingShape(Shape):
+    def __init__(self, *, axis: glm.vec3, start: glm.vec3, inner: float, outer: float, depth: float, theta: float = math.pi * 2, sections=20, color=None) -> None:
         super().__init__(glm.mat4(0))
         self.state.set(ShapeState.HIDE)
         self.color = color if color else glm.vec4(1, 1, 1, 1)
         delta = theta/sections
         angle = 0
-        angles = []
+        vertices = []
         for i in range(sections):
-            angles.append(angle)
+            vertices.append(glm.angleAxis(angle, axis) * start)
             angle += delta
-        sin_cos = [(math.sin(angle), math.cos(angle)) for angle in angles]
         self.quads = []
 
-        d = depth * 0.5
-        for i, (s0, c0) in enumerate(sin_cos):
-            s1, c1 = sin_cos[(i+1) % sections]
-            v0 = glm.vec3(d, c0 * inner, s0 * inner)
-            v1 = glm.vec3(d, c0 * outer, s0 * outer)
-            v2 = glm.vec3(d, c1 * outer, s1 * outer)
-            v3 = glm.vec3(d, c1 * inner, s1 * inner)
-            v4 = glm.vec3(-d, c0 * inner, s0 * inner)
-            v5 = glm.vec3(-d, c0 * outer, s0 * outer)
-            v6 = glm.vec3(-d, c1 * outer, s1 * outer)
-            v7 = glm.vec3(-d, c1 * inner, s1 * inner)
+        d = axis * depth * 0.5
+        for i, v in enumerate(vertices):
+            vv = vertices[(i+1) % sections]
+            v0 = d + v * inner
+            v1 = d + v * outer
+            v2 = d + vv * outer
+            v3 = d + vv * inner
+            v4 = -d + v * inner
+            v5 = -d + v * outer
+            v6 = -d + vv * outer
+            v7 = -d + vv * inner
             '''
                   v7 v6
             v3 v2 v4 v5
@@ -49,89 +48,22 @@ class XRingShape(Shape):
         return []
 
 
-class YRingShape(Shape):
+class XRingShape(RingShape):
     def __init__(self, *, inner: float, outer: float, depth: float, theta: float = math.pi * 2, sections=20, color=None) -> None:
-        super().__init__(glm.mat4(0))
-        self.state.set(ShapeState.HIDE)
-        self.color = color if color else glm.vec4(1, 1, 1, 1)
-        delta = theta/sections
-        angle = 0
-        angles = []
-        for i in range(sections):
-            angles.append(angle)
-            angle += delta
-        sin_cos = [(math.sin(angle), math.cos(angle)) for angle in angles]
-        self.quads = []
-
-        d = depth * 0.5
-        for i, (s0, c0) in enumerate(sin_cos):
-            s1, c1 = sin_cos[(i+1) % sections]
-            v0 = glm.vec3(s0 * inner, d, c0 * inner)
-            v1 = glm.vec3(s0 * outer, d, c0 * outer)
-            v2 = glm.vec3(s1 * outer, d, c1 * outer)
-            v3 = glm.vec3(s1 * inner, d, c1 * inner)
-            v4 = glm.vec3(s0 * inner, -d, c0 * inner)
-            v5 = glm.vec3(s0 * outer, -d, c0 * outer)
-            v6 = glm.vec3(s1 * outer, -d, c1 * outer)
-            v7 = glm.vec3(s1 * inner, -d, c1 * inner)
-            '''
-                  v7 v6
-            v3 v2 v4 v5
-            v0 v1
-            '''
-            self.quads += [
-                Quad.from_points(v0, v1, v2, v3),
-                Quad.from_points(v1, v5, v6, v2),
-                Quad.from_points(v7, v6, v5, v4),
-            ]
-
-    def get_quads(self) -> Iterable[Tuple[Quad, glm.vec4]]:
-        for quad in self.quads:
-            yield quad, self.color
-
-    def get_lines(self):
-        return []
+        super().__init__(axis=glm.vec3(1, 0, 0), start=glm.vec3(0, 1, 0),
+                         inner=inner, outer=outer,
+                         depth=depth, theta=theta, sections=sections, color=color)
 
 
-class ZRingShape(Shape):
+class YRingShape(RingShape):
     def __init__(self, *, inner: float, outer: float, depth: float, theta: float = math.pi * 2, sections=20, color=None) -> None:
-        super().__init__(glm.mat4(0))
-        self.state.set(ShapeState.HIDE)
-        self.color = color if color else glm.vec4(1, 1, 1, 1)
-        delta = theta/sections
-        angle = 0
-        angles = []
-        for i in range(sections):
-            angles.append(angle)
-            angle += delta
-        sin_cos = [(math.sin(angle), math.cos(angle)) for angle in angles]
-        self.quads = []
+        super().__init__(axis=glm.vec3(0, 1, 0), start=glm.vec3(0, 0, 1),
+                         inner=inner, outer=outer,
+                         depth=depth, theta=theta, sections=sections, color=color)
 
-        d = depth * 0.5
-        for i, (s0, c0) in enumerate(sin_cos):
-            s1, c1 = sin_cos[(i+1) % sections]
-            v0 = glm.vec3(c0 * inner, s0 * inner, d)
-            v1 = glm.vec3(c0 * outer, s0 * outer, d)
-            v2 = glm.vec3(c1 * outer, s1 * outer, d)
-            v3 = glm.vec3(c1 * inner, s1 * inner, d)
-            v4 = glm.vec3(c0 * inner, s0 * inner, -d)
-            v5 = glm.vec3(c0 * outer, s0 * outer, -d)
-            v6 = glm.vec3(c1 * outer, s1 * outer, -d)
-            v7 = glm.vec3(c1 * inner, s1 * inner, -d)
-            '''
-                  v7 v6
-            v3 v2 v4 v5
-            v0 v1
-            '''
-            self.quads += [
-                Quad.from_points(v0, v1, v2, v3),
-                Quad.from_points(v1, v5, v6, v2),
-                Quad.from_points(v7, v6, v5, v4),
-            ]
 
-    def get_quads(self) -> Iterable[Tuple[Quad, glm.vec4]]:
-        for quad in self.quads:
-            yield quad, self.color
-
-    def get_lines(self):
-        return []
+class ZRingShape(RingShape):
+    def __init__(self, *, inner: float, outer: float, depth: float, theta: float = math.pi * 2, sections=20, color=None) -> None:
+        super().__init__(axis=glm.vec3(0, 0, 1), start=glm.vec3(1, 0, 0),
+                         inner=inner, outer=outer,
+                         depth=depth, theta=theta, sections=sections, color=color)
