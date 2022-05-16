@@ -98,8 +98,9 @@ class MouseEvent:
                 callback(current.x, current.y)
             self.middle_active = False
 
-        if current.wheel:
-            for callback in self.wheel:
-                callback(current.wheel)
+        if current.is_active or current.is_hover:
+            if current.wheel:
+                for callback in self.wheel:
+                    callback(current.wheel)
 
         self.last_input = current
