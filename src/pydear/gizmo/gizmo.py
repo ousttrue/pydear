@@ -3,7 +3,7 @@ from typing import Optional, Dict, List, NamedTuple
 import glm
 from pydear.scene.camera import Camera, Ray
 from .shapes.shape import Shape, ShapeState
-from .triangle_buffer import TriangleBuffer
+from .gizmo_vertex_buffer import GizmoVertexBuffer
 
 
 class RayHit(NamedTuple):
@@ -15,7 +15,7 @@ class RayHit(NamedTuple):
 
 class Gizmo:
     def __init__(self) -> None:
-        self.vertex_buffer = TriangleBuffer()
+        self.vertex_buffer = GizmoVertexBuffer()
         self.shapes: List[Shape] = []
         self.hit = RayHit(glm.vec2(), Ray(glm.vec3(), glm.vec3()),
                           None, float('inf'))

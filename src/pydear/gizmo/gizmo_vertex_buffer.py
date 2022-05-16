@@ -12,7 +12,7 @@ from OpenGL import GL
 LOGGER = logging.getLogger(__name__)
 
 
-class TriangleBuffer:
+class GizmoVertexBuffer:
     def __init__(self) -> None:
         self.shader: Optional[glo.Shader] = None
         self.props = []
