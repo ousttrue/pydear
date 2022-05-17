@@ -67,12 +67,11 @@ class ScreenLine:
 
 
 class DragContext:
-    def __init__(self, start_screen_pos: glm.vec2, *, manipulator: Shape, axis: Axis, target: Shape) -> None:
+    def __init__(self, start_screen_pos: glm.vec2, *, manipulator: Shape, target: Shape) -> None:
         self.start_screen_pos = start_screen_pos
         self.manipulator = manipulator
         assert(isinstance(self.manipulator, Shape))
         self.manipulator.add_state(ShapeState.DRAG)
-        self.axis = axis
         assert target
         self.target = target
         self.init_matrix = target.matrix.value
@@ -88,7 +87,8 @@ class RingDragContext(DragContext):
     '''
 
     def __init__(self, start_screen_pos: glm.vec2, *, manipulator: Shape, axis: Axis, target: Shape, camera: Camera):
-        super().__init__(start_screen_pos, manipulator=manipulator, axis=axis, target=target)
+        super().__init__(start_screen_pos, manipulator=manipulator, target=target)
+        self.axis = axis
 
         vp = camera.projection.matrix * camera.view.matrix
         center_pos = vp * manipulator.matrix.value[3]
@@ -124,13 +124,14 @@ class RingDragContext(DragContext):
         return m
 
 
-class RollgDragContext(DragContext):
+class RollDragContext(DragContext):
     '''
     横面のドラッグ
     '''
 
     def __init__(self, start_screen_pos: glm.vec2, *, manipulator: Shape, axis: Axis, target: Shape, camera: Camera):
-        super().__init__(start_screen_pos, manipulator=manipulator, axis=axis, target=target)
+        super().__init__(start_screen_pos, manipulator=manipulator, target=target)
+        self.axis = axis
 
         view_axis = (camera.view.matrix *
                      manipulator.matrix.value)[axis.value].xy
@@ -196,17 +197,17 @@ class GizmoDragHandler(GizmoEventHandler):
                     target=self.selected.value, camera=self.camera)
             case self.x_roll:
                 # ring is not selectable
-                self.context = RollgDragContext(
+                self.context = RollDragContext(
                     hit.cursor_pos, manipulator=hit.shape, axis=Axis.X,
                     target=self.selected.value, camera=self.camera)
             case self.y_roll:
                 # ring is not selectable
-                self.context = RollgDragContext(
+                self.context = RollDragContext(
                     hit.cursor_pos, manipulator=hit.shape, axis=Axis.Y,
                     target=self.selected.value, camera=self.camera)
             case self.z_roll:
                 # ring is not selectable
-                self.context = RollgDragContext(
+                self.context = RollDragContext(
                     hit.cursor_pos, manipulator=hit.shape, axis=Axis.Z,
                     target=self.selected.value, camera=self.camera)
             case _:
