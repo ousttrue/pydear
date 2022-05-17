@@ -21,6 +21,7 @@ class ScreenLine:
     def __init__(self, start: glm.vec2, dir: glm.vec2, w, h) -> None:
         # v = at + b
         self.start = start
+        self.current = start
         self.dir = glm.normalize(dir)
         '''
         y = ax + b
@@ -60,10 +61,20 @@ class ScreenLine:
     #     return glm.vec2(x, self.a * x + self.b)
 
     def distance(self, v: glm.vec2):
+        self.current = v
         return glm.dot(v-self.start, self.dir)
 
     def get_t(self, t: float) -> glm.vec2:
         return self.start + self.dir * t
+
+    def nvg_draw(self, vg):
+        from pydear.utils.nanovg_renderer import nvg_line_from_to
+        start = self.start
+        current = self.current
+        nvg_line_from_to(vg, start.x, start.y, current.x, current.y)
+        p0 = self.p0
+        p1 = self.p1
+        nvg_line_from_to(vg, p0.x, p0.y, p1.x, p1.y)
 
 
 class DragContext:
@@ -79,6 +90,9 @@ class DragContext:
     def end(self):
         self.manipulator.remove_state(ShapeState.DRAG)
         self.manipulator = None
+
+    def nvg_draw(self, vg):
+        pass
 
 
 class RingDragContext(DragContext):
@@ -123,6 +137,9 @@ class RingDragContext(DragContext):
         self.target.matrix.set(m)
         return m
 
+    def nvg_draw(self, vg):
+        self.line.nvg_draw(vg)
+
 
 class RollDragContext(DragContext):
     '''
@@ -146,6 +163,9 @@ class RollDragContext(DragContext):
         m = self.init_matrix * glm.rotate(angle, IDENTITY[self.axis.value].xyz)
         self.target.matrix.set(m)
         return m
+
+    def nvg_draw(self, vg):
+        self.line.nvg_draw(vg)
 
 
 class GizmoDragHandler(GizmoEventHandler):

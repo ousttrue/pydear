@@ -69,12 +69,8 @@ class GizmoScene(Item):
 
         context = self.handler.context
         if context:
-            start = context.start_screen_pos
             with self.nvg.render(w, h) as vg:
-                nvg_line_from_to(vg, start.x, start.y, input.x, input.y)
-                p0 = context.line.p0
-                p1 = context.line.p1
-                nvg_line_from_to(vg, p0.x, p0.y, p1.x, p1.y)
+                context.nvg_draw(vg)
 
     def show(self):
         pass
