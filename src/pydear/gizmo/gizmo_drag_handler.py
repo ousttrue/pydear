@@ -18,21 +18,33 @@ class Axis(Enum):
 
 
 class ScreenLine:
-    def __init__(self, start: glm.vec2, end: glm.vec2) -> None:
-        a = end - start
-        if a.x:
-            self.a = a.y/a.x
-        else:
-            self.a = float('inf')
+    def __init__(self, start: glm.vec2, dir: glm.vec2) -> None:
+        self.start = start
+        self.dir = glm.normalize(dir)
 
-        self.b = self.a * start.x - start.y
+    @staticmethod
+    def begin_end(self, start: glm.vec2, end: glm.vec2) -> 'ScreenLine':
+        '''
+        y = ax + b
+        b = y - ax
+        '''
+        return ScreenLine(start, end-self.start)
+    #     a = end - start
+    #     if a.x:
+    #         self.a = a.y/a.x
+    #     else:
+    #         self.a = float('inf')
 
-    def point_from_x(self, x: float) -> glm.vec2:
-        return glm.vec2(x, self.a * x - self.b)
+    #     self.b = start.y - self.a * start.x
 
+    # def point_from_x(self, x: float) -> glm.vec2:
+    #     '''
+    #     y = ax + b
+    #     '''
+    #     return glm.vec2(x, self.a * x + self.b)
 
-
-# ScreenSplitDragger
+    def distance(self, v: glm.vec2):
+        return glm.dot(v-self.start, self.dir)
 
 
 class DragContext:
@@ -63,31 +75,30 @@ class RingDragContext(DragContext):
         center_pos = vp * manipulator.matrix.value[3]
         cx = center_pos.x / center_pos.w
         cy = center_pos.y / center_pos.w
-        self.center_screen_pos = glm.vec2(
+        center_screen_pos = glm.vec2(
             (cx * 0.5 + 0.5)*camera.projection.width,
             (0.5 - cy * 0.5)*camera.projection.height
         )
+        # self.line = ScreenLine(start_screen_pos, self.center_screen_pos)
 
-        l = ScreenLine(self.start_screen_pos, self.center_screen_pos)
-        self.left = l.point_from_x(0)
-        self.right = l.point_from_x(camera.projection.width)
+        # l = ScreenLine(self.start_screen_pos, self.center_screen_pos)
+        # self.left = l.point_from_x(0)
+        # self.right = l.point_from_x(camera.projection.width)
 
         view_axis = (camera.view.matrix *
                      manipulator.matrix.value)[axis.value].xyz
         center_start = glm.vec3(self.start_screen_pos, 0) - \
-            glm.vec3(self.center_screen_pos, 0)
-        self.cross = glm.normalize(glm.cross(center_start, view_axis))
-        assert self.cross.x != 0 or self.cross.y != 0
-        self.edge = False
-        self.cross.z = 0
-        self.cross = glm.normalize(self.cross)
+            glm.vec3(center_screen_pos, 0)
+        cross = glm.normalize(glm.cross(center_start, view_axis))
+        assert cross.x != 0 or cross.y != 0
+        # self.edge = False
+        cross.z = 0
+        cross = glm.normalize(cross)
+        self.line = ScreenLine(self.start_screen_pos, cross.xy)
 
     def drag(self, cursor_pos: glm.vec2):
-        # TODO: center project to screen
-        # TODO: split by center-start
-        start_cursor = glm.vec3(cursor_pos, 0) - \
-            glm.vec3(self.start_screen_pos, 0)
-        d = glm.dot(self.cross, start_cursor)
+        d = self.line.distance(cursor_pos)
+
         angle = d * 0.02
         m = self.init_matrix * glm.rotate(angle, IDENTITY[self.axis.value].xyz)
         self.target.matrix.set(m)
