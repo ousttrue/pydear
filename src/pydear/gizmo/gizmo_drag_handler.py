@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict, Type, Tuple
 from enum import Enum
 import glm
 from pydear.scene.camera import Camera
@@ -148,6 +148,18 @@ class RollDragContext(DragContext):
         return m
 
 
+def create_rotation_shapes(inner: float, outer: float, depth: float) -> Dict[Shape, Tuple[Type, Axis]]:
+    from pydear.gizmo.shapes.ring_shape import XRingShape, YRingShape, ZRingShape, XRollShape, YRollShape, ZRollShape
+    return {
+        XRingShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(1, 0.3, 0.3, 1)): (RingDragContext, Axis.X),
+        YRingShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 1, 0.3, 1)): (RingDragContext, Axis.Y),
+        ZRingShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 0.3, 1, 1)): (RingDragContext, Axis.Z),
+        XRollShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(1, 0.3, 0.3, 1)): (RollDragContext, Axis.X),
+        YRollShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 1, 0.3, 1)): (RollDragContext, Axis.Y),
+        ZRollShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 0.3, 1, 1)): (RollDragContext, Axis.Z),
+    }
+
+
 class GizmoDragHandler(GizmoEventHandler):
     def __init__(self, gizmo: Gizmo, camera, *, inner=0.4, outer=0.6, depth=0.04) -> None:
         super().__init__()
@@ -155,60 +167,18 @@ class GizmoDragHandler(GizmoEventHandler):
         self.selected = EventProperty[Optional[Shape]](None)
 
         # draggable
-        from pydear.gizmo.shapes.ring_shape import XRingShape, YRingShape, ZRingShape, XRollShape, YRollShape, ZRollShape
-        self.x_ring = XRingShape(inner=inner, outer=outer, depth=depth,
-                                 color=glm.vec4(1, 0.3, 0.3, 1))
-        gizmo.add_shape(self.x_ring)
-        self.y_ring = YRingShape(inner=inner, outer=outer, depth=depth,
-                                 color=glm.vec4(0.3, 1, 0.3, 1))
-        gizmo.add_shape(self.y_ring)
-        self.z_ring = ZRingShape(inner=inner, outer=outer, depth=depth,
-                                 color=glm.vec4(0.3, 0.3, 1, 1))
-        gizmo.add_shape(self.z_ring)
-
-        self.x_roll = XRollShape(inner=inner, outer=outer, depth=depth,
-                                 color=glm.vec4(1, 0.3, 0.3, 1))
-        gizmo.add_shape(self.x_roll)
-        self.y_roll = YRollShape(inner=inner, outer=outer, depth=depth,
-                                 color=glm.vec4(0.3, 1, 0.3, 1))
-        gizmo.add_shape(self.y_roll)
-        self.z_roll = ZRollShape(inner=inner, outer=outer, depth=depth,
-                                 color=glm.vec4(0.3, 0.3, 1, 1))
-        gizmo.add_shape(self.z_roll)
+        self.drag_shapes = create_rotation_shapes(inner, outer, depth)
+        for drag_shape in self.drag_shapes.keys():
+            gizmo.add_shape(drag_shape)
 
         self.context = None
 
     def drag_begin(self, hit: RayHit):
-        match hit.shape:
-            case self.x_ring:
+        match self.drag_shapes.get(hit.shape): # type: ignore
+            case (t, axis):
                 # ring is not selectable
-                self.context = RingDragContext(
-                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.X,
-                    target=self.selected.value, camera=self.camera)
-            case self.y_ring:
-                # ring is not selectable
-                self.context = RingDragContext(
-                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.Y,
-                    target=self.selected.value, camera=self.camera)
-            case self.z_ring:
-                # ring is not selectable
-                self.context = RingDragContext(
-                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.Z,
-                    target=self.selected.value, camera=self.camera)
-            case self.x_roll:
-                # ring is not selectable
-                self.context = RollDragContext(
-                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.X,
-                    target=self.selected.value, camera=self.camera)
-            case self.y_roll:
-                # ring is not selectable
-                self.context = RollDragContext(
-                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.Y,
-                    target=self.selected.value, camera=self.camera)
-            case self.z_roll:
-                # ring is not selectable
-                self.context = RollDragContext(
-                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.Z,
+                self.context = t(
+                    hit.cursor_pos, manipulator=hit.shape, axis=axis,
                     target=self.selected.value, camera=self.camera)
             case _:
                 self.select(hit.shape)
@@ -216,12 +186,8 @@ class GizmoDragHandler(GizmoEventHandler):
     def drag(self, x, y, dx, dy):
         if self.context:
             m = self.context.drag(glm.vec2(x, y))
-            self.x_ring.matrix.set(m)
-            self.y_ring.matrix.set(m)
-            self.z_ring.matrix.set(m)
-            self.x_roll.matrix.set(m)
-            self.y_roll.matrix.set(m)
-            self.z_roll.matrix.set(m)
+            for drag_shape in self.drag_shapes.keys():
+                drag_shape.matrix.set(m)
 
     def drag_end(self, x, y):
         if self.context:
@@ -238,22 +204,9 @@ class GizmoDragHandler(GizmoEventHandler):
         self.selected.set(shape)
         if shape:
             shape.add_state(ShapeState.SELECT)
-            self.x_ring.matrix.set(shape.matrix.value)
-            self.x_ring.remove_state(ShapeState.HIDE)
-            self.y_ring.matrix.set(shape.matrix.value)
-            self.y_ring.remove_state(ShapeState.HIDE)
-            self.z_ring.matrix.set(shape.matrix.value)
-            self.z_ring.remove_state(ShapeState.HIDE)
-            self.x_roll.matrix.set(shape.matrix.value)
-            self.x_roll.remove_state(ShapeState.HIDE)
-            self.y_roll.matrix.set(shape.matrix.value)
-            self.y_roll.remove_state(ShapeState.HIDE)
-            self.z_roll.matrix.set(shape.matrix.value)
-            self.z_roll.remove_state(ShapeState.HIDE)
+            for drag_shape in self.drag_shapes.keys():
+                drag_shape.matrix.set(shape.matrix.value)
+                drag_shape.remove_state(ShapeState.HIDE)
         else:
-            self.x_ring.add_state(ShapeState.HIDE)
-            self.y_ring.add_state(ShapeState.HIDE)
-            self.z_ring.add_state(ShapeState.HIDE)
-            self.x_roll.add_state(ShapeState.HIDE)
-            self.y_roll.add_state(ShapeState.HIDE)
-            self.z_roll.add_state(ShapeState.HIDE)
+            for drag_shape in self.drag_shapes.keys():
+                drag_shape.add_state(ShapeState.HIDE)
