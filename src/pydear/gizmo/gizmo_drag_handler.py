@@ -18,17 +18,33 @@ class Axis(Enum):
 
 
 class ScreenLine:
-    def __init__(self, start: glm.vec2, dir: glm.vec2) -> None:
+    def __init__(self, start: glm.vec2, dir: glm.vec2, w, h) -> None:
+        # v = at + b
         self.start = start
         self.dir = glm.normalize(dir)
-
-    @staticmethod
-    def begin_end(self, start: glm.vec2, end: glm.vec2) -> 'ScreenLine':
         '''
         y = ax + b
         b = y - ax
         '''
-        return ScreenLine(start, end-self.start)
+        if self.dir.x == 0:
+            self.p0 = glm.vec2(self.start.x, 0)
+            self.p1 = glm.vec2(self.start.x, h)
+        elif self.dir.y == 0:
+            self.p0 = glm.vec2(0, self.start.y)
+            self.p1 = glm.vec2(w, self.start.y)
+        else:
+            # y = ax + b
+            a = self.dir.y/self.dir.x
+            # b = y - ax
+            b = start.y - start.x * a
+            # x = 0
+            self.p0 = glm.vec2(0, b)
+            # x = w
+            self.p1 = glm.vec2(w, a * w + b)
+
+    @staticmethod
+    def begin_end(start: glm.vec2, end: glm.vec2, w, h) -> 'ScreenLine':
+        return ScreenLine(start, end-start, w, h)
     #     a = end - start
     #     if a.x:
     #         self.a = a.y/a.x
@@ -46,12 +62,15 @@ class ScreenLine:
     def distance(self, v: glm.vec2):
         return glm.dot(v-self.start, self.dir)
 
+    def get_t(self, t: float) -> glm.vec2:
+        return self.start + self.dir * t
+
 
 class DragContext:
     def __init__(self, start_screen_pos: glm.vec2, *, manipulator: Shape, axis: Axis, target: Shape) -> None:
         self.start_screen_pos = start_screen_pos
         self.manipulator = manipulator
-        assert(self.manipulator)
+        assert(isinstance(self.manipulator, Shape))
         self.manipulator.add_state(ShapeState.DRAG)
         self.axis = axis
         assert target
@@ -92,9 +111,9 @@ class RingDragContext(DragContext):
         cross = glm.normalize(glm.cross(center_start, view_axis))
         assert cross.x != 0 or cross.y != 0
         # self.edge = False
-        cross.z = 0
-        cross = glm.normalize(cross)
-        self.line = ScreenLine(self.start_screen_pos, cross.xy)
+        n = glm.normalize(cross.xy)
+        self.line = ScreenLine(
+            self.start_screen_pos, glm.vec2(n.y, n.x), camera.projection.width, camera.projection.height)
 
     def drag(self, cursor_pos: glm.vec2):
         d = self.line.distance(cursor_pos)
@@ -113,10 +132,18 @@ class RollgDragContext(DragContext):
     def __init__(self, start_screen_pos: glm.vec2, *, manipulator: Shape, axis: Axis, target: Shape, camera: Camera):
         super().__init__(start_screen_pos, manipulator=manipulator, axis=axis, target=target)
 
+        view_axis = (camera.view.matrix *
+                     manipulator.matrix.value)[axis.value].xy
+        view_axis = glm.normalize(view_axis)
+        self.line = ScreenLine(
+            start_screen_pos, glm.vec2(view_axis.y, view_axis.x), camera.projection.width, camera.projection.height)
+
     def drag(self, cursor_pos: glm.vec2):
-        # TODO: axis project to screen
-        # TODO: split by start-axis_dir
-        m = self.init_matrix
+        d = self.line.distance(cursor_pos)
+
+        angle = d * 0.02
+        m = self.init_matrix * glm.rotate(angle, IDENTITY[self.axis.value].xyz)
+        self.target.matrix.set(m)
         return m
 
 
@@ -165,6 +192,21 @@ class GizmoDragHandler(GizmoEventHandler):
             case self.z_ring:
                 # ring is not selectable
                 self.context = RingDragContext(
+                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.Z,
+                    target=self.selected.value, camera=self.camera)
+            case self.x_roll:
+                # ring is not selectable
+                self.context = RollgDragContext(
+                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.X,
+                    target=self.selected.value, camera=self.camera)
+            case self.y_roll:
+                # ring is not selectable
+                self.context = RollgDragContext(
+                    hit.cursor_pos, manipulator=hit.shape, axis=Axis.Y,
+                    target=self.selected.value, camera=self.camera)
+            case self.z_roll:
+                # ring is not selectable
+                self.context = RollgDragContext(
                     hit.cursor_pos, manipulator=hit.shape, axis=Axis.Z,
                     target=self.selected.value, camera=self.camera)
             case _:
