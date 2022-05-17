@@ -148,18 +148,6 @@ class RollDragContext(DragContext):
         return m
 
 
-def create_rotation_shapes(inner: float, outer: float, depth: float) -> Dict[Shape, Tuple[Type, Axis]]:
-    from pydear.gizmo.shapes.ring_shape import XRingShape, YRingShape, ZRingShape, XRollShape, YRollShape, ZRollShape
-    return {
-        XRingShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(1, 0.3, 0.3, 1)): (RingDragContext, Axis.X),
-        YRingShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 1, 0.3, 1)): (RingDragContext, Axis.Y),
-        ZRingShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 0.3, 1, 1)): (RingDragContext, Axis.Z),
-        XRollShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(1, 0.3, 0.3, 1)): (RollDragContext, Axis.X),
-        YRollShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 1, 0.3, 1)): (RollDragContext, Axis.Y),
-        ZRollShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 0.3, 1, 1)): (RollDragContext, Axis.Z),
-    }
-
-
 class GizmoDragHandler(GizmoEventHandler):
     def __init__(self, gizmo: Gizmo, camera, *, inner=0.4, outer=0.6, depth=0.04) -> None:
         super().__init__()
@@ -167,19 +155,30 @@ class GizmoDragHandler(GizmoEventHandler):
         self.selected = EventProperty[Optional[Shape]](None)
 
         # draggable
-        self.drag_shapes = create_rotation_shapes(inner, outer, depth)
+        self.drag_shapes = self.create_rotation_shapes(inner, outer, depth)
         for drag_shape in self.drag_shapes.keys():
             gizmo.add_shape(drag_shape)
 
         self.context = None
 
+    def create_rotation_shapes(self, inner: float, outer: float, depth: float) -> Dict[Shape, Tuple[Type, dict]]:
+        from pydear.gizmo.shapes.ring_shape import XRingShape, YRingShape, ZRingShape, XRollShape, YRollShape, ZRollShape
+        return {
+            XRingShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(1, 0.3, 0.3, 1)): (RingDragContext, {'axis': Axis.X}),
+            YRingShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 1, 0.3, 1)): (RingDragContext, {'axis': Axis.Y}),
+            ZRingShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 0.3, 1, 1)): (RingDragContext, {'axis': Axis.Z}),
+            XRollShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(1, 0.3, 0.3, 1)): (RollDragContext, {'axis': Axis.X}),
+            YRollShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 1, 0.3, 1)): (RollDragContext, {'axis': Axis.Y}),
+            ZRollShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 0.3, 1, 1)): (RollDragContext, {'axis': Axis.Z}),
+        }
+
     def drag_begin(self, hit: RayHit):
-        match self.drag_shapes.get(hit.shape): # type: ignore
-            case (t, axis):
+        match self.drag_shapes.get(hit.shape):  # type: ignore
+            case (t, kw):
                 # ring is not selectable
                 self.context = t(
-                    hit.cursor_pos, manipulator=hit.shape, axis=axis,
-                    target=self.selected.value, camera=self.camera)
+                    hit.cursor_pos, manipulator=hit.shape,
+                    target=self.selected.value, camera=self.camera, **kw)
             case _:
                 self.select(hit.shape)
 
