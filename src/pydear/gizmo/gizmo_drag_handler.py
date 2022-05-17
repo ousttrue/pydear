@@ -1,4 +1,5 @@
 from typing import Optional, Dict, Type, Tuple
+import abc
 from enum import Enum
 import glm
 from pydear.scene.camera import Camera
@@ -17,67 +18,7 @@ class Axis(Enum):
     Z = 2
 
 
-class ScreenLine:
-    def __init__(self, start: glm.vec2, dir: glm.vec2, w, h) -> None:
-        # v = at + b
-        self.start = start
-        self.current = start
-        self.dir = glm.normalize(dir)
-        '''
-        y = ax + b
-        b = y - ax
-        '''
-        if self.dir.x == 0:
-            self.p0 = glm.vec2(self.start.x, 0)
-            self.p1 = glm.vec2(self.start.x, h)
-        elif self.dir.y == 0:
-            self.p0 = glm.vec2(0, self.start.y)
-            self.p1 = glm.vec2(w, self.start.y)
-        else:
-            # y = ax + b
-            a = self.dir.y/self.dir.x
-            # b = y - ax
-            b = start.y - start.x * a
-            # x = 0
-            self.p0 = glm.vec2(0, b)
-            # x = w
-            self.p1 = glm.vec2(w, a * w + b)
-
-    @staticmethod
-    def begin_end(start: glm.vec2, end: glm.vec2, w, h) -> 'ScreenLine':
-        return ScreenLine(start, end-start, w, h)
-    #     a = end - start
-    #     if a.x:
-    #         self.a = a.y/a.x
-    #     else:
-    #         self.a = float('inf')
-
-    #     self.b = start.y - self.a * start.x
-
-    # def point_from_x(self, x: float) -> glm.vec2:
-    #     '''
-    #     y = ax + b
-    #     '''
-    #     return glm.vec2(x, self.a * x + self.b)
-
-    def distance(self, v: glm.vec2):
-        self.current = v
-        return glm.dot(v-self.start, self.dir)
-
-    def get_t(self, t: float) -> glm.vec2:
-        return self.start + self.dir * t
-
-    def nvg_draw(self, vg):
-        from pydear.utils.nanovg_renderer import nvg_line_from_to
-        start = self.start
-        current = self.current
-        nvg_line_from_to(vg, start.x, start.y, current.x, current.y)
-        p0 = self.p0
-        p1 = self.p1
-        nvg_line_from_to(vg, p0.x, p0.y, p1.x, p1.y)
-
-
-class DragContext:
+class DragContext(metaclass=abc.ABCMeta):
     def __init__(self, start_screen_pos: glm.vec2, *, manipulator: Shape, target: Shape) -> None:
         self.start_screen_pos = start_screen_pos
         self.manipulator = manipulator
@@ -91,6 +32,11 @@ class DragContext:
         self.manipulator.remove_state(ShapeState.DRAG)
         self.manipulator = None
 
+    @abc.abstractmethod
+    def drag(self, cursor_pos: glm.vec2):
+        pass
+
+    @abc.abstractmethod
     def nvg_draw(self, vg):
         pass
 
@@ -105,13 +51,18 @@ class RingDragContext(DragContext):
         self.axis = axis
 
         vp = camera.projection.matrix * camera.view.matrix
-        center_pos = vp * manipulator.matrix.value[3]
+        center_pos = vp * target.matrix.value * glm.vec4(0, 0, 0, 1)
         cx = center_pos.x / center_pos.w
         cy = center_pos.y / center_pos.w
         center_screen_pos = glm.vec2(
             (cx * 0.5 + 0.5)*camera.projection.width,
-            (0.5 - cy * 0.5)*camera.projection.height
+            -(cy - 1)*0.5*camera.projection.height
         )
+
+        def draw_center_start(vg):
+            from pydear.utils.nanovg_renderer import nvg_line_from_to
+            nvg_line_from_to(vg, center_screen_pos.x, center_screen_pos.y,
+                             self.start_screen_pos.x, self.start_screen_pos.y)
         # self.line = ScreenLine(start_screen_pos, self.center_screen_pos)
 
         # l = ScreenLine(self.start_screen_pos, self.center_screen_pos)
@@ -123,14 +74,16 @@ class RingDragContext(DragContext):
         center_start = glm.vec3(self.start_screen_pos, 0) - \
             glm.vec3(center_screen_pos, 0)
         cross = glm.normalize(glm.cross(center_start, view_axis))
-        assert cross.x != 0 or cross.y != 0
+        # assert cross.x != 0 or cross.y != 0
         # self.edge = False
         n = glm.normalize(cross.xy)
-        self.line = ScreenLine(
-            self.start_screen_pos, glm.vec2(n.y, n.x), camera.projection.width, camera.projection.height)
+        from .screen_slider import ScreenSlider
+        self.line = ScreenSlider(self.start_screen_pos, n,
+                                 camera.projection.width, camera.projection.height,
+                                 debug_draw=[draw_center_start])
 
     def drag(self, cursor_pos: glm.vec2):
-        d = self.line.distance(cursor_pos)
+        d = self.line.drag(cursor_pos)
 
         angle = d * 0.02
         m = self.init_matrix * glm.rotate(angle, IDENTITY[self.axis.value].xyz)
@@ -153,11 +106,12 @@ class RollDragContext(DragContext):
         view_axis = (camera.view.matrix *
                      manipulator.matrix.value)[axis.value].xy
         view_axis = glm.normalize(view_axis)
-        self.line = ScreenLine(
+        from .screen_slider import ScreenSlider
+        self.line = ScreenSlider(
             start_screen_pos, glm.vec2(view_axis.y, view_axis.x), camera.projection.width, camera.projection.height)
 
     def drag(self, cursor_pos: glm.vec2):
-        d = self.line.distance(cursor_pos)
+        d = self.line.drag(cursor_pos)
 
         angle = d * 0.02
         m = self.init_matrix * glm.rotate(angle, IDENTITY[self.axis.value].xyz)
@@ -179,7 +133,7 @@ class GizmoDragHandler(GizmoEventHandler):
         for drag_shape in self.drag_shapes.keys():
             gizmo.add_shape(drag_shape)
 
-        self.context = None
+        self.context: Optional[DragContext] = None
 
     def create_rotation_shapes(self, inner: float, outer: float, depth: float) -> Dict[Shape, Tuple[Type, dict]]:
         from pydear.gizmo.shapes.ring_shape import XRingShape, YRingShape, ZRingShape, XRollShape, YRollShape, ZRollShape
