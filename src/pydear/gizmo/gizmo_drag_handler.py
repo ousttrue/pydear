@@ -174,7 +174,6 @@ class GizmoDragHandler(GizmoEventHandler):
         if self.selected.value:
             self.selected.value.remove_state(ShapeState.SELECT)
         # select
-        self.selected.set(shape)
         if shape:
             shape.add_state(ShapeState.SELECT)
             for drag_shape in self.drag_shapes.keys():
@@ -183,3 +182,4 @@ class GizmoDragHandler(GizmoEventHandler):
         else:
             for drag_shape in self.drag_shapes.keys():
                 drag_shape.add_state(ShapeState.HIDE)
+        self.selected.set(shape)
