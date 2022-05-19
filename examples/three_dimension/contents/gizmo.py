@@ -67,6 +67,11 @@ class GizmoScene(Item):
         self.handler.selected += self.on_selected
 
     def on_selected(self, selected: Optional[Shape]):
+        if selected:
+            position = selected.matrix.value[3].xyz
+            self.camera.view.set_gaze(position)
+            self.camera.middle_drag.shift = self.camera.view.shift
+
         self.selected = selected
 
     def render(self, w, h):
@@ -90,8 +95,6 @@ class GizmoScene(Item):
 
             if selected:
                 self.handler.select(selected)
-                position = selected.matrix.value[3].xyz
-                self.camera.view.set_gaze(position)
                 self.camera.middle_drag.reset()
 
         ImGui.End()

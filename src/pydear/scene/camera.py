@@ -112,7 +112,12 @@ class View:
 
     def set_gaze(self, gaze: glm.vec3):
         self.gaze = gaze
-        self.shift = glm.vec3(0, 0, self.shift.z)
+        # self.matrix = t * r * g
+        g = glm.translate(-self.gaze)
+        # t = glm.translate(self.shift)
+        r = glm.mat4(self.rotation)
+        t = self.matrix * glm.inverse(r*g)
+        self.shift = t[3].xyz
         self.update_matrix()
 
 
@@ -144,10 +149,10 @@ class ScreenShift(DragInterface):
             distance=distance
         )
         self.reset()
-        self.update()
 
     def reset(self):
         self.shift = glm.vec3(0, self.default['y'], -self.default['distance'])
+        self.update()
 
     def update(self) -> None:
         self.view.shift = self.shift
