@@ -33,7 +33,7 @@ class DragContext(metaclass=abc.ABCMeta):
         self.manipulator = None
 
     @abc.abstractmethod
-    def drag(self, cursor_pos: glm.vec2):
+    def drag(self, cursor_pos: glm.vec2) -> glm.mat4:
         pass
 
     @abc.abstractmethod

@@ -64,14 +64,14 @@ class GizmoScene(Item):
         self.handler.bind_mouse_event_with_gizmo(
             self.mouse_event, self.gizmo)
 
-        self.handler.selected += self.on_selected
+        # camera gaze when selection
+        def on_selected(selected: Optional[Shape]):
+            if selected:
+                position = selected.matrix.value[3].xyz
+                self.camera.view.set_gaze(position)
 
-    def on_selected(self, selected: Optional[Shape]):
-        if selected:
-            position = selected.matrix.value[3].xyz
-            self.camera.view.set_gaze(position)
-
-        self.selected = selected
+            self.selected = selected
+        self.handler.selected += on_selected
 
     def render(self, w, h):
         self.camera.projection.resize(w, h)
@@ -93,6 +93,7 @@ class GizmoScene(Item):
                     selected = cube
 
             if selected:
+                # select from ImGui list
                 self.handler.select(selected)
                 self.camera.middle_drag.reset()
 
