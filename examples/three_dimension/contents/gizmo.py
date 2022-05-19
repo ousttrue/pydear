@@ -1,7 +1,7 @@
 '''
 simple triangle sample
 '''
-from typing import Optional, Iterable, Tuple
+from typing import Optional, Iterable, Tuple, List
 import pathlib
 import logging
 import glm
@@ -47,11 +47,14 @@ class GizmoScene(Item):
         # gizmo shapes
         self.gizmo = Gizmo()
         from pydear.gizmo.shapes.cube_shape import CubeShape
+        self.selected: Optional[Shape] = None
+        self.cubes: List[Shape] = []
         for i in range(-2, 3, 1):
             for j in range(-2, 3, 1):
                 cube = CubeShape(0.5, 0.5, 0.5,
                                  position=glm.vec3(i, j, 0))
                 self.gizmo.add_shape(cube)
+                self.cubes.append(cube)
 
         line_shape = XYSquare(2)
         self.gizmo.add_shape(line_shape)
@@ -60,6 +63,11 @@ class GizmoScene(Item):
         self.handler = GizmoDragHandler(self.gizmo, self.camera)
         self.handler.bind_mouse_event_with_gizmo(
             self.mouse_event, self.gizmo)
+
+        self.handler.selected += self.on_selected
+
+    def on_selected(self, selected: Optional[Shape]):
+        self.selected = selected
 
     def render(self, w, h):
         self.camera.projection.resize(w, h)
@@ -73,4 +81,17 @@ class GizmoScene(Item):
                 context.nvg_draw(vg)
 
     def show(self):
-        pass
+        from pydear import imgui as ImGui
+        if ImGui.Begin('gizmo cubes'):
+            selected = None
+            for i, cube in enumerate(self.cubes):
+                if ImGui.Selectable(f'cube#{i}', cube == self.selected):
+                    selected = cube
+
+            if selected:
+                self.handler.select(selected)
+                position = selected.matrix.value[3].xyz
+                self.camera.view.set_gaze(position)
+                self.camera.middle_drag.reset()
+
+        ImGui.End()

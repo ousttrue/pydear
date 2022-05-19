@@ -13,7 +13,7 @@ class EventProperty(Generic[T]):
         self.callbacks.append(callback)
         return self
 
-    def set(self, value):
+    def set(self, value: T):
         if self.value == value:
             return
         self.value = value

@@ -1,4 +1,4 @@
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, TypedDict
 import math
 import logging
 import glm
@@ -98,15 +98,22 @@ class Perspective:
 
 class View:
     def __init__(self) -> None:
+        self.gaze = glm.vec3(0, 0, 0)
         self.rotation = glm.quat()
         self.shift = glm.vec3(0, 0, -5)
         self.update_matrix()
 
     def update_matrix(self):
+        g = glm.translate(-self.gaze)
         t = glm.translate(self.shift)
         r = glm.mat4(self.rotation)
-        self.matrix = t * r
+        self.matrix = t * r * g
         self.inverse = glm.inverse(self.matrix)
+
+    def set_gaze(self, gaze: glm.vec3):
+        self.gaze = gaze
+        self.shift = glm.vec3(0, 0, self.shift.z)
+        self.update_matrix()
 
 
 class DragInterface(abc.ABC):
@@ -123,12 +130,24 @@ class DragInterface(abc.ABC):
         pass
 
 
+class ScreenShiftDefault(TypedDict):
+    distance: float
+    y: float
+
+
 class ScreenShift(DragInterface):
     def __init__(self, view: View, projection: Perspective, *, distance=5, y=0) -> None:
         self.view = view
         self.projection = projection
-        self.shift = glm.vec3(0, y, -distance)
+        self.default = ScreenShiftDefault(
+            y=y,
+            distance=distance
+        )
+        self.reset()
         self.update()
+
+    def reset(self):
+        self.shift = glm.vec3(0, self.default['y'], -self.default['distance'])
 
     def update(self) -> None:
         self.view.shift = self.shift
@@ -257,25 +276,6 @@ class Camera:
         mouse_event.middle_pressed.append(self.middle_drag.begin)
         mouse_event.middle_drag.append(self.middle_drag.drag)
         mouse_event.middle_released.append(self.middle_drag.end)
-
-    # def fit(self, p0: Float3, p1: Float3):
-    #     if math.isnan(p0.x) or math.isnan(p0.y) or math.isnan(p0.z) or math.isnan(p1.x) or math.isnan(p1.y) or math.isnan(p1.z):
-    #         return
-    #     if math.isinf(p0.x) or math.isinf(p0.y) or math.isinf(p0.z) or math.isinf(p1.x) or math.isinf(p1.y) or math.isinf(p1.z):
-    #         return
-
-    #     self.view.x = 0
-    #     self.view.y = -(p1.y+p0.y)/2
-    #     self.view.distance = (p1.y-p0.y) / \
-    #         math.tan(self.projection.fov_y / 2)
-    #     self.view.yaw = 0
-    #     self.view.pitch = 0
-    #     self.view.update_matrix()
-    #     logger.info(self.view)
-
-    #     if self.view.distance*2 > self.projection.z_far:
-    #         self.projection.z_far = self.view.distance*2
-    #         self.projection.update_matrix()
 
     def get_mouse_ray(self, x: int, y: int) -> Ray:
         return get_mouse_ray(x, y, self.projection.width, self.projection.height,
