@@ -70,7 +70,6 @@ class GizmoScene(Item):
         if selected:
             position = selected.matrix.value[3].xyz
             self.camera.view.set_gaze(position)
-            self.camera.middle_drag.shift = self.camera.view.shift
 
         self.selected = selected
 

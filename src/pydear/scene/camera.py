@@ -151,11 +151,10 @@ class ScreenShift(DragInterface):
         self.reset()
 
     def reset(self):
-        self.shift = glm.vec3(0, self.default['y'], -self.default['distance'])
+        self.view.shift = glm.vec3(0, self.default['y'], -self.default['distance'])
         self.update()
 
     def update(self) -> None:
-        self.view.shift = self.shift
         self.view.update_matrix()
 
     def begin(self, x, y):
@@ -163,9 +162,9 @@ class ScreenShift(DragInterface):
 
     def drag(self, x, y, dx: int, dy: int):
         plane_height = math.tan(
-            self.projection.fov_y * 0.5) * self.shift.z * 2
-        self.shift.x -= dx / self.projection.height * plane_height
-        self.shift.y += dy / self.projection.height * plane_height
+            self.projection.fov_y * 0.5) * self.view.shift.z * 2
+        self.view.shift.x -= dx / self.projection.height * plane_height
+        self.view.shift.y += dy / self.projection.height * plane_height
         self.update()
 
     def end(self, x, y):
@@ -173,10 +172,10 @@ class ScreenShift(DragInterface):
 
     def wheel(self, d: int):
         if d < 0:
-            self.shift.z *= 1.1
+            self.view.shift.z *= 1.1
             self.update()
         elif d > 0:
-            self.shift.z *= 0.9
+            self.view.shift.z *= 0.9
             self.update()
 
 
