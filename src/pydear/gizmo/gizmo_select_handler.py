@@ -1,18 +1,23 @@
 from typing import Optional
+
+from pydear.utils.mouse_event import MouseInput
 from .gizmo import RayHit
 from .shapes.shape import Shape, ShapeState
-from .gizmo_event_handler import GizmoEventHandler
 from pydear.utils.eventproperty import EventProperty
+from pydear.scene.camera import DragInterface
+from .gizmo import Gizmo
 
 
-class GizmoSelectHandler(GizmoEventHandler):
-    def __init__(self) -> None:
+class GizmoSelectHandler(DragInterface):
+    def __init__(self, gizmo: Gizmo) -> None:
+        self.gizmo = gizmo
         self.selected = EventProperty[Optional[Shape]](None)
 
-    def drag_begin(self, hit: RayHit):
+    def begin(self, mouse_input: MouseInput):
         '''
         select when mouse down
         '''
+        hit = self.gizmo.hit
         shape = hit.shape
         if shape == self.selected.value:
             return
@@ -24,8 +29,8 @@ class GizmoSelectHandler(GizmoEventHandler):
         if shape:
             shape.add_state(ShapeState.SELECT)
 
-    def drag(self, x, y, dx, dy):
+    def drag(self, mouse_input, dx, dy):
         pass
 
-    def drag_end(self, x, y):
+    def end(self, mouse_input):
         pass

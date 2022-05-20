@@ -2,11 +2,11 @@ from typing import Optional, Dict, Type, Tuple
 import abc
 from enum import Enum
 import glm
-from pydear.scene.camera import Camera
+from pydear.scene.camera import Camera, DragInterface
 from pydear.utils.eventproperty import EventProperty
+from pydear.utils.mouse_event import MouseInput
 from .shapes.shape import Shape, ShapeState
 from .gizmo import Gizmo, RayHit
-from .gizmo_event_handler import GizmoEventHandler
 
 
 IDENTITY = glm.mat4()
@@ -122,9 +122,10 @@ class RollDragContext(DragContext):
         self.line.nvg_draw(vg)
 
 
-class GizmoDragHandler(GizmoEventHandler):
+class GizmoDragHandler(DragInterface):
     def __init__(self, gizmo: Gizmo, camera, *, inner=0.4, outer=0.6, depth=0.04) -> None:
         super().__init__()
+        self.gizmo = gizmo
         self.camera = camera
         self.selected = EventProperty[Optional[Shape]](None)
 
@@ -146,7 +147,8 @@ class GizmoDragHandler(GizmoEventHandler):
             ZRollShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 0.3, 1, 1)): (RollDragContext, {'axis': Axis.Z}),
         }
 
-    def drag_begin(self, hit: RayHit):
+    def begin(self, mouse_input: MouseInput):
+        hit = self.gizmo.hit
         match self.drag_shapes.get(hit.shape):  # type: ignore
             case (t, kw):
                 # ring is not selectable
@@ -156,13 +158,13 @@ class GizmoDragHandler(GizmoEventHandler):
             case _:
                 self.select(hit.shape)
 
-    def drag(self, x, y, dx, dy):
+    def drag(self, mouse_input: MouseInput, dx, dy):
         if self.context:
-            m = self.context.drag(glm.vec2(x, y))
+            m = self.context.drag(glm.vec2(mouse_input.x, mouse_input.y))
             for drag_shape in self.drag_shapes.keys():
                 drag_shape.matrix.set(m)
 
-    def drag_end(self, x, y):
+    def end(self, mouse_input: MouseInput):
         if self.context:
             self.context.end()
             self.context = None

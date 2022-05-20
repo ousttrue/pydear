@@ -1,9 +1,8 @@
-from typing import NamedTuple, Optional, TypedDict
+from typing import NamedTuple, Optional
 import math
 import logging
 import glm
-import abc
-from pydear.utils.mouse_event import MouseEvent
+from pydear.utils.mouse_event import DragInterface, MouseInput, MouseEvent
 LOGGER = logging.getLogger(__name__)
 
 
@@ -116,58 +115,34 @@ class View:
         g = glm.translate(-self.gaze)
         # t = glm.translate(self.shift)
         r = glm.mat4(self.rotation)
-        t = self.matrix * glm.inverse(r*g)
+        t = self.matrix * glm.inverse(r * g)
         self.shift = t[3].xyz
         self.update_matrix()
 
 
-class DragInterface(abc.ABC):
-    @abc.abstractmethod
-    def begin(self, x, y):
-        pass
-
-    @abc.abstractmethod
-    def drag(self, x, y, dx, dy):
-        pass
-
-    @abc.abstractmethod
-    def end(self):
-        pass
-
-
-class ScreenShiftDefault(TypedDict):
-    distance: float
-    y: float
-
-
 class ScreenShift(DragInterface):
-    def __init__(self, view: View, projection: Perspective, *, distance=5, y=0) -> None:
+    def __init__(self, view: View, projection: Perspective) -> None:
         self.view = view
         self.projection = projection
-        self.default = ScreenShiftDefault(
-            y=y,
-            distance=distance
-        )
-        self.reset()
 
-    def reset(self):
-        self.view.shift = glm.vec3(0, self.default['y'], -self.default['distance'])
+    def reset(self, shift: glm.vec3):
+        self.view.shift = shift
         self.update()
 
     def update(self) -> None:
         self.view.update_matrix()
 
-    def begin(self, x, y):
+    def begin(self, mouse_input: MouseInput):
         pass
 
-    def drag(self, x, y, dx: int, dy: int):
+    def drag(self, mouse_input: MouseInput, dx: int, dy: int):
         plane_height = math.tan(
             self.projection.fov_y * 0.5) * self.view.shift.z * 2
         self.view.shift.x -= dx / self.projection.height * plane_height
         self.view.shift.y += dy / self.projection.height * plane_height
         self.update()
 
-    def end(self, x, y):
+    def end(self, mouse_input: MouseInput):
         pass
 
     def wheel(self, d: int):
@@ -192,15 +167,15 @@ class TurnTable(DragInterface):
         self.view.rotation = pitch * yaw
         self.view.update_matrix()
 
-    def begin(self, x, y):
+    def begin(self, mouse_input: MouseInput):
         pass
 
-    def drag(self, x, y, dx: int, dy: int):
+    def drag(self, mouse_input: MouseInput, dx: int, dy: int):
         self.yaw += dx * 0.01
         self.pitch += dy * 0.01
         self.update()
 
-    def end(self, x, y):
+    def end(self, mouse_input: MouseInput):
         pass
 
 
@@ -208,8 +183,8 @@ def get_arcball_vector(x, y, screen_width, screen_height):
     '''
     https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Tutorial_Arcball
     '''
-    P = glm.vec3(x/screen_width*2 - 1.0,
-                 y/screen_height*2 - 1.0,
+    P = glm.vec3(x / screen_width * 2 - 1.0,
+                 y / screen_height * 2 - 1.0,
                  0)
     P.y = -P.y
     OP_squared = P.x * P.x + P.y * P.y
@@ -234,14 +209,18 @@ class ArcBall(DragInterface):
         self.view.rotation = glm.normalize(self.tmp_rotation * self.rotation)
         self.view.update_matrix()
 
-    def begin(self, x, y):
+    def begin(self, mouse_input: MouseInput):
+        x = mouse_input.x
+        y = mouse_input.y
         self.rotation = self.view.rotation
         self.x = x
         self.y = y
         self.va = get_arcball_vector(
             x, y, self.projection.width, self.projection.height)
 
-    def drag(self, x, y, dx, dy):
+    def drag(self, mouse_input: MouseInput, dx: int, dy: int):
+        x = mouse_input.x
+        y = mouse_input.y
         if x == self.x and y == self.y:
             return
         self.x = x
@@ -253,7 +232,9 @@ class ArcBall(DragInterface):
         self.tmp_rotation = glm.angleAxis(angle, axis)
         self.update()
 
-    def end(self, x, y):
+    def end(self, mouse_input: MouseInput):
+        x = mouse_input.x
+        y = mouse_input.y
         self.rotation = glm.normalize(self.tmp_rotation * self.rotation)
         self.tmp_rotation = glm.quat()
         self.update()
@@ -263,23 +244,6 @@ class Camera:
     def __init__(self, *, near=0.01, far=1000, distance=5, y=0):
         self.projection = Perspective(near=near, far=far)
         self.view = View()
-        # self.right_drag = TurnTable(self.view)
-        self.right_drag = ArcBall(self.view, self.projection)
-        self.middle_drag = ScreenShift(
-            self.view, self.projection, distance=distance, y=y)
-        self.on_wheel = self.middle_drag
-
-    def bind_mouse_event(self, mouse_event: MouseEvent):
-        '''
-        use right and middle drag and wheel
-        '''
-        mouse_event.wheel.append(self.on_wheel.wheel)
-        mouse_event.right_pressed.append(self.right_drag.begin)
-        mouse_event.right_drag.append(self.right_drag.drag)
-        mouse_event.right_released.append(self.right_drag.end)
-        mouse_event.middle_pressed.append(self.middle_drag.begin)
-        mouse_event.middle_drag.append(self.middle_drag.drag)
-        mouse_event.middle_released.append(self.middle_drag.end)
 
     def get_mouse_ray(self, x: int, y: int) -> Ray:
         return get_mouse_ray(x, y, self.projection.width, self.projection.height,
@@ -289,11 +253,11 @@ class Camera:
 def get_mouse_ray(x: int, y: int, w: int, h: int,
                   view_inverse: glm.mat4, fov_y: float, aspect: float) -> Ray:
     origin = view_inverse[3].xyz
-    half_fov = fov_y/2
+    half_fov = fov_y / 2
     dir = view_inverse * glm.vec4(
-        (x/w * 2 - 1) *
-        math.tan(half_fov) * (aspect),
-        -(y/h * 2 - 1) * math.tan(half_fov),
+        (x / w * 2 - 1)
+        * math.tan(half_fov) * (aspect),
+        -(y / h * 2 - 1) * math.tan(half_fov),
         -1,
         0)
     return Ray(origin, glm.normalize(dir.xyz))

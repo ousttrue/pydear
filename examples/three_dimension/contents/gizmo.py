@@ -6,11 +6,11 @@ import pathlib
 import logging
 import glm
 from pydear.utils.selector import Item
-from pydear.scene.camera import Camera, MouseEvent
+from pydear.scene.camera import Camera, MouseEvent, ArcBall, ScreenShift
 from pydear.gizmo.gizmo import Gizmo
 from pydear.gizmo.shapes.shape import Shape, Quad
 from pydear.gizmo.gizmo_drag_handler import GizmoDragHandler
-from pydear.utils.nanovg_renderer import NanoVgRenderer, nvg_line_from_to
+from pydear.utils.nanovg_renderer import NanoVgRenderer
 LOGGER = logging.getLogger(__name__)
 
 
@@ -40,7 +40,10 @@ class GizmoScene(Item):
         super().__init__('gizmo')
         self.camera = Camera()
         self.mouse_event = mouse_event
-        self.camera.bind_mouse_event(self.mouse_event)
+        mouse_event.bind_right_drag(ArcBall(self.camera.view, self.camera.projection))
+        self.middle_drag = ScreenShift(self.camera.view, self.camera.projection)
+        mouse_event.bind_middle_drag(self.middle_drag)
+        mouse_event.wheel += [self.middle_drag.wheel]
 
         self.nvg = NanoVgRenderer(font)
 
@@ -61,8 +64,7 @@ class GizmoScene(Item):
 
         # mouse event handling
         self.handler = GizmoDragHandler(self.gizmo, self.camera)
-        self.handler.bind_mouse_event_with_gizmo(
-            self.mouse_event, self.gizmo)
+        self.mouse_event.bind_left_drag(self.handler)
 
         # camera gaze when selection
         def on_selected(selected: Optional[Shape]):
@@ -95,6 +97,6 @@ class GizmoScene(Item):
             if selected:
                 # select from ImGui list
                 self.handler.select(selected)
-                self.camera.middle_drag.reset()
+                self.middle_drag.reset(glm.vec3(0, 0, -5))
 
         ImGui.End()

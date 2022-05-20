@@ -1,7 +1,7 @@
 from typing import Optional
 from OpenGL import GL
 from pydear.utils.selector import Item
-from pydear.scene.camera import Camera, MouseEvent
+from pydear.scene.camera import Camera, MouseEvent, ArcBall, ScreenShift
 from pydear import glo
 
 
@@ -10,7 +10,10 @@ class TeaPot(Item):
         super().__init__('teapot')
         self.drawable: Optional[glo.Drawable] = None
         self.camera = Camera()
-        self.camera.bind_mouse_event(mouse_event)
+        mouse_event.bind_right_drag(ArcBall(self.camera.view, self.camera.projection))
+        middle_drag = ScreenShift(self.camera.view, self.camera.projection)
+        mouse_event.bind_middle_drag(middle_drag)
+        mouse_event.wheel += [middle_drag.wheel]
 
     def render(self, w, h):
         self.camera.projection.resize(w, h)
