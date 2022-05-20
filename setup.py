@@ -17,9 +17,9 @@ HERE = pathlib.Path(__name__).absolute().parent
 
 class CMakeExtension(setuptools.Extension):
 
-    def __init__(self, name):
+    def __init__(self, name, sources):
         # don't invoke the original build_ext for this special extension
-        super().__init__(name, sources=[])
+        super().__init__(name, sources=sources)
 
 
 class build_ext_cmake(build_ext):
@@ -51,7 +51,9 @@ class build_ext_cmake(build_ext):
 
 
 EXTENSIONS: List[setuptools.Extension] = [CMakeExtension(
-    'pydear.impl',
+    'pydear.impl', [
+        'cpp_src/impl.cpp', 'cpp_src/rawtypes.h',
+    ]
 )]
 
 setuptools.setup(
