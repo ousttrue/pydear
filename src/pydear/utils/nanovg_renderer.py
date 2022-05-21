@@ -1,11 +1,20 @@
+from typing import Optional
 import pathlib
 import contextlib
 from pydear import nanovg
 from pydear.nanovg_backends import nanovg_impl_opengl3
 
 
+def get_system_font() -> pathlib.Path:
+    import platform
+    if platform.system() == 'Windows':
+        return pathlib.Path('C:/Windows/Fonts/MSGothic.tff')
+    else:
+        return pathlib.Path('/usr/share/fonts/liberation-fonts/LiberationMono-Regular.ttf')
+
+
 class NanoVgRenderer:
-    def __init__(self, font_path: pathlib.Path, font_name='nanovg_font') -> None:
+    def __init__(self, font_path: Optional[pathlib.Path] = None, font_name='nanovg_font') -> None:
         self.vg = nanovg.nvgCreate(nanovg.NVGcreateFlags.NVG_ANTIALIAS
                                    | nanovg.NVGcreateFlags.NVG_STENCIL_STROKES
                                    | nanovg.NVGcreateFlags.NVG_DEBUG)
@@ -13,7 +22,9 @@ class NanoVgRenderer:
             raise RuntimeError("Could not init nanovg")
         nanovg_impl_opengl3.init(self.vg)
 
-        assert font_path.exists()
+        if not font_path or not font_path.exists():
+            font_path = get_system_font()
+
         self.font_path = str(font_path.absolute()).replace('\\', '/')
         self.font_initialized = False
         self.font_name = font_name
@@ -71,6 +82,6 @@ def nvg_text(vg, font_name, x, y):
     nanovg.nvgFontSize(vg, 15.0)
     nanovg.nvgFontFace(vg, font_name)
     nanovg.nvgFillColor(vg, nanovg.nvgRGBA(255, 255, 255, 255))
-    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT |
-                        nanovg.NVGalign.NVG_ALIGN_MIDDLE)
+    nanovg.nvgTextAlign(vg, nanovg.NVGalign.NVG_ALIGN_LEFT
+                        | nanovg.NVGalign.NVG_ALIGN_MIDDLE)
     nanovg.nvgText(vg, x, y, f'{x}, {y}', None)  # type: ignore

@@ -29,13 +29,15 @@ class FboView:
 
             io = ImGui.GetIO()
             self.mouse_event.process(MouseInput(
-                (io.MousePos.x-x), (io.MousePos.y-y),
+                (io.MousePos.x - x), (io.MousePos.y - y),
                 w, h,
                 io.MouseDown[0], io.MouseDown[1], io.MouseDown[2],
                 ImGui.IsItemActive(), ImGui.IsItemHovered(), int(io.MouseWheel)))
 
             if self.render:
                 self.render(w, h)
+            else:
+                self.mouse_event.debug_draw()
 
     def show(self, p_open=None):
         if p_open and not p_open[0]:
@@ -43,8 +45,8 @@ class FboView:
 
         ImGui.PushStyleVar_2(ImGui.ImGuiStyleVar_.WindowPadding, (0, 0))
         if ImGui.Begin("render target", p_open,
-                       ImGui.ImGuiWindowFlags_.NoScrollbar |
-                       ImGui.ImGuiWindowFlags_.NoScrollWithMouse):
+                       ImGui.ImGuiWindowFlags_.NoScrollbar
+                       | ImGui.ImGuiWindowFlags_.NoScrollWithMouse):
             x, y = ImGui.GetWindowPos()
             y += ImGui.GetFrameHeight()
             w, h = ImGui.GetContentRegionAvail()

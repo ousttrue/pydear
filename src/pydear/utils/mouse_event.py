@@ -40,20 +40,21 @@ class MouseEvent:
         self.last_input: Optional[MouseInput] = None
 
         # highlevel event
-        self.left_active = False
+        self.left_active = None
         self.left_pressed: List[BeginEndCallback] = []
         self.left_drag: List[DragCallback] = []
         self.left_released: List[BeginEndCallback] = []
-        self.right_active = False
+        self.right_active = None
         self.right_pressed: List[BeginEndCallback] = []
         self.right_drag: List[DragCallback] = []
         self.right_released: List[BeginEndCallback] = []
-        self.middle_active = False
+        self.middle_active = None
         self.middle_pressed: List[BeginEndCallback] = []
         self.middle_drag: List[DragCallback] = []
         self.middle_released: List[BeginEndCallback] = []
 
         self.wheel: List[Callable[[int], None]] = []
+        self.nvg = None
 
     def __iadd__(self, callback: Callback):
         self.callbacks.append(callback)
@@ -74,44 +75,44 @@ class MouseEvent:
         # pressed
         if current.is_hover:
             if (not self.last_input or not self.last_input.left_down) and current.left_down:
-                self.left_active = True
+                self.left_active = (current.x, current.y)
                 for callback in self.left_pressed:
                     callback(current)
             if (not self.last_input or not self.last_input.right_down) and current.right_down:
-                self.right_active = True
+                self.right_active = (current.x, current.y)
                 for callback in self.right_pressed:
                     callback(current)
             if (not self.last_input or not self.last_input.middle_down) and current.middle_down:
-                self.middle_active = True
+                self.middle_active = (current.x, current.y)
                 for callback in self.middle_pressed:
                     callback(current)
         # drag
         if current.is_active:
             if current.left_down:
-                self.left_active = True
+                # self.left_active = True
                 for callback in self.left_drag:
                     callback(current, dx, dy)
             if current.right_down:
-                self.right_active = True
+                # self.right_active = True
                 for callback in self.right_drag:
                     callback(current, dx, dy)
             if current.middle_down:
-                self.middle_active = True
+                # self.middle_active = True
                 for callback in self.middle_drag:
                     callback(current, dx, dy)
         # released
         if self.left_active and not current.left_down:
             for callback in self.left_released:
                 callback(current)
-            self.left_active = False
+            self.left_active = None
         if self.right_active and not current.right_down:
             for callback in self.right_released:
                 callback(current)
-            self.right_active = False
+            self.right_active = None
         if self.middle_active and not current.middle_down:
             for callback in self.middle_released:
                 callback(current)
-            self.middle_active = False
+            self.middle_active = None
 
         if current.is_active or current.is_hover:
             if current.wheel:
@@ -134,3 +135,44 @@ class MouseEvent:
         self.middle_pressed.append(drag_handler.begin)
         self.middle_drag.append(drag_handler.drag)
         self.middle_released.append(drag_handler.end)
+
+    def debug_draw(self):
+        mouse_input = self.last_input
+        if not mouse_input:
+            return
+        if not self.nvg:
+            from pydear.utils.nanovg_renderer import NanoVgRenderer
+            self.nvg = NanoVgRenderer()
+
+        def draw_line(vg, sx, sy, ex, ey, r, g, b):
+            nanovg.nvgSave(vg)
+            nanovg.nvgStrokeWidth(vg, 1.0)
+            nanovg.nvgStrokeColor(vg, nanovg.nvgRGBA(r, g, b, 255))
+            nanovg.nvgFillColor(vg, nanovg.nvgRGBA(r, g, b, 255))
+
+            nanovg.nvgBeginPath(vg)
+            nanovg.nvgMoveTo(vg, sx, sy)
+            nanovg.nvgLineTo(vg, ex, ey)
+            nanovg.nvgStroke(vg)
+
+            nanovg.nvgBeginPath(vg)
+            nanovg.nvgCircle(vg, sx, sy, 4)
+            nanovg.nvgFill(vg)
+
+            nanovg.nvgBeginPath(vg)
+            nanovg.nvgCircle(vg, ex, ey, 4)
+            nanovg.nvgFill(vg)
+
+            nanovg.nvgRestore(vg)
+
+        with self.nvg.render(mouse_input.width, mouse_input.height) as vg:
+            from pydear import nanovg
+            match self.left_active:
+                case (x, y):
+                    draw_line(vg, x, y, mouse_input.x, mouse_input.y, 255, 0, 0)
+            match self.middle_active:
+                case (x, y):
+                    draw_line(vg, x, y, mouse_input.x, mouse_input.y, 0, 255, 0)
+            match self.right_active:
+                case (x, y):
+                    draw_line(vg, x, y, mouse_input.x, mouse_input.y, 0, 0, 255)
