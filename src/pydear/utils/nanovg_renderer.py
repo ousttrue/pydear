@@ -8,7 +8,7 @@ from pydear.nanovg_backends import nanovg_impl_opengl3
 def get_system_font() -> pathlib.Path:
     import platform
     if platform.system() == 'Windows':
-        return pathlib.Path('C:/Windows/Fonts/MSGothic.tff')
+        return pathlib.Path('C:/Windows/Fonts/msgothic.ttc')
     else:
         return pathlib.Path('/usr/share/fonts/liberation-fonts/LiberationMono-Regular.ttf')
 
