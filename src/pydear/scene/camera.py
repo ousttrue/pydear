@@ -96,10 +96,10 @@ class Perspective:
 
 
 class View:
-    def __init__(self) -> None:
+    def __init__(self, y=0, distance=5) -> None:
         self.gaze = glm.vec3(0, 0, 0)
         self.rotation = glm.quat()
-        self.shift = glm.vec3(0, 0, -5)
+        self.shift = glm.vec3(0, y, -distance)
         self.update_matrix()
 
     def update_matrix(self):
@@ -243,7 +243,7 @@ class ArcBall(DragInterface):
 class Camera:
     def __init__(self, *, near=0.01, far=1000, distance=5, y=0):
         self.projection = Perspective(near=near, far=far)
-        self.view = View()
+        self.view = View(y=y, distance=distance)
 
     def get_mouse_ray(self, x: int, y: int) -> Ray:
         return get_mouse_ray(x, y, self.projection.width, self.projection.height,
