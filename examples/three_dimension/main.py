@@ -38,9 +38,9 @@ def main():
         if selector.selected:
             selector.selected.show()
 
-    def render(w, h):
+    def render(mouse_input):
         if selector.selected:
-            selector.selected.render(w, h)
+            selector.selected.render(mouse_input)
 
     from pydear.utils.fbo_view import FboView
     fbo = FboView(render)

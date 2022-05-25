@@ -1,6 +1,7 @@
 from typing import Optional
 import abc
 from pydear import imgui as ImGui
+from .mouse_event import MouseInput
 
 
 class Item(abc.ABC):
@@ -8,7 +9,7 @@ class Item(abc.ABC):
         self.name = name
 
     @abc.abstractmethod
-    def render(self, w: int, h: int):
+    def render(self, mouse_input: MouseInput):
         pass
 
     @abc.abstractmethod

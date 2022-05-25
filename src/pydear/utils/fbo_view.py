@@ -4,7 +4,7 @@ from pydear import imgui as ImGui
 from .mouse_event import MouseEvent, MouseInput
 
 
-RenderCallback: TypeAlias = Callable[[int, int], None]
+RenderCallback: TypeAlias = Callable[[MouseInput], None]
 
 
 class FboView:
@@ -17,7 +17,9 @@ class FboView:
         self.mouse_event = MouseEvent()
         self.render = render
 
-    def show_fbo(self, x, y, w, h):
+    def show_fbo(self, x: int, y: int, w: int, h: int):
+        assert w
+        assert h
         texture = self.fbo_manager.clear(
             int(w), int(h), self.clear_color)
         if texture:
@@ -28,14 +30,16 @@ class FboView:
                                           ImGui.ImGuiButtonFlags_.MouseButtonMiddle | ImGui.ImGuiButtonFlags_.MouseButtonRight)
 
             io = ImGui.GetIO()
-            self.mouse_event.process(MouseInput(
-                (io.MousePos.x - x), (io.MousePos.y - y),
+
+            mouse_input = MouseInput(
+                (int(io.MousePos.x) - x), (int(io.MousePos.y) - y),
                 w, h,
                 io.MouseDown[0], io.MouseDown[1], io.MouseDown[2],
-                ImGui.IsItemActive(), ImGui.IsItemHovered(), int(io.MouseWheel)))
+                ImGui.IsItemActive(), ImGui.IsItemHovered(), int(io.MouseWheel))
+            self.mouse_event.process(mouse_input)
 
             if self.render:
-                self.render(w, h)
+                self.render(mouse_input)
             else:
                 self.mouse_event.debug_draw()
 

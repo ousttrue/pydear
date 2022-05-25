@@ -6,7 +6,8 @@ import pathlib
 import logging
 import glm
 from pydear.utils.selector import Item
-from pydear.scene.camera import Camera, MouseEvent, ArcBall, ScreenShift
+from pydear.utils.mouse_camera import MouseCamera, MouseEvent
+from pydear.utils.mouse_event import MouseInput
 from pydear.gizmo.gizmo import Gizmo
 from pydear.gizmo.shapes.shape import Shape, Quad
 from pydear.gizmo.gizmo_drag_handler import GizmoDragHandler
@@ -38,13 +39,7 @@ class XYSquare(Shape):
 class GizmoScene(Item):
     def __init__(self, mouse_event: MouseEvent, *, font: pathlib.Path) -> None:
         super().__init__('gizmo')
-        self.camera = Camera()
-        self.mouse_event = mouse_event
-        mouse_event.bind_right_drag(ArcBall(self.camera.view, self.camera.projection))
-        self.middle_drag = ScreenShift(self.camera.view, self.camera.projection)
-        mouse_event.bind_middle_drag(self.middle_drag)
-        mouse_event.wheel += [self.middle_drag.wheel]
-
+        self.mouse_camera = MouseCamera(mouse_event)
         self.nvg = NanoVgRenderer(font)
 
         # gizmo shapes
@@ -63,27 +58,26 @@ class GizmoScene(Item):
         self.gizmo.add_shape(line_shape)
 
         # mouse event handling
-        self.handler = GizmoDragHandler(self.gizmo, self.camera)
-        self.mouse_event.bind_left_drag(self.handler)
+        self.handler = GizmoDragHandler(self.gizmo, self.mouse_camera.camera)
+        mouse_event.bind_left_drag(self.handler)
 
         # camera gaze when selection
         def on_selected(selected: Optional[Shape]):
             if selected:
                 position = selected.matrix.value[3].xyz
-                self.camera.view.set_gaze(position)
+                self.mouse_camera.camera.view.set_gaze(position)
 
             self.selected = selected
         self.handler.selected += on_selected
 
-    def render(self, w, h):
-        self.camera.projection.resize(w, h)
-        input = self.mouse_event.last_input
-        assert(input)
-        self.gizmo.process(self.camera, input.x, input.y)
+    def render(self, mouse_input: MouseInput):
+        camera = self.mouse_camera.camera
+        camera.projection.resize(mouse_input.width, mouse_input.height)
+        self.gizmo.process(camera, mouse_input.x, mouse_input.y)
 
         context = self.handler.context
         if context:
-            with self.nvg.render(w, h) as vg:
+            with self.nvg.render(mouse_input.width, mouse_input.height) as vg:
                 context.nvg_draw(vg)
 
     def show(self):
@@ -97,6 +91,6 @@ class GizmoScene(Item):
             if selected:
                 # select from ImGui list
                 self.handler.select(selected)
-                self.middle_drag.reset(glm.vec3(0, 0, -5))
+                self.mouse_camera.middle_drag.reset(glm.vec3(0, 0, -5))
 
         ImGui.End()

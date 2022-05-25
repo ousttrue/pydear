@@ -179,12 +179,12 @@ class TurnTable(DragInterface):
         pass
 
 
-def get_arcball_vector(x, y, screen_width, screen_height):
+def get_arcball_vector(mouse_input: MouseInput):
     '''
     https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Tutorial_Arcball
     '''
-    P = glm.vec3(x / screen_width * 2 - 1.0,
-                 y / screen_height * 2 - 1.0,
+    P = glm.vec3(mouse_input.x / mouse_input.width * 2 - 1.0,
+                 mouse_input.y / mouse_input.height * 2 - 1.0,
                  0)
     P.y = -P.y
     OP_squared = P.x * P.x + P.y * P.y
@@ -215,8 +215,7 @@ class ArcBall(DragInterface):
         self.rotation = self.view.rotation
         self.x = x
         self.y = y
-        self.va = get_arcball_vector(
-            x, y, self.projection.width, self.projection.height)
+        self.va = get_arcball_vector(mouse_input)
 
     def drag(self, mouse_input: MouseInput, dx: int, dy: int):
         x = mouse_input.x
@@ -225,8 +224,7 @@ class ArcBall(DragInterface):
             return
         self.x = x
         self.y = y
-        vb = get_arcball_vector(
-            x, y, self.projection.width, self.projection.height)
+        vb = get_arcball_vector(mouse_input)
         angle = math.acos(min(1.0, glm.dot(self.va, vb))) * 2
         axis = glm.cross(self.va, vb)
         self.tmp_rotation = glm.angleAxis(angle, axis)
