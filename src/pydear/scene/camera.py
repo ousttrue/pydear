@@ -239,7 +239,7 @@ class ArcBall(DragInterface):
 
 
 class Camera:
-    def __init__(self, *, near=0.01, far=1000, distance=5, y=0):
+    def __init__(self, *, near=0.01, far=1000, distance: float = 5, y: float = 0):
         self.projection = Perspective(near=near, far=far)
         self.view = View(y=y, distance=distance)
 
