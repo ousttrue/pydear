@@ -1,13 +1,14 @@
 from typing import List
+import logging
 import pathlib
 import setuptools
 from setuptools.command.build_ext import build_ext
-
+LOGGER = logging.getLogger(__name__)
 try:
     import code_generation
     code_generation.run()
-except:
-    pass
+except Exception as ex:
+    LOGGER.exception(ex)
 
 
 HERE = pathlib.Path(__name__).absolute().parent

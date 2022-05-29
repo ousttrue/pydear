@@ -282,8 +282,8 @@ def run():
     #
     # generate c++ source and relative py and pyi
     #
-    from rawtypes.generator.generator import Generator  # noqa
-    generator = Generator(*HEADERS)
+    from rawtypes.generator.python_generator import PythonGenerator  # noqa
+    generator = PythonGenerator(*HEADERS)
 
     generator.type_manager.WRAP_TYPES.extend(WRAP_TYPES)
 
