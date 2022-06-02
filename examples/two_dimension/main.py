@@ -5,6 +5,7 @@ import logging
 import ctypes
 from pydear import imgui as ImGui
 from pydear.utils.fbo_view import FboView
+from pydear.utils.mouse_event import MouseInput
 logger = logging.getLogger(__name__)
 
 
@@ -31,9 +32,9 @@ class SelectorView:
         if self.selector.selected:
             self.selector.selected.show()
 
-    def render(self, w: int, h: int):
+    def render(self, mouse_input: MouseInput):
         if self.selector.selected:
-            self.selector.selected.render(w, h)
+            self.selector.selected.render(mouse_input)
 
 
 def main():

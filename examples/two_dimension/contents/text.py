@@ -165,8 +165,9 @@ class TextRenderer(Item):
         self.height = 1
         self.view = glm.mat4()
 
-        def put_letter(x, y):
-            self._update_vertices(x, y, self.size, self.size)
+        def put_letter(mouse_input: MouseInput):
+            self._update_vertices(
+                mouse_input.x, mouse_input.y, self.size, self.size)
         mouse_event.left_pressed.append(put_letter)
 
         def on_wheel(d):
@@ -193,9 +194,9 @@ class TextRenderer(Item):
     def show(self):
         pass
 
-    def render(self, w, h):
-        self.width = w
-        self.height = h
+    def render(self, mouse_input: MouseInput):
+        self.width = mouse_input.width
+        self.height = mouse_input.height
 
         self.view = glm.ortho(
             0, self.width,

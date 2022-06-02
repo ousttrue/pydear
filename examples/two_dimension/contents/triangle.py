@@ -5,7 +5,7 @@ from typing import Optional
 import logging
 import ctypes
 from pydear import glo
-from pydear.utils.selector import Item
+from pydear.utils.selector import Item, MouseInput
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class Triangle(Item):
         self.shader: Optional[glo.Shader] = None
         self.vao: Optional[glo.Vao] = None
 
-    def render(self, w, h):
+    def render(self, mouse_input: MouseInput):
         if not self.shader:
             shader_or_error = glo.Shader.load(vs, fs)
             if not isinstance(shader_or_error, glo.Shader):

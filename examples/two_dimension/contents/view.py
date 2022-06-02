@@ -7,7 +7,7 @@ import ctypes
 from pydear import glo
 from pydear import imgui as ImGui
 from pydear.utils.selector import Item
-from pydear.utils.mouse_event import MouseEvent
+from pydear.utils.mouse_event import MouseEvent, MouseInput
 import glm
 
 LOGGER = logging.getLogger(__name__)
@@ -57,17 +57,17 @@ vertices = (Vertex * 3)(
 class ButtonInfo:
     def __init__(self, name: str) -> None:
         self.name = name
-        self.start = None
+        self.start: Optional[MouseInput] = None
         self.status = ''
-        self.on_released(0, 0)
 
-    def on_pressed(self, x, y):
-        self.start = (int(x), int(y))
+    def on_pressed(self, mouse_input: MouseInput):
+        self.start = mouse_input
 
-    def on_drag(self, x, y, dx, dy):
-        self.status = f'{self.name}: drag: {self.start} => ({x}, {y})'
+    def on_drag(self, mouse_input: MouseInput, dx, dy):
+        self.status = f'{self.name}: drag: {self.start} => ({mouse_input.x}, {mouse_input.y})'
 
-    def on_released(self, x, y):
+    def on_released(self, mouse_input: MouseInput):
+        self.start = None
         self.status = f'{self.name}: release'
 
     def show(self):
@@ -101,7 +101,7 @@ class View(Item):
         self.middle = ButtonInfo('middle')
         mouse_event.middle_pressed += [self.middle.on_pressed]
 
-        def on_drag(x, y, dx, dy):
+        def on_drag(mouse_input: MouseInput, dx, dy):
             self.x -= dx * self.zoom
             self.y += dy * self.zoom
 
@@ -142,9 +142,9 @@ class View(Item):
 
         ImGui.End()
 
-    def render(self, w, h):
-        self.width = w
-        self.height = h
+    def render(self, mouse_input: MouseInput):
+        self.width = mouse_input.width
+        self.height = mouse_input.height
         self._update_matrix()
 
         if not self.shader:
