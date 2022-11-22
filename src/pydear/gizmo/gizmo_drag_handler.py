@@ -2,9 +2,9 @@ from typing import Optional, Dict, Type, Tuple
 import abc
 from enum import Enum
 import glm
-from pydear.scene.camera import Camera, DragInterface
+from glglue.camera import Camera, DragInterface
 from pydear.utils.eventproperty import EventProperty
-from pydear.utils.mouse_event import MouseInput
+from glglue.frame_input import FrameInput
 from .shapes.shape import Shape, ShapeState
 from .gizmo import Gizmo, RayHit
 
@@ -147,7 +147,7 @@ class GizmoDragHandler(DragInterface):
             ZRollShape(inner=inner, outer=outer, depth=depth, color=glm.vec4(0.3, 0.3, 1, 1)): (RollDragContext, {'axis': Axis.Z}),
         }
 
-    def begin(self, mouse_input: MouseInput):
+    def begin(self, mouse_input: FrameInput):
         hit = self.gizmo.hit
         match self.drag_shapes.get(hit.shape):  # type: ignore
             case (t, kw):
@@ -158,13 +158,13 @@ class GizmoDragHandler(DragInterface):
             case _:
                 self.select(hit.shape)
 
-    def drag(self, mouse_input: MouseInput, dx, dy):
+    def drag(self, mouse_input: FrameInput, dx, dy):
         if self.context:
             m = self.context.drag(glm.vec2(mouse_input.x, mouse_input.y))
             for drag_shape in self.drag_shapes.keys():
                 drag_shape.matrix.set(m)
 
-    def end(self, mouse_input: MouseInput):
+    def end(self, mouse_input: FrameInput):
         if self.context:
             self.context.end()
             self.context = None

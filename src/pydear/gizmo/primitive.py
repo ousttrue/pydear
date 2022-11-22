@@ -1,6 +1,6 @@
 from typing import NamedTuple, Optional
 import glm
-from pydear.scene.camera import Ray
+from glglue.camera import Ray
 
 
 class Triangle(NamedTuple):

@@ -1,18 +1,19 @@
 from typing import Optional
 from OpenGL import GL
 from pydear.utils.selector import Item
-from pydear.utils.mouse_camera import MouseCamera, MouseEvent
-from pydear.utils.mouse_event import MouseInput
+from glglue.camera.mouse_camera import MouseCamera, MouseEvent
+from glglue.frame_input import FrameInput
+from glglue.drawable import Drawable
 from glglue import glo
 
 
 class TeaPot(Item):
     def __init__(self, mouse_event: MouseEvent) -> None:
         super().__init__('teapot')
-        self.drawable: Optional[glo.Drawable] = None
-        self.mouse_camera = MouseCamera(mouse_event)
+        self.drawable: Optional[Drawable] = None
+        self.mouse_camera = MouseCamera(mouse_event = mouse_event)
 
-    def render(self, mouse_input: MouseInput):
+    def render(self, mouse_input: FrameInput):
         camera = self.mouse_camera.camera
         camera.projection.resize(mouse_input.width, mouse_input.height)
 
@@ -29,7 +30,7 @@ class TeaPot(Item):
             props = shader.create_props(camera)
 
             # mesh
-            from pydear.scene import teapot
+            from glglue.scene import teapot
             self.drawable = teapot.create(shader, props)
 
         self.drawable.draw()

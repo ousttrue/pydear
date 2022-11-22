@@ -1,16 +1,18 @@
 from typing import Callable, Optional, TypeAlias
 import ctypes
 from pydear import imgui as ImGui
-from .mouse_event import MouseEvent, MouseInput
+from glglue.camera.mouse_event import MouseEvent
+from glglue.frame_input import FrameInput
 
 
-RenderCallback: TypeAlias = Callable[[MouseInput], None]
+RenderCallback: TypeAlias = Callable[[FrameInput], None]
 
 
 class FboView:
     def __init__(self, render: Optional[RenderCallback] = None) -> None:
         self.clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
         from glglue import glo
+
         self.fbo_manager = glo.FboRenderer()
         self.bg = ImGui.ImVec4(1, 1, 1, 1)
         self.tint = ImGui.ImVec4(1, 1, 1, 1)
@@ -20,22 +22,34 @@ class FboView:
     def show_fbo(self, x: int, y: int, w: int, h: int):
         assert w
         assert h
-        texture = self.fbo_manager.clear(
-            int(w), int(h), self.clear_color)
+        texture = self.fbo_manager.clear(int(w), int(h), self.clear_color)
         if texture:
-            ImGui.ImageButton(texture, (w, h), (0, 1),
-                              (1, 0), 0, self.bg, self.tint)
+            ImGui.ImageButton(texture, (w, h), (0, 1), (1, 0), 0, self.bg, self.tint)
             from pydear import imgui_internal
-            imgui_internal.ButtonBehavior(ImGui.Custom_GetLastItemRect(), ImGui.Custom_GetLastItemId(), None, None,  # type: ignore
-                                          ImGui.ImGuiButtonFlags_.MouseButtonMiddle | ImGui.ImGuiButtonFlags_.MouseButtonRight)
+
+            imgui_internal.ButtonBehavior(
+                ImGui.Custom_GetLastItemRect(),
+                ImGui.Custom_GetLastItemId(),
+                None,
+                None,  # type: ignore
+                ImGui.ImGuiButtonFlags_.MouseButtonMiddle
+                | ImGui.ImGuiButtonFlags_.MouseButtonRight,
+            )
 
             io = ImGui.GetIO()
 
-            mouse_input = MouseInput(
-                (int(io.MousePos.x) - x), (int(io.MousePos.y) - y),
-                w, h,
-                io.MouseDown[0], io.MouseDown[1], io.MouseDown[2],
-                ImGui.IsItemActive(), ImGui.IsItemHovered(), int(io.MouseWheel))
+            mouse_input = FrameInput(
+                width=w,
+                height=h,
+                mouse_x=(int(io.MousePos.x) - x),
+                mouse_y=(int(io.MousePos.y) - y),
+                mouse_left=io.MouseDown[0],
+                mouse_right=io.MouseDown[1],
+                mouse_middle=io.MouseDown[2],
+                mouse_wheel=int(io.MouseWheel),
+                is_active=ImGui.IsItemActive(),
+                is_hover=ImGui.IsItemHovered(),
+            )
             self.mouse_event.process(mouse_input)
 
             if self.render:
@@ -48,9 +62,12 @@ class FboView:
             return
 
         ImGui.PushStyleVar_2(ImGui.ImGuiStyleVar_.WindowPadding, (0, 0))
-        if ImGui.Begin("render target", p_open,
-                       ImGui.ImGuiWindowFlags_.NoScrollbar
-                       | ImGui.ImGuiWindowFlags_.NoScrollWithMouse):
+        if ImGui.Begin(
+            "render target",
+            p_open,
+            ImGui.ImGuiWindowFlags_.NoScrollbar
+            | ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
+        ):
             x, y = ImGui.GetWindowPos()
             y += ImGui.GetFrameHeight()
             w, h = ImGui.GetContentRegionAvail()

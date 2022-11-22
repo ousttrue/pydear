@@ -4,7 +4,7 @@ from pydear.utils.mouse_event import MouseInput
 from .gizmo import RayHit
 from .shapes.shape import Shape, ShapeState
 from pydear.utils.eventproperty import EventProperty
-from pydear.scene.camera import DragInterface
+from glglue.camera import DragInterface
 from .gizmo import Gizmo
 
 

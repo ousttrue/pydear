@@ -3,7 +3,7 @@ import logging
 import ctypes
 import glm
 from glglue import glo
-from pydear.scene.camera import Camera
+from glglue.camera import Camera
 from .shader_vertex import Vertex, SHADER
 from .primitive import Triangle, Quad
 from .shapes.shape import Shape

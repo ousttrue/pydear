@@ -1,6 +1,6 @@
 import unittest
 import glm
-from pydear.scene.camera import Camera
+from glglue.camera import Camera
 
 
 class TestCamera(unittest.TestCase):

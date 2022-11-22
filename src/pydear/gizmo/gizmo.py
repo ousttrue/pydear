@@ -1,7 +1,7 @@
 from lib2to3.pgen2.token import OP
 from typing import Optional, Dict, List, NamedTuple
 import glm
-from pydear.scene.camera import Camera, Ray
+from glglue.camera import Camera, Ray
 from .shapes.shape import Shape, ShapeState
 from .gizmo_vertex_buffer import GizmoVertexBuffer
 

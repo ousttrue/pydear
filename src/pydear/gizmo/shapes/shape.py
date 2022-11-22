@@ -1,7 +1,7 @@
 from typing import Iterable, Optional, Tuple
 import abc
 import glm
-from pydear.scene.camera import Ray
+from glglue.camera import Ray
 from pydear.utils.eventproperty import EventProperty
 from ..primitive import Quad
 from enum import IntFlag
