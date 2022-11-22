@@ -4,7 +4,7 @@ Triangle with Orthogonal Matrix
 from typing import Optional, Callable, List
 import logging
 import ctypes
-from pydear import glo
+from glglue import glo
 from pydear import imgui as ImGui
 from pydear.utils.selector import Item
 from pydear.utils.mouse_event import MouseEvent, MouseInput

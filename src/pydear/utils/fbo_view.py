@@ -10,7 +10,7 @@ RenderCallback: TypeAlias = Callable[[MouseInput], None]
 class FboView:
     def __init__(self, render: Optional[RenderCallback] = None) -> None:
         self.clear_color = (ctypes.c_float * 4)(0.1, 0.2, 0.3, 1)
-        from pydear import glo
+        from glglue import glo
         self.fbo_manager = glo.FboRenderer()
         self.bg = ImGui.ImVec4(1, 1, 1, 1)
         self.tint = ImGui.ImVec4(1, 1, 1, 1)

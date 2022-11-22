@@ -2,7 +2,7 @@ from typing import Optional, Dict, List
 import logging
 import ctypes
 import glm
-from pydear import glo
+from glglue import glo
 from pydear.scene.camera import Camera
 from .shader_vertex import Vertex, SHADER
 from .primitive import Triangle, Quad

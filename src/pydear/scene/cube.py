@@ -1,6 +1,7 @@
 from typing import Tuple, NamedTuple
 import glm
-from .. import glo
+from glglue import glo
+from glglue.drawable.drawable import Drawable
 from . import vertex_buffer
 
 
@@ -50,7 +51,7 @@ QUADS = [
 ]
 
 
-def create(shader, props) -> glo.Drawable:
+def create(shader, props) -> Drawable:
     builder = vertex_buffer.MeshBuilder()
     for (i0, i1, i2, i3), rgb in QUADS:
         builder.push_quad(VERTICES[i0], VERTICES[i1],
@@ -63,6 +64,6 @@ def create(shader, props) -> glo.Drawable:
     vao = glo.Vao(
         vbo, glo.VertexLayout.create_list(shader.program))
 
-    drawable = glo.Drawable(vao)
+    drawable = Drawable(vao)
     drawable.push_submesh(shader, len(vertices), props)
     return drawable

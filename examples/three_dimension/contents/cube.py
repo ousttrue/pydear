@@ -5,7 +5,7 @@ from typing import Optional
 import logging
 from OpenGL import GL
 from pydear.utils.selector import Item
-from pydear import glo
+from glglue import glo
 from pydear.utils.mouse_camera import MouseCamera, MouseEvent
 from pydear.utils.mouse_event import MouseInput
 

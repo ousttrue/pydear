@@ -7,7 +7,7 @@ import PIL.ImageDraw
 import PIL.ImageFont
 from pydear.utils.selector import Item
 from pydear.utils.mouse_event import MouseInput, MouseEvent
-from pydear import glo
+from glglue import glo
 from OpenGL import GL
 import glm
 

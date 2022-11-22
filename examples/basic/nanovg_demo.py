@@ -5,7 +5,7 @@ from pydear import nanovg
 
 
 HERE = pathlib.Path(__file__).absolute().parent
-NVG_DIR = HERE.parent.parent / '_external/nanovg'
+NVG_DIR = HERE.parent.parent / '_external/picovg'
 # ICON_SEARCH = '\u1F50D'
 ICON_CIRCLED_CROSS = '\u2716'
 ICON_CHEVRON_RIGHT = '\uE75E'

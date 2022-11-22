@@ -4,7 +4,7 @@ simple triangle sample
 from typing import Optional
 import logging
 import ctypes
-from pydear import glo
+from glglue import glo
 from pydear.utils.selector import Item, MouseInput
 
 LOGGER = logging.getLogger(__name__)

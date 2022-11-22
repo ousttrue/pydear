@@ -10,7 +10,7 @@ import PIL.ImageFont
 import logging
 #
 from xyztile import Tile
-from pydear import glo
+from glglue import glo
 
 logger = logging.getLogger(__name__)
 

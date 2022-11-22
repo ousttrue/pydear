@@ -3,7 +3,7 @@ import ctypes
 import pkgutil
 from OpenGL import GL
 from pydear import nanovg
-from pydear import glo
+from glglue import glo
 
 P_PATH = ctypes.POINTER(nanovg.GLNVGpath)
 P_CALL = ctypes.POINTER(nanovg.GLNVGcall)
